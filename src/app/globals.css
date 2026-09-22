@@ -19,7 +19,8 @@
     outline-offset: 3px;
   }
 
-  button:not(:disabled), select {
+  button:not(:disabled),
+  select {
     cursor: pointer;
   }
 
@@ -30,6 +31,18 @@
   ::selection {
     background: var(--accent);
     color: var(--foreground);
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm text-black disabled:opacity-50;
+  }
+  .input {
+    @apply block min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-black;
   }
 }
 

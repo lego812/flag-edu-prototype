@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/features/auth/login-form";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export const metadata = { title: "로그인" };
 
@@ -25,9 +26,17 @@ export default async function LoginPage() {
           이미 비밀번호를 설정한 계정으로 로그인하세요.
         </p>
         <div className="mt-4 text-sm leading-6 text-neutral-600">
-          처음이신가요? 초대 이메일의 <strong className="text-black">초대 수락</strong>으로 비밀번호를 설정하세요.
+          처음이신가요? 초대 이메일의{" "}
+          <strong className="text-black">초대 수락</strong>으로 비밀번호를
+          설정하세요.
         </div>
         <LoginForm />
+        <Link
+          href="/forgot-password"
+          className="mt-5 inline-block text-sm text-neutral-600 underline"
+        >
+          비밀번호를 잊으셨나요?
+        </Link>
       </section>
     </main>
   );

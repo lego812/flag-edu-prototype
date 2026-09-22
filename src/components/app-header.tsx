@@ -14,15 +14,53 @@ export function AppHeader({ name, isAdmin }: AppHeaderProps) {
           <Link href="/dashboard" className="font-bold text-neutral-950">
             Flag Edu
           </Link>
-          <Link href="/classes" className="text-sm font-medium text-neutral-600">수업</Link>
+          <Link
+            href="/classes"
+            className="text-sm font-medium text-neutral-600"
+          >
+            수업
+          </Link>
+          <Link
+            href="/reports"
+            className="text-sm font-medium text-neutral-600"
+          >
+            내 보고서
+          </Link>
           {isAdmin && (
-            <Link href="/members" className="text-sm font-medium text-neutral-600">
+            <Link
+              href="/members"
+              className="text-sm font-medium text-neutral-600"
+            >
               구성원
             </Link>
           )}
+          {isAdmin && (
+            <>
+              <Link
+                href="/templates"
+                className="text-sm font-medium text-neutral-600"
+              >
+                템플릿
+              </Link>
+              <Link
+                href="/admin-reports"
+                className="text-sm font-medium text-neutral-600"
+              >
+                전체 보고서
+              </Link>
+              <Link
+                href="/exports"
+                className="text-sm font-medium text-neutral-600"
+              >
+                내보내기
+              </Link>
+            </>
+          )}
         </nav>
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-neutral-600 sm:inline">{name}</span>
+          <span className="hidden text-sm text-neutral-600 sm:inline">
+            {name}
+          </span>
           <form action={logoutAction}>
             <button className="min-h-11 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700">
               로그아웃

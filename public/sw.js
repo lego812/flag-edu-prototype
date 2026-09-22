@@ -1,4 +1,4 @@
-const CACHE_NAME = "flag-edu-shell-v1";
+const CACHE_NAME = "flag-edu-shell-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
