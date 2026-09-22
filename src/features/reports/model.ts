@@ -19,6 +19,7 @@ export type Field = {
   field_options: { id?: string; label: string; sort_order: number }[];
 };
 export type Template = {
+  name: string;
   id: string;
   version: number;
   status: "draft" | "active" | "archived";

@@ -39,6 +39,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202609220001_initial_schema.sql",
       "202609220002_service_role_member_grants.sql",
       "202609220003_reporting_workflows.sql",
+      "202609220004_template_names.sql",
     ]) {
       let sql = await readFile("supabase/migrations/" + file, "utf8");
       sql = sql.replace("create extension if not exists pgcrypto;", "");
@@ -101,6 +102,15 @@ describe("reporting PostgreSQL workflows and RLS", () => {
         )
       ).rows[0].label,
     ).toBe("내용");
+  });
+  it("renames a template without changing its version or fields", async()=>{
+    await asUser(ids.coach);
+    await expect(db.query("select public.rename_template($1,'기본 양식')",[templateId])).rejects.toThrow();
+    await asUser(ids.admin);
+    await db.query("select public.rename_template($1,'기본 양식')",[templateId]);
+    const result=await db.query<{name:string;version:number}>("select name,version from public.template_versions where id=$1",[templateId]);
+    expect(result.rows[0]).toEqual({name:"기본 양식",version:1});
+    expect((await db.query("select id from public.template_fields where id=$1",[fieldId])).rows).toHaveLength(1);
   });
   it("creates exactly one report and enforces required submission fields", async () => {
     await asUser(ids.coach);

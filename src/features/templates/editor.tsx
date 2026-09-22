@@ -39,6 +39,7 @@ export function TemplateEditor({ template }: { template?: Template }) {
       })) ?? [],
   );
   const [preview, setPreview] = useState(false);
+  const [name,setName] = useState(template?.name ?? "보고서 양식");
   const [state, action, pending] = useActionState(saveTemplateAction, {});
   const update = (i: number, patch: Partial<Editable>) =>
     setFields(fields.map((f, index) => (index === i ? { ...f, ...patch } : f)));
@@ -71,6 +72,7 @@ export function TemplateEditor({ template }: { template?: Template }) {
         게시된 내용은 변경하지 않고 새 버전으로 저장합니다.
       </p>
       <fieldset disabled={pending} className="space-y-6">
+        <label className="block text-sm font-semibold">양식 이름<input className="input mt-2" name="name" required maxLength={100} value={name} onChange={e=>setName(e.target.value)}/></label>
         <button
           type="button"
           className="btn-secondary"

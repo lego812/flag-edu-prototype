@@ -6,7 +6,7 @@ export default async function TemplatesPage() {
   if (profile.role !== "admin") redirect("/dashboard");
   const { data, error } = await supabase
     .from("template_versions")
-    .select("id,version,status")
+    .select("id,name,version,status")
     .eq("organization_id", profile.organization_id)
     .order("version", { ascending: false });
   if (error) throw new Error("템플릿 조회 실패");
@@ -25,7 +25,7 @@ export default async function TemplatesPage() {
         {data?.map((t) => (
           <li key={t.id} className="flex items-center justify-between py-4">
             <span>
-              버전 {t.version} ·{" "}
+              <strong>{t.name}</strong> · 버전 {t.version} ·{" "}
               {t.status === "active"
                 ? "사용 중"
                 : t.status === "draft"
