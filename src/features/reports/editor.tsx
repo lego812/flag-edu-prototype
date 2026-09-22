@@ -69,11 +69,18 @@ export function ReportEditor({
         {fields
           .filter((f) => f.field_type !== "photo")
           .map((f) => (
-            <FieldInput key={f.id} field={f} value={draft[f.id]} />
+            <FieldInput
+              key={f.id}
+              field={f}
+              value={draft[f.id]}
+              onChange={() => {
+                dirty.current = true;
+              }}
+            />
           ))}
         <div className="flex flex-wrap gap-3">
           <button className="btn-secondary" name="intent" value="save">
-            {report.status === "submitted" ? "변경 저장" : "임시저장"}
+            임시저장
           </button>
           <button
             className="btn"

@@ -50,15 +50,6 @@ export function ExportForm({
           <input className="input" type="date" name="to" />
         </label>
         <label>
-          상태
-          <select className="input" name="status">
-            <option value="all">전체</option>
-            <option value="draft">미제출</option>
-            <option value="submitted">제출 · 미확인</option>
-            <option value="confirmed">확인 완료</option>
-          </select>
-        </label>
-        <label>
           작성자
           <select className="input" name="author">
             <option value="">전체</option>

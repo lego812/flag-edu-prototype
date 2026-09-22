@@ -23,7 +23,7 @@ export async function startReportAction(
         "보고서를 열지 못했습니다. 수업이 취소됐거나 게시된 템플릿이 없을 수 있습니다.",
     };
   revalidatePath("/reports");
-  redirect("/reports/" + data.id);
+  redirect("/reports/" + data.id + "?edit=1");
 }
 export async function saveReportAction(
   id: string,
@@ -45,7 +45,7 @@ export async function saveReportAction(
     answers = parseAnswers(
       template.template_fields,
       form,
-      form.get("intent") === "submit" || report.status === "submitted",
+      form.get("intent") === "submit",
       counts,
     );
   } catch (e) {
@@ -73,30 +73,6 @@ export async function saveReportAction(
   return {
     redirectTo: form.get("intent") === "submit" ? "/reports" : undefined,
     success:
-      form.get("intent") === "submit"
-        ? "제출했습니다."
-        : "저장했습니다.",
+      form.get("intent") === "submit" ? "제출했습니다." : "저장했습니다.",
   };
-}
-export async function confirmReportAction(
-  id: string,
-  version: string,
-  _state: ActionState,
-  form: FormData,
-): Promise<ActionState> {
-  const { supabase, profile } = await requireCurrentProfile();
-  if (profile.role !== "admin" || !isUuid(id) || form.get("confirm") !== "yes")
-    return { error: "관리자 확인이 필요합니다." };
-  const { error } = await supabase.rpc("confirm_report_version", {
-    p_id: id,
-    p_version: version,
-  });
-  if (error)
-    return {
-      error:
-        "확인하지 못했습니다. 보고서가 변경되었거나 제출 전입니다. 새로고침해 주세요.",
-    };
-  revalidatePath("/reports/" + id);
-  revalidatePath("/admin-reports");
-  return { success: "확인 처리했습니다." };
 }

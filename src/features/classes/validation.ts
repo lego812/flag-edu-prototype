@@ -7,6 +7,7 @@ export type ClassValues = {
   start: string;
   end: string;
   memo: string;
+  teaching_method?: string;
 };
 export type ClassFormState = {
   error?: string;
@@ -25,6 +26,7 @@ export function parseClassForm(
     start: text("start"),
     end: text("end"),
     memo: text("memo"),
+    teaching_method: text("teaching_method"),
   };
   const fieldErrors: NonNullable<ClassFormState["fieldErrors"]> = {};
   if (!values.title || [...values.title].length > 150)
@@ -32,6 +34,10 @@ export function parseClassForm(
   if (!values.location || [...values.location].length > 200)
     fieldErrors.location = "장소는 1~200자로 입력해 주세요.";
   const hasTime = form.get("has_time") !== "false";
+  if ((values.teaching_method?.length ?? 0) > 2000)
+    fieldErrors.teaching_method = "진행방식은 2,000자 이하로 입력해 주세요.";
+  if (values.memo.length > 5000)
+    fieldErrors.memo = "메모는 5,000자 이하로 입력해 주세요.";
   const validDate = isDate(values.start) && values.start < "9999-12-31";
   const start = hasTime
     ? parseSeoulDateTime(values.start)
@@ -58,6 +64,7 @@ export function parseClassForm(
       start_at: start!,
       end_at: end!,
       memo: values.memo || null,
+      teaching_method: values.teaching_method || null,
       has_time: hasTime,
     },
     values,

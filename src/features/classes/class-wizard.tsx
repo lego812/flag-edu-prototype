@@ -6,6 +6,7 @@ import { addDays, seoulToday, toSeoulInput } from "./dates";
 import { buildSchedule, type RepeatUnit } from "./recurrence";
 import { parseClassForm, type ClassFormState } from "./validation";
 import type { ClassSession } from "./model";
+import { CountPicker } from "@/components/count-picker";
 
 const WEEKDAYS = [
   { value: 1, label: "월" },
@@ -21,6 +22,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
   const [title, setTitle] = useState(session?.title ?? "");
   const [location, setLocation] = useState(session?.location ?? "");
   const [memo, setMemo] = useState(session?.memo ?? "");
+  const [method, setMethod] = useState(session?.teaching_method ?? "");
   const [day, setDay] = useState(
     session ? toSeoulInput(session.start_at).slice(0, 10) : seoulToday(),
   );
@@ -62,6 +64,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
     form.set("title", title);
     form.set("location", location);
     form.set("memo", memo);
+    form.set("teaching_method", method);
     form.set("has_time", String(hasTime));
     form.set("start", hasTime ? day + "T" + startTime : day);
     form.set("end", hasTime ? endDay + "T" + endTime : "");
@@ -134,6 +137,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
       <input type="hidden" name="title" value={title} />
       <input type="hidden" name="location" value={location} />
       <input type="hidden" name="memo" value={memo} />
+      <input type="hidden" name="teaching_method" value={method} />
       <input
         type="hidden"
         name="start"
@@ -233,14 +237,12 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
                   <label className="block text-sm font-semibold">
                     수업 간격
                     <div className="mt-2 flex items-center gap-3">
-                      <input
-                        aria-label="반복 간격"
-                        className="input max-w-28"
-                        type="number"
+                      <CountPicker
+                        label="반복 간격"
                         min={1}
                         max={365}
                         value={every}
-                        onChange={(e) => setEvery(e.target.value)}
+                        onChange={setEvery}
                       />
                       <span>
                         {repeat === "day"
@@ -389,10 +391,23 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
               </p>
             )}
             <label className="block text-sm font-semibold">
+              수업 진행방식 (선택)
+              <textarea
+                className="input mt-2"
+                rows={3}
+                maxLength={2000}
+                value={method}
+                onChange={(e) => setMethod(e.target.value)}
+                placeholder="예: 준비 운동 → 팀 활동 → 마무리"
+              />
+            </label>
+            <label className="block text-sm font-semibold">
               메모 (선택)
               <textarea
                 className="input mt-2"
                 rows={3}
+                maxLength={5000}
+                placeholder="준비물이나 수업 중 참고할 내용을 남겨 주세요."
                 value={memo}
                 onChange={(e) => setMemo(e.target.value)}
               />
@@ -415,6 +430,11 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
                 <li key={d}>{d}</li>
               ))}
             </ul>
+            {method && (
+              <p className="whitespace-pre-wrap break-words text-sm">
+                {method}
+              </p>
+            )}
             {memo && (
               <p className="whitespace-pre-wrap break-words text-sm">{memo}</p>
             )}

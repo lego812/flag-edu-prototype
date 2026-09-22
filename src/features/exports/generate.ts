@@ -24,7 +24,7 @@ export function exportRows(
       r.profiles.name,
       reportStatus(r),
       r.class_sessions.status === "cancelled" ? "취소" : "예정",
-      String(template.version),
+      formatClassDate(r.created_at),
     ];
     return template.template_fields.map((f) => {
       const value = r.report_answers.find((a) => a.field_id === f.id)?.value;
@@ -51,7 +51,7 @@ export const HEADERS = [
   "작성자",
   "보고 상태",
   "수업 상태",
-  "양식 버전",
+  "작성 일시 (한국)",
   "질문",
   "답변 / 사진 정보",
 ];
@@ -130,7 +130,8 @@ export async function generateExport(
     if (group !== previous) {
       y -= 12;
       draw(`${row[0]} / ${row[4]} / ${row[5]}`, true);
-      draw(`${row[1]} | ${row[2]} ~ ${row[3]} | ${row[6]} | 양식 v${row[7]}`);
+      draw(`${row[1]} | ${row[2]}${row[3] ? " ~ " + row[3] : ""} | ${row[6]}`);
+      draw(row[7]);
       previous = group;
     }
     draw(row[8] + ": " + (row[9] || "미입력"));

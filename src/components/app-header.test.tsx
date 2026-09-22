@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { AppHeader } from "./app-header";
 
 vi.mock("@/features/auth/actions", () => ({ logoutAction: vi.fn() }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/templates" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/templates",
+  useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
+}));
 
 describe("AppHeader", () => {
   it("keeps administrator navigation and logout accessible", () => {

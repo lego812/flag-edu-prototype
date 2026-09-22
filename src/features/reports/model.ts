@@ -55,11 +55,11 @@ export type Report = {
   report_answers: { field_id: string; value: unknown }[];
   report_attachments: Attachment[];
 };
-export type ActionState = { error?: string; success?: string; redirectTo?: string };
-export function reportStatus(report: Pick<Report, "status" | "confirmed_at">) {
-  return report.confirmed_at
-    ? "확인 완료"
-    : report.status === "submitted"
-      ? "제출 완료"
-      : "미제출";
+export type ActionState = {
+  error?: string;
+  success?: string;
+  redirectTo?: string;
+};
+export function reportStatus(report: Pick<Report, "status">) {
+  return report.status === "submitted" ? "제출" : "임시저장";
 }

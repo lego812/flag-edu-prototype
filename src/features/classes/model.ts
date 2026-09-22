@@ -7,6 +7,7 @@ export type ClassSession = {
   end_at: string;
   has_time?: boolean;
   memo: string | null;
+  teaching_method?: string | null;
   status: "scheduled" | "cancelled";
   created_by: string;
   updated_by: string;
@@ -16,7 +17,13 @@ export type ClassSession = {
 
 export type ClassInput = Pick<
   ClassSession,
-  "title" | "location" | "start_at" | "end_at" | "memo" | "has_time"
+  | "title"
+  | "location"
+  | "start_at"
+  | "end_at"
+  | "memo"
+  | "has_time"
+  | "teaching_method"
 >;
 export type ClassActor = {
   id: string;
