@@ -9,11 +9,16 @@ export function parseSeoulDateTime(value: string): string | null {
 }
 
 export function toSeoulInput(utc: string) {
-  return new Date(new Date(utc).getTime() + KST_OFFSET).toISOString().slice(0, 16);
+  return new Date(new Date(utc).getTime() + KST_OFFSET)
+    .toISOString()
+    .slice(0, 16);
 }
 
 export function isDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && parseSeoulDateTime(value + "T00:00") !== null;
+  return (
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    parseSeoulDateTime(value + "T00:00") !== null
+  );
 }
 
 export function seoulToday(now = new Date()) {
@@ -26,9 +31,21 @@ export function addDays(day: string, count: number) {
   return date.toISOString().slice(0, 10);
 }
 
-export function formatClassDate(utc: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric",
-    weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
-  }).format(new Date(utc));
+export function formatClassDate(utc: string, hasTime = true) {
+  return (
+    new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+      ...(hasTime
+        ? {
+            hour: "2-digit" as const,
+            minute: "2-digit" as const,
+            hour12: false,
+          }
+        : {}),
+    }).format(new Date(utc)) + (hasTime ? "" : " · 시간 미정")
+  );
 }

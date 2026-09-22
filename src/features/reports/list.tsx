@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { redirect } from "next/navigation";
 import { listReports, reportFilters } from "./repository";
@@ -45,7 +46,7 @@ export async function ReportList({
     : { data: [] };
   const { data: sessions } = await supabase
     .from("class_sessions")
-    .select("id,title,start_at")
+    .select("id,title,start_at,has_time")
     .eq("organization_id", profile.organization_id)
     .order("start_at", { ascending: false })
     .limit(200);
@@ -57,92 +58,95 @@ export async function ReportList({
       <h1 className="text-2xl font-bold">
         {admin ? "전체 보고서" : "내 보고서"}
       </h1>
-      <form
-        action={base}
-        className="grid gap-3 border-y border-neutral-200 py-5 sm:grid-cols-3"
-      >
-        <label className="text-sm">
-          수업 시작일
-          <input
-            className="input mt-1"
-            type="date"
-            name="from"
-            defaultValue={filters.from}
-          />
-        </label>
-        <label className="text-sm">
-          수업 종료일
-          <input
-            className="input mt-1"
-            type="date"
-            name="to"
-            defaultValue={filters.to}
-          />
-        </label>
-        <label className="text-sm">
-          상태
-          <select
-            className="input mt-1"
-            name="status"
-            defaultValue={filters.status}
-          >
-            <option value="all">전체</option>
-            <option value="draft">미제출</option>
-            <option value="submitted">제출 · 미확인</option>
-            <option value="confirmed">확인 완료</option>
-          </select>
-        </label>
-        {admin && (
+      <ListFilters>
+        <form action={base} className="grid grid-cols-1 gap-4">
           <label className="text-sm">
-            작성자
+            수업 시작일
+            <input
+              className="input mt-1"
+              type="date"
+              name="from"
+              defaultValue={filters.from}
+            />
+          </label>
+          <label className="text-sm">
+            수업 종료일
+            <input
+              className="input mt-1"
+              type="date"
+              name="to"
+              defaultValue={filters.to}
+            />
+          </label>
+          <label className="text-sm">
+            상태
             <select
               className="input mt-1"
-              name="author"
-              defaultValue={filters.author}
+              name="status"
+              defaultValue={filters.status}
+            >
+              <option value="all">전체</option>
+              <option value="draft">미제출</option>
+              <option value="submitted">제출 · 미확인</option>
+              <option value="confirmed">확인 완료</option>
+            </select>
+          </label>
+          {admin && (
+            <label className="text-sm">
+              작성자
+              <select
+                className="input mt-1"
+                name="author"
+                defaultValue={filters.author}
+              >
+                <option value="">전체</option>
+                {members?.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="text-sm">
+            수업 (최근 200개)
+            <select
+              className="input mt-1"
+              name="session"
+              defaultValue={filters.session}
             >
               <option value="">전체</option>
-              {members?.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
+              {sessions?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title} · {formatClassDate(s.start_at, s.has_time)}
                 </option>
               ))}
             </select>
           </label>
-        )}
-        <label className="text-sm">
-          수업 (최근 200개)
-          <select
-            className="input mt-1"
-            name="session"
-            defaultValue={filters.session}
-          >
-            <option value="">전체</option>
-            {sessions?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title} · {formatClassDate(s.start_at)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="btn self-end">조회</button>
-      </form>
+          <button className="btn self-end">조회</button>
+        </form>
+      </ListFilters>
       <p className="text-sm text-neutral-600">
         총 {count ?? 0}개 · 미제출은 생성된 임시저장 보고서입니다. 참여자 미지정
         수업의 미작성자는 집계하지 않습니다.
       </p>
-      <ul className="divide-y divide-neutral-200">
+      <ul className="grid grid-cols-1 gap-3">
         {data?.map((r) => (
           <li key={r.id}>
             <Link
               href={"/reports/" + r.id}
-              className="block space-y-2 py-4 hover:bg-neutral-50"
+              className="block space-y-2 rounded-3xl border border-neutral-200 bg-white p-5 transition hover:border-neutral-400 focus-visible:outline-2 focus-visible:outline-black"
             >
               <div className="flex flex-wrap justify-between gap-2">
                 <strong>{r.class_sessions.title}</strong>
                 <span className="text-sm">{reportStatus(r)}</span>
               </div>
               <p className="text-sm text-neutral-600">
-                {r.profiles.name} · {formatClassDate(r.class_sessions.start_at)}
+                {r.profiles.name} ·{" "}
+                {formatClassDate(
+                  r.class_sessions.start_at,
+                  r.class_sessions.has_time,
+                )}
               </p>
             </Link>
           </li>

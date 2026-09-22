@@ -47,8 +47,12 @@ export default async function ClassDetailPage({
           <div>
             <dt className="text-sm text-neutral-500">수업 일시 (한국 시간)</dt>
             <dd className="mt-1">
-              {formatClassDate(session.start_at)}
-              <br />~ {formatClassDate(session.end_at)}
+              {formatClassDate(session.start_at, session.has_time)}
+              {session.has_time !== false && (
+                <>
+                  <br />~ {formatClassDate(session.end_at)}
+                </>
+              )}
             </dd>
           </div>
           <div>

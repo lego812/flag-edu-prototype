@@ -22,7 +22,10 @@ export async function saveTemplateAction(
   if (invalid) return { error: invalid };
   if (form.get("intent") === "publish" && form.get("confirm") !== "yes")
     return { error: "게시 확인을 선택해 주세요." };
-  const { error } = await supabase.rpc("save_template", {
+  const name = String(form.get("name") ?? "").trim();
+  if (!name || name.length > 100) return {error:"양식 이름은 1~100자로 입력해 주세요."};
+  const { error } = await supabase.rpc("save_named_template", {
+    p_name: name,
     p_id: form.get("id") || null,
     p_version: form.get("version") || null,
     p_fields: fields,

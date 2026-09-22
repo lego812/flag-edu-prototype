@@ -17,8 +17,10 @@ export function exportRows(
     const base = [
       r.class_sessions.title,
       r.class_sessions.location,
-      formatClassDate(r.class_sessions.start_at),
-      formatClassDate(r.class_sessions.end_at),
+      formatClassDate(r.class_sessions.start_at, r.class_sessions.has_time),
+      r.class_sessions.has_time === false
+        ? ""
+        : formatClassDate(r.class_sessions.end_at),
       r.profiles.name,
       reportStatus(r),
       r.class_sessions.status === "cancelled" ? "취소" : "예정",
@@ -133,15 +135,13 @@ export async function generateExport(
     }
     draw(row[8] + ": " + (row[9] || "미입력"));
   }
-  pdf
-    .getPages()
-    .forEach((p, i) =>
-      p.drawText(`${i + 1} / ${pdf.getPageCount()}`, {
-        x: 280,
-        y: 25,
-        font,
-        size: 9,
-      }),
-    );
+  pdf.getPages().forEach((p, i) =>
+    p.drawText(`${i + 1} / ${pdf.getPageCount()}`, {
+      x: 280,
+      y: 25,
+      font,
+      size: 9,
+    }),
+  );
   return pdf.save();
 }

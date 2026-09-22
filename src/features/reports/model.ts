@@ -19,6 +19,7 @@ export type Field = {
   field_options: { id?: string; label: string; sort_order: number }[];
 };
 export type Template = {
+  name: string;
   id: string;
   version: number;
   status: "draft" | "active" | "archived";
@@ -42,6 +43,7 @@ export type Report = {
   confirmed_at: string | null;
   updated_at: string;
   class_sessions: {
+    has_time?: boolean;
     title: string;
     location: string;
     start_at: string;

@@ -48,7 +48,10 @@ export default async function ReportPage({
         </p>
         <p className="text-sm text-neutral-600">
           {report.class_sessions.location} ·{" "}
-          {formatClassDate(report.class_sessions.start_at)}
+          {formatClassDate(
+            report.class_sessions.start_at,
+            report.class_sessions.has_time,
+          )}
         </p>
         {report.class_sessions.status === "cancelled" && (
           <p className="text-red-700">
