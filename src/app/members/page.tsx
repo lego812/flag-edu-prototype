@@ -72,7 +72,9 @@ export default async function MembersPage() {
                         }`}
                       >
                         {member.role === "admin" ? "관리자" : "코치"} ·{" "}
-                        {isInvitationPending
+                        {!authUser
+                          ? "가입 상태 확인 불가"
+                          : isInvitationPending
                           ? "초대 수락 대기중"
                           : member.status === "active"
                             ? "활성"

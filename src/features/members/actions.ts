@@ -46,42 +46,6 @@ async function sendInvitation(
   });
 }
 
-async function replacePendingInvitation(
-  adminClient: AdminClient,
-  email: string,
-) {
-  const { data, error } = await adminClient.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-
-  if (error) {
-    return false;
-  }
-
-  const existingUser = data.users.find(
-    (user) => user.email?.toLowerCase() === email && !user.email_confirmed_at,
-  );
-
-  if (!existingUser) {
-    return false;
-  }
-
-  const { error: profileDeleteError } = await adminClient
-    .from("profiles")
-    .delete()
-    .eq("id", existingUser.id);
-
-  if (profileDeleteError) {
-    return false;
-  }
-
-  const { error: userDeleteError } =
-    await adminClient.auth.admin.deleteUser(existingUser.id);
-
-  return !userDeleteError;
-}
-
 export async function inviteCoachAction(
   _state: InviteActionState,
   formData: FormData,
@@ -103,21 +67,9 @@ export async function inviteCoachAction(
     const env = requireServerEnv();
     const adminClient = createAdminClient();
     const redirectTo = `${env.siteUrl}/auth/callback?next=/set-password`;
-    let invitation = await sendInvitation(adminClient, email, name, redirectTo);
-    let replacedPendingInvitation = false;
-
-    if (invitation.error) {
-      replacedPendingInvitation = await replacePendingInvitation(
-        adminClient,
-        email,
-      );
-
-      if (replacedPendingInvitation) {
-        invitation = await sendInvitation(adminClient, email, name, redirectTo);
-      }
-    }
-
-    const { data, error: inviteError } = invitation;
+    const { data, error: inviteError } = await sendInvitation(
+      adminClient, email, name, redirectTo,
+    );
 
     if (inviteError || !data.user) {
       return {
@@ -138,15 +90,12 @@ export async function inviteCoachAction(
     });
 
     if (profileError) {
-      await adminClient.auth.admin.deleteUser(data.user.id);
-      return { error: "구성원 프로필을 만들지 못해 초대를 취소했습니다." };
+      return { error: "초대는 생성됐지만 구성원 등록에 실패했습니다. 관리자에게 문의해 주세요." };
     }
 
     revalidatePath("/members");
     return {
-      success: replacedPendingInvitation
-        ? `${email} 주소로 새 초대 메일을 보냈습니다.`
-        : `${email} 주소로 초대 메일을 보냈습니다.`,
+      success: `${email} 주소로 초대 메일을 보냈습니다.`,
     };
   } catch (error) {
     return {
@@ -190,12 +139,12 @@ export async function resendCoachInvitationAction(
 
     const { data: invitedProfile, error: profileError } = await adminClient
       .from("profiles")
-      .select("name, organization_id")
+      .select("name, organization_id, status")
       .eq("id", userId)
       .eq("organization_id", currentProfile.organization_id)
       .single();
 
-    if (profileError || !invitedProfile) {
+    if (profileError || !invitedProfile || invitedProfile.status !== "active") {
       return { error: "같은 기관의 초대 구성원을 찾을 수 없습니다." };
     }
 
@@ -214,47 +163,11 @@ export async function resendCoachInvitationAction(
       return { success: "새 비밀번호 설정 메일을 보냈습니다." };
     }
 
-    let invitation = await sendInvitation(
-      adminClient,
-      email,
-      invitedProfile.name,
-      redirectTo,
+    const { error: invitationError } = await sendInvitation(
+      adminClient, email, invitedProfile.name, redirectTo,
     );
-
-    if (invitation.error) {
-      const replaced = await replacePendingInvitation(adminClient, email);
-
-      if (!replaced) {
-        return { error: "기존 초대를 갱신하지 못했습니다." };
-      }
-
-      invitation = await sendInvitation(
-        adminClient,
-        email,
-        invitedProfile.name,
-        redirectTo,
-      );
-
-      if (!invitation.error && invitation.data.user) {
-        const { error: recreatedProfileError } = await adminClient
-          .from("profiles")
-          .insert({
-            id: invitation.data.user.id,
-            organization_id: currentProfile.organization_id,
-            name: invitedProfile.name,
-            role: "coach",
-            status: "active",
-          });
-
-        if (recreatedProfileError) {
-          await adminClient.auth.admin.deleteUser(invitation.data.user.id);
-          return { error: "구성원 프로필을 다시 만들지 못했습니다." };
-        }
-      }
-    }
-
-    if (invitation.error) {
-      return { error: getEmailDeliveryErrorMessage(invitation.error) };
+    if (invitationError) {
+      return { error: getEmailDeliveryErrorMessage(invitationError) };
     }
 
     revalidatePath("/members");

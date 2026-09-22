@@ -2,18 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [error, setError] = useState<string>();
+  const started = useRef(false);
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     async function finishAuthentication() {
       const query = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.slice(1));
+      window.history.replaceState(null, "", window.location.pathname);
       const authError =
         hash.get("error_description") ?? query.get("error_description");
 
@@ -42,10 +46,7 @@ export default function AuthCallbackPage() {
           await supabase.auth.exchangeCodeForSession(code);
         authenticationError = exchangeError;
       } else {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          authenticationError = new Error("No invitation session");
-        }
+        authenticationError = new Error("No invitation credentials");
       }
 
       if (authenticationError) {
@@ -60,7 +61,9 @@ export default function AuthCallbackPage() {
       router.refresh();
     }
 
-    void finishAuthentication();
+    void finishAuthentication().catch(() => {
+      setError("인증 서버에 연결하지 못했습니다. 잠시 후 새 초대 링크로 다시 시도해 주세요.");
+    });
   }, [router, supabase]);
 
   return (

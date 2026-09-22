@@ -4,5 +4,7 @@ import { requirePublicEnv } from "@/lib/env";
 export function createClient() {
   const env = requirePublicEnv();
 
-  return createBrowserClient(env.supabaseUrl, env.supabasePublishableKey);
+  return createBrowserClient(env.supabaseUrl, env.supabasePublishableKey, {
+    auth: { detectSessionInUrl: false },
+  });
 }
