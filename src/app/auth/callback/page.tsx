@@ -68,30 +68,30 @@ export default function AuthCallbackPage() {
 
   return (
     <main className="flex min-h-svh items-center justify-center px-5 py-10">
-      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-sm sm:p-9">
+      <section className="w-full max-w-md py-7 text-center sm:p-9">
         {error ? (
           <>
             <p className="text-sm font-semibold text-red-600">초대 확인 실패</p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">
+            <h1 className="mt-2 text-2xl font-bold text-neutral-950">
               새 초대가 필요합니다
             </h1>
-            <p className="mt-4 leading-7 text-slate-600" role="alert">
+            <p className="mt-4 leading-7 text-neutral-600" role="alert">
               {error}
             </p>
             <Link
               href="/login"
-              className="mt-7 inline-flex rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white"
+              className="mt-7 inline-flex rounded-lg bg-black px-5 py-3 font-semibold text-white"
             >
               로그인 화면으로
             </Link>
           </>
         ) : (
           <>
-            <p className="text-sm font-semibold text-blue-600">Flag Edu</p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">
+            <p className="text-sm font-semibold text-black">Flag Edu</p>
+            <h1 className="mt-2 text-2xl font-bold text-neutral-950">
               초대를 확인하고 있습니다
             </h1>
-            <p className="mt-4 text-slate-600">잠시만 기다려 주세요.</p>
+            <p className="mt-4 text-neutral-600">잠시만 기다려 주세요.</p>
           </>
         )}
       </section>

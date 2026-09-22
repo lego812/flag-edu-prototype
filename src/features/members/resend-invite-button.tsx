@@ -24,7 +24,7 @@ export function ResendInviteButton({ userId }: ResendInviteButtonProps) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+        className="min-h-11 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold text-black hover:bg-neutral-100 disabled:opacity-60"
       >
         {pending ? "발송 중…" : "메일 재발송"}
       </button>
@@ -34,7 +34,7 @@ export function ResendInviteButton({ userId }: ResendInviteButtonProps) {
         </span>
       )}
       {state.success && (
-        <span className="text-xs text-emerald-700" role="status">
+        <span className="text-xs text-neutral-700" role="status">
           {state.success}
         </span>
       )}

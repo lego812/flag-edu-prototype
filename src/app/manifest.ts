@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "코치 수업 보고와 관리자 확인을 위한 업무 앱",
     start_url: "/",
     display: "standalone",
-    background_color: "#f5f7fb",
-    theme_color: "#2563eb",
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     lang: "ko-KR",
     orientation: "portrait-primary",
     icons: [

@@ -7,9 +7,9 @@ import type { ClassFormState } from "./validation";
 export function CancelClassForm({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const [state, submit, pending] = useActionState<ClassFormState, FormData>(cancelClassAction.bind(null, id), {});
-  if (!open) return <button onClick={() => setOpen(true)} className="rounded-xl border border-red-200 px-5 py-3 font-semibold text-red-700">수업 취소</button>;
+  if (!open) return <button onClick={() => setOpen(true)} className="rounded-lg border border-red-200 px-5 py-3 font-semibold text-red-700">수업 취소</button>;
   return (
-    <form action={submit} className="w-full rounded-xl border border-red-200 bg-red-50 p-5">
+    <form action={submit} className="w-full rounded-lg border border-red-200 bg-red-50 p-5">
       <h2 className="font-bold text-red-900">이 수업을 취소할까요?</h2>
       <p className="mt-2 text-sm text-red-800">수업과 기존 보고서는 보존됩니다. 취소된 수업에는 새 보고서를 작성하거나 제출할 수 없습니다.</p>
       <label className="mt-4 flex items-center gap-2 text-sm text-red-900">

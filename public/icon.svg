@@ -1,4 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Flag Edu">
-  <rect width="512" height="512" rx="112" fill="#2563eb"/>
+  <rect width="512" height="512" rx="112" fill="#000000"/>
   <path d="M148 112h222v76H230v72h122v76H230v112h-82V112Z" fill="#fff"/>
 </svg>
