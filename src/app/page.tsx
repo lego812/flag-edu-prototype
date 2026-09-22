@@ -27,25 +27,14 @@ export default function Home() {
           관리합니다.
         </p>
 
-        <div
-          className={`mt-8 rounded-lg border p-4 text-sm ${
-            envStatus.configured
-              ? "border-neutral-200 bg-neutral-50 text-neutral-700"
-              : "border-accent bg-accent text-black"
-          }`}
-          role="status"
-        >
-          <p className="font-semibold">
-            {envStatus.configured
-              ? "Supabase 연결 준비 완료"
-              : "개발 환경 설정이 필요합니다"}
-          </p>
-          {!envStatus.configured && (
+        {!envStatus.configured && (
+          <div className="mt-8 rounded-lg border border-accent bg-accent p-4 text-sm text-black" role="alert">
+            <p className="font-semibold">개발 환경 설정이 필요합니다</p>
             <p className="mt-1 leading-6">
               누락된 환경변수: {envStatus.missing.join(", ")}
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         {envStatus.configured && (
           <Link
