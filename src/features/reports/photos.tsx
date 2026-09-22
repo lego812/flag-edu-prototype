@@ -64,7 +64,6 @@ export function Photos({
   }
   return (
     <section className="space-y-6 border-t border-neutral-200 pt-6">
-      {editable && fields.some(f=>f.field_type === "photo") && <p className="text-sm text-neutral-600">사진을 변경하면 보고서가 임시저장 상태로 돌아갑니다. 사진 첨부 후 제출을 눌러 주세요.</p>}
       {fields
         .filter((f) => f.field_type === "photo")
         .map((f) => {

@@ -44,7 +44,7 @@ export default async function ClassesPage({
           수업 등록
         </Link>
       </div>
-      <ListFilters>
+      <ListFilters from={filters?.from} to={filters?.to}>
         <form action="/classes" className="grid grid-cols-1 gap-4">
           <label className="min-w-0 text-sm font-medium">
             시작일

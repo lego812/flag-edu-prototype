@@ -1,5 +1,6 @@
 "use client";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FieldInput } from "./field-input";
 import type { Field, Report } from "./model";
 import { saveReportAction } from "./actions";
@@ -10,6 +11,7 @@ export function ReportEditor({
   report: Report;
   fields: Field[];
 }) {
+  const router = useRouter();
   const [draft, setDraft] = useState<Record<string, unknown>>(() =>
     Object.fromEntries(report.report_answers.map((a) => [a.field_id, a.value])),
   );
@@ -49,8 +51,11 @@ export function ReportEditor({
     return () => window.removeEventListener("beforeunload", handler);
   }, []);
   useEffect(() => {
-    if (state.success) dirty.current = false;
-  }, [state]);
+    if (state.success) {
+      dirty.current = false;
+      if (state.redirectTo) router.push(state.redirectTo);
+    }
+  }, [state, router]);
   return (
     <form
       action={action}
@@ -66,10 +71,6 @@ export function ReportEditor({
           .map((f) => (
             <FieldInput key={f.id} field={f} value={draft[f.id]} />
           ))}
-        <p className="text-sm text-neutral-600">
-          사진은 아래 첨부 영역에서 별도로 저장합니다. 제출한 내용을 수정하면
-          관리자 확인이 해제됩니다.
-        </p>
         <div className="flex flex-wrap gap-3">
           <button className="btn-secondary" name="intent" value="save">
             {report.status === "submitted" ? "변경 저장" : "임시저장"}

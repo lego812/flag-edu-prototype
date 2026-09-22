@@ -4,7 +4,7 @@ import { requireCurrentProfile } from "@/features/auth/current-user";
 import { getReport, getTemplate } from "@/features/reports/repository";
 import { ReportEditor } from "@/features/reports/editor";
 import { Photos } from "@/features/reports/photos";
-import { reportStatus } from "@/features/reports/model";
+import { ReportMetadata } from "@/features/reports/metadata";
 import { formatClassDate } from "@/features/classes/dates";
 import { isUuid } from "@/features/classes/model";
 import { ActionButton } from "@/components/action-button";
@@ -42,17 +42,10 @@ export default async function ReportPage({
         <h1 className="break-words text-2xl font-bold">
           {report.class_sessions.title}
         </h1>
-        <p>
-          {report.profiles.name} · {reportStatus(report)} · 양식 v
-          {template.version}
-        </p>
-        <p className="text-sm text-neutral-600">
-          {report.class_sessions.location} ·{" "}
-          {formatClassDate(
-            report.class_sessions.start_at,
-            report.class_sessions.has_time,
-          )}
-        </p>
+        <ReportMetadata
+          name={report.profiles.name}
+          createdAt={report.created_at}
+        />
         {report.class_sessions.status === "cancelled" && (
           <p className="text-red-700">
             취소된 수업입니다. 기존 기록은 유지되며 새 제출은 불가능합니다.
