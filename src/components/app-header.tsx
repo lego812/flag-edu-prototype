@@ -1,68 +1,29 @@
 import Link from "next/link";
 import { logoutAction } from "@/features/auth/actions";
-
-type AppHeaderProps = {
+import { AppNavigation } from "./app-navigation";
+export function AppHeader({
+  name,
+  isAdmin,
+}: {
   name: string;
   isAdmin: boolean;
-};
-
-export function AppHeader({ name, isAdmin }: AppHeaderProps) {
+}) {
   return (
-    <header className="border-b border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-3">
-        <nav aria-label="주 메뉴" className="flex flex-wrap items-center gap-4">
-          <Link href="/dashboard" className="font-bold text-neutral-950">
-            Flag Edu
-          </Link>
-          <Link
-            href="/classes"
-            className="text-sm font-medium text-neutral-600"
-          >
-            수업
-          </Link>
-          <Link
-            href="/reports"
-            className="text-sm font-medium text-neutral-600"
-          >
-            내 보고서
-          </Link>
-          {isAdmin && (
-            <Link
-              href="/members"
-              className="text-sm font-medium text-neutral-600"
-            >
-              구성원
-            </Link>
-          )}
-          {isAdmin && (
-            <>
-              <Link
-                href="/templates"
-                className="text-sm font-medium text-neutral-600"
-              >
-                템플릿
-              </Link>
-              <Link
-                href="/admin-reports"
-                className="text-sm font-medium text-neutral-600"
-              >
-                전체 보고서
-              </Link>
-              <Link
-                href="/exports"
-                className="text-sm font-medium text-neutral-600"
-              >
-                내보내기
-              </Link>
-            </>
-          )}
-        </nav>
+    <header className="app-header">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+        <Link
+          href="/dashboard"
+          className="text-xl font-extrabold tracking-tight"
+        >
+          flag edu.
+        </Link>
+        <AppNavigation isAdmin={isAdmin} />
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-neutral-600 sm:inline">
+          <span className="hidden max-w-32 truncate text-sm text-neutral-600 lg:inline">
             {name}
           </span>
           <form action={logoutAction}>
-            <button className="min-h-11 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700">
+            <button className="min-h-11 rounded-full border border-neutral-300 px-4 text-xs font-medium">
               로그아웃
             </button>
           </form>

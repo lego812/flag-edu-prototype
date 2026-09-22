@@ -57,10 +57,10 @@ export function ReportEditor({
       onChange={() => {
         dirty.current = true;
       }}
-      className="max-w-2xl space-y-6"
+      className="max-w-2xl space-y-8 py-4"
     >
       <input type="hidden" name="version" value={report.updated_at} />
-      <fieldset disabled={pending} className="space-y-6">
+      <fieldset disabled={pending} className="space-y-10">
         {fields
           .filter((f) => f.field_type !== "photo")
           .map((f) => (

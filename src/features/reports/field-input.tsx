@@ -9,7 +9,7 @@ export function FieldInput({
   disabled?: boolean;
 }) {
   const label = (
-    <span className="mb-2 block text-sm font-semibold">
+    <span className="mb-4 block text-lg font-bold tracking-tight">
       {f.label}
       {f.required && " *"}
     </span>
@@ -30,13 +30,16 @@ export function FieldInput({
   if (f.field_type === "multi_select")
     return (
       <fieldset disabled={disabled}>
-        <legend className="text-sm font-semibold">
+        <legend className="text-lg font-bold tracking-tight">
           {f.label}
           {f.required && " *"}
         </legend>
         <div className="mt-2 flex flex-wrap gap-4">
           {f.field_options.map((o) => (
-            <label key={o.label} className="flex min-h-11 items-center gap-2">
+            <label
+              key={o.label}
+              className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 py-3"
+            >
               <input
                 type="checkbox"
                 name={f.id}
@@ -55,8 +58,8 @@ export function FieldInput({
       {label}
       {f.field_type === "long_text" ? (
         <textarea
-          className="input"
-          rows={4}
+          className="input min-h-48 border-0 p-5 leading-8"
+          rows={6}
           name={f.id}
           maxLength={20000}
           defaultValue={String(value ?? "")}

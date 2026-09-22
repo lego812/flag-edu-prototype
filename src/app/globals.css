@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
+  --background: #f3f3f2;
+  --foreground: #191919;
   --accent: #ffcc4d;
 }
 
@@ -36,13 +36,40 @@
 
 @layer components {
   .btn {
-    @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm text-black disabled:opacity-50;
+    @apply inline-flex min-h-12 items-center justify-center rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-black transition-colors hover:bg-white disabled:opacity-50;
   }
   .input {
-    @apply block min-h-11 w-full min-w-0 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-black;
+    @apply block min-h-12 w-full min-w-0 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-black;
+  }
+  .surface {
+    @apply rounded-[1.75rem] bg-white;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold tracking-[0.16em] text-neutral-500;
+  }
+  .app-navigation {
+    @apply fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-neutral-200 bg-background px-3 pt-3;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .nav-item {
+    @apply flex min-h-12 min-w-16 flex-col items-center justify-center gap-1 rounded-xl px-3 text-xs text-neutral-500;
+  }
+  .nav-active {
+    @apply font-bold text-black;
+  }
+  @media (min-width: 768px) {
+    .app-navigation {
+      @apply static gap-2 border-0 bg-transparent p-0;
+    }
+    .nav-item {
+      @apply min-w-0 flex-row gap-2 rounded-full px-4 text-sm;
+    }
+    .nav-active {
+      @apply bg-white;
+    }
   }
 }
 
@@ -50,4 +77,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+@media (max-width: 767px) {
+  body:has(.app-header) {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
 }
