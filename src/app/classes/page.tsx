@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { formatClassDate } from "@/features/classes/dates";
 import {
@@ -43,54 +44,53 @@ export default async function ClassesPage({
           수업 등록
         </Link>
       </div>
-      <form
-        action="/classes"
-        className="grid gap-4 border-y border-neutral-200 py-5 sm:grid-cols-4"
-      >
-        <label className="min-w-0 text-sm font-medium">
-          시작일
-          <input
-            aria-label="조회 시작일"
-            type="date"
-            name="from"
-            required
-            defaultValue={filters?.from}
-            className="mt-2 block w-full min-w-0 rounded-lg border border-neutral-300 p-3"
-          />
-        </label>
-        <label className="min-w-0 text-sm font-medium">
-          종료일
-          <input
-            aria-label="조회 종료일"
-            type="date"
-            name="to"
-            required
-            defaultValue={filters?.to}
-            className="mt-2 block w-full min-w-0 rounded-lg border border-neutral-300 p-3"
-          />
-        </label>
-        <label className="text-sm font-medium">
-          상태
-          <select
-            name="status"
-            defaultValue={filters?.status ?? "all"}
-            className="mt-2 block w-full rounded-lg border border-neutral-300 bg-white p-3"
-          >
-            <option value="all">전체</option>
-            <option value="scheduled">예정</option>
-            <option value="cancelled">취소</option>
-          </select>
-        </label>
-        <button className="self-end rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white">
-          조회
-        </button>
-        <p className="text-xs text-neutral-500 sm:col-span-4">
-          한국 시간의 수업 시작일 기준으로 조회합니다. 종료일도 포함됩니다.{" "}
-          <Link href="/classes" className="underline">
-            기간 초기화
-          </Link>
-        </p>
-      </form>
+      <ListFilters>
+        <form action="/classes" className="grid grid-cols-1 gap-4">
+          <label className="min-w-0 text-sm font-medium">
+            시작일
+            <input
+              aria-label="조회 시작일"
+              type="date"
+              name="from"
+              required
+              defaultValue={filters?.from}
+              className="mt-2 block w-full min-w-0 rounded-lg border border-neutral-300 p-3"
+            />
+          </label>
+          <label className="min-w-0 text-sm font-medium">
+            종료일
+            <input
+              aria-label="조회 종료일"
+              type="date"
+              name="to"
+              required
+              defaultValue={filters?.to}
+              className="mt-2 block w-full min-w-0 rounded-lg border border-neutral-300 p-3"
+            />
+          </label>
+          <label className="text-sm font-medium">
+            상태
+            <select
+              name="status"
+              defaultValue={filters?.status ?? "all"}
+              className="mt-2 block w-full rounded-lg border border-neutral-300 bg-white p-3"
+            >
+              <option value="all">전체</option>
+              <option value="scheduled">예정</option>
+              <option value="cancelled">취소</option>
+            </select>
+          </label>
+          <button className="self-end rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white">
+            조회
+          </button>
+          <p className="text-xs text-neutral-500">
+            한국 시간의 수업 시작일 기준으로 조회합니다. 종료일도 포함됩니다.{" "}
+            <Link href="/classes" className="underline">
+              기간 초기화
+            </Link>
+          </p>
+        </form>
+      </ListFilters>
       {parsed.error || result?.error ? (
         <p role="alert" className="rounded-lg bg-red-50 p-5 text-red-700">
           {parsed.error ??
@@ -107,12 +107,12 @@ export default async function ClassesPage({
               등록하세요.
             </div>
           ) : (
-            <ul className="divide-y divide-neutral-200 border-y border-neutral-200">
+            <ul className="grid grid-cols-1 gap-3">
               {result.data.map((session) => (
                 <li key={session.id}>
                   <Link
                     href={"/classes/" + session.id}
-                    className="block px-2 py-5 transition hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-black"
+                    className="block rounded-3xl border border-neutral-200 bg-white p-5 transition hover:border-neutral-400 focus-visible:outline-2 focus-visible:outline-black"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <h2 className="min-w-0 break-words text-lg font-bold text-neutral-950">
