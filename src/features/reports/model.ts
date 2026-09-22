@@ -41,6 +41,7 @@ export type Report = {
   status: "draft" | "submitted";
   submitted_at: string | null;
   confirmed_at: string | null;
+  created_at: string;
   updated_at: string;
   class_sessions: {
     has_time?: boolean;
@@ -54,7 +55,7 @@ export type Report = {
   report_answers: { field_id: string; value: unknown }[];
   report_attachments: Attachment[];
 };
-export type ActionState = { error?: string; success?: string };
+export type ActionState = { error?: string; success?: string; redirectTo?: string };
 export function reportStatus(report: Pick<Report, "status" | "confirmed_at">) {
   return report.confirmed_at
     ? "확인 완료"

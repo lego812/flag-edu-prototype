@@ -3,7 +3,7 @@ import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { redirect } from "next/navigation";
 import { listReports, reportFilters } from "./repository";
-import { reportStatus } from "./model";
+import { ReportMetadata } from "./metadata";
 import { formatClassDate } from "@/features/classes/dates";
 export async function ReportList({
   params,
@@ -58,7 +58,7 @@ export async function ReportList({
       <h1 className="text-2xl font-bold">
         {admin ? "전체 보고서" : "내 보고서"}
       </h1>
-      <ListFilters>
+      <ListFilters from={filters.from} to={filters.to}>
         <form action={base} className="grid grid-cols-1 gap-4">
           <label className="text-sm">
             수업 시작일
@@ -86,7 +86,7 @@ export async function ReportList({
               defaultValue={filters.status}
             >
               <option value="all">전체</option>
-              <option value="draft">미제출</option>
+              <option value="draft">작성 중</option>
               <option value="submitted">제출 · 미확인</option>
               <option value="confirmed">확인 완료</option>
             </select>
@@ -126,10 +126,7 @@ export async function ReportList({
           <button className="btn self-end">조회</button>
         </form>
       </ListFilters>
-      <p className="text-sm text-neutral-600">
-        총 {count ?? 0}개 · 미제출은 생성된 임시저장 보고서입니다. 참여자 미지정
-        수업의 미작성자는 집계하지 않습니다.
-      </p>
+      <p className="text-sm text-neutral-600">총 {count ?? 0}개</p>
       <ul className="grid grid-cols-1 gap-3">
         {data?.map((r) => (
           <li key={r.id}>
@@ -139,15 +136,8 @@ export async function ReportList({
             >
               <div className="flex flex-wrap justify-between gap-2">
                 <strong>{r.class_sessions.title}</strong>
-                <span className="text-sm">{reportStatus(r)}</span>
               </div>
-              <p className="text-sm text-neutral-600">
-                {r.profiles.name} ·{" "}
-                {formatClassDate(
-                  r.class_sessions.start_at,
-                  r.class_sessions.has_time,
-                )}
-              </p>
+              <ReportMetadata name={r.profiles.name} createdAt={r.created_at} />
             </Link>
           </li>
         ))}

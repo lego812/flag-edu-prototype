@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { formatClassDate, seoulToday } from "@/features/classes/dates";
+import { ReportMetadata } from "@/features/reports/metadata";
 
 export const metadata = { title: "홈" };
 
@@ -24,7 +25,7 @@ export default async function DashboardPage() {
       .eq("status", "draft"),
     supabase
       .from("reports")
-      .select("id,status,updated_at,class_sessions(title)")
+      .select("id,created_at,class_sessions(title)")
       .eq("author_id", profile.id)
       .order("updated_at", { ascending: false })
       .limit(5),
@@ -86,10 +87,10 @@ export default async function DashboardPage() {
               </h2>
               <p className="mt-4 text-sm text-neutral-600">
                 {drafts.error
-                  ? "미제출 현황을 확인하지 못했습니다."
+                  ? "작성 중인 기록을 확인하지 못했습니다."
                   : drafts.count
                     ? "작성 중인 보고서를 이어서 완성해 주세요."
-                    : "미제출 보고서가 없어요."}
+                    : "작성 중인 보고서가 없어요."}
               </p>
             </div>
             <Link
@@ -145,14 +146,11 @@ export default async function DashboardPage() {
               {recent.data?.map((r) => (
                 <li key={r.id}>
                   <Link className="block py-5" href={"/reports/" + r.id}>
-                    <span className="font-semibold">
-                      {r.status === "draft"
-                        ? "작성 중인 보고서"
-                        : "제출한 보고서"}
-                    </span>
-                    <span className="mt-1 block text-sm text-neutral-500">
-                      {formatClassDate(r.updated_at)}
-                    </span>
+                    <span className="font-semibold">보고서</span>
+                    <ReportMetadata
+                      name={profile.name}
+                      createdAt={r.created_at}
+                    />
                   </Link>
                 </li>
               ))}

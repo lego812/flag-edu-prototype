@@ -71,10 +71,11 @@ export async function saveReportAction(
   revalidatePath("/admin-reports");
   revalidatePath("/dashboard");
   return {
+    redirectTo: form.get("intent") === "submit" ? "/reports" : undefined,
     success:
       form.get("intent") === "submit"
         ? "제출했습니다."
-        : "저장했습니다. 관리자 확인 상태는 해제됩니다.",
+        : "저장했습니다.",
   };
 }
 export async function confirmReportAction(

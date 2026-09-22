@@ -4,23 +4,24 @@ import { ListFilters } from "./list-filters";
 
 describe("ListFilters", () => {
   it("keeps filters collapsed until opened without losing their values", () => {
-    const { container } = render(
-      <ListFilters>
+    render(
+      <ListFilters from="2026-09-22" to="2026-09-30">
         <label>
           시작일
           <input name="from" defaultValue="2026-09-22" />
         </label>
       </ListFilters>,
     );
-    const details = container.querySelector("details")!;
-    expect(details.open).toBe(false);
-    fireEvent.click(screen.getByText("조회 필터"));
-    expect(details.open).toBe(true);
+    const toggle = screen.getByRole("button", { name: "필터" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("9월 22일 ~ 9월 30일")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("필터"));
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
     fireEvent.change(screen.getByLabelText("시작일"), {
       target: { value: "2026-09-23" },
     });
-    fireEvent.click(screen.getByText("조회 필터"));
-    fireEvent.click(screen.getByText("조회 필터"));
+    fireEvent.click(screen.getByText("필터"));
+    fireEvent.click(screen.getByText("필터"));
     expect(screen.getByLabelText("시작일")).toHaveValue("2026-09-23");
   });
 });
