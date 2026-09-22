@@ -14,6 +14,7 @@ export function AppHeader({ name, isAdmin }: AppHeaderProps) {
           <Link href="/dashboard" className="font-bold text-slate-950">
             Flag Edu
           </Link>
+          <Link href="/classes" className="text-sm font-medium text-slate-600">수업</Link>
           {isAdmin && (
             <Link href="/members" className="text-sm font-medium text-slate-600">
               구성원

@@ -19,9 +19,10 @@ export default async function DashboardPage() {
           {profile.name}님, 안녕하세요
         </h1>
         <p className="mt-3 text-slate-600">
-          인증과 사용자 컨텍스트가 연결되었습니다.
+          수업 일정을 확인하고 새로운 수업을 등록하세요.
         </p>
 
+        <Link href="/classes" className="mt-8 mr-3 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">수업 일정 보기</Link>
         {isAdmin && (
           <Link
             href="/members"
