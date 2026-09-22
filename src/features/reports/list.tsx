@@ -45,7 +45,7 @@ export async function ReportList({
     : { data: [] };
   const { data: sessions } = await supabase
     .from("class_sessions")
-    .select("id,title,start_at")
+    .select("id,title,start_at,has_time")
     .eq("organization_id", profile.organization_id)
     .order("start_at", { ascending: false })
     .limit(200);
@@ -119,7 +119,7 @@ export async function ReportList({
             <option value="">전체</option>
             {sessions?.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.title} · {formatClassDate(s.start_at)}
+                {s.title} · {formatClassDate(s.start_at, s.has_time)}
               </option>
             ))}
           </select>
@@ -142,7 +142,11 @@ export async function ReportList({
                 <span className="text-sm">{reportStatus(r)}</span>
               </div>
               <p className="text-sm text-neutral-600">
-                {r.profiles.name} · {formatClassDate(r.class_sessions.start_at)}
+                {r.profiles.name} ·{" "}
+                {formatClassDate(
+                  r.class_sessions.start_at,
+                  r.class_sessions.has_time,
+                )}
               </p>
             </Link>
           </li>

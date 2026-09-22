@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const [sessions, drafts, recent] = await Promise.all([
     supabase
       .from("class_sessions")
-      .select("id,title,start_at")
+      .select("id,title,start_at,has_time")
       .eq("organization_id", profile.organization_id)
       .eq("status", "scheduled")
       .gte("start_at", seoulToday() + "T00:00:00+09:00")
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
               </h2>
               {nextClass && (
                 <p className="mt-3 text-sm text-neutral-300">
-                  {formatClassDate(nextClass.start_at)}
+                  {formatClassDate(nextClass.start_at, nextClass.has_time)}
                 </p>
               )}
             </div>
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                 >
                   <strong className="block break-words">{s.title}</strong>
                   <span className="mt-1 block text-sm text-neutral-500">
-                    {formatClassDate(s.start_at)}
+                    {formatClassDate(s.start_at, s.has_time)}
                   </span>
                 </Link>
               ))}

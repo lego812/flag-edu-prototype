@@ -43,6 +43,7 @@ export type Report = {
   confirmed_at: string | null;
   updated_at: string;
   class_sessions: {
+    has_time?: boolean;
     title: string;
     location: string;
     start_at: string;
