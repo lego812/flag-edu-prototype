@@ -42,4 +42,12 @@ describe("dynamic field renderer", () => {
     );
     expect(screen.getByRole("textbox")).toBeDisabled();
   });
+  it("omits placeholder text when help text is absent", () => {
+    render(
+      <FieldInput
+        field={{ ...field, field_type: "long_text", help_text: null }}
+      />,
+    );
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("placeholder");
+  });
 });
