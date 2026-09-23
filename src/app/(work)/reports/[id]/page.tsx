@@ -5,14 +5,13 @@ import { getReport, getTemplate } from "@/features/reports/repository";
 import { ReportEditor } from "@/features/reports/editor";
 import { Photos } from "@/features/reports/photos";
 import { ReportMetadata } from "@/features/reports/metadata";
-import { formatClassDate } from "@/features/classes/dates";
 import { isUuid } from "@/features/classes/model";
-import { ActionButton } from "@/components/action-button";
-import { confirmReportAction } from "@/features/reports/actions";
 export default async function ReportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ edit?: string }>;
 }) {
   const { id } = await params;
   const { supabase, profile } = await requireCurrentProfile();
@@ -22,6 +21,7 @@ export default async function ReportPage({
   if (!report) notFound();
   const template = await getTemplate(supabase, report.template_version_id);
   const mine = report.author_id === profile.id;
+  const editing = mine && (await searchParams).edit === "1";
   const attachments = await Promise.all(
     report.report_attachments.map(async (a) => {
       const { data } = await supabase.storage
@@ -52,7 +52,15 @@ export default async function ReportPage({
           </p>
         )}
       </header>
-      {mine ? (
+      {mine && (
+        <Link
+          className="btn-secondary w-fit"
+          href={editing ? `/reports/${id}` : `/reports/${id}?edit=1`}
+        >
+          {editing ? "조회로 돌아가기" : "수정"}
+        </Link>
+      )}
+      {editing ? (
         <ReportEditor report={report} fields={template.template_fields} />
       ) : (
         <dl className="space-y-5">
@@ -81,23 +89,8 @@ export default async function ReportPage({
         reportId={id}
         fields={template.template_fields}
         attachments={attachments}
-        editable={mine}
+        editable={editing}
       />
-      {profile.role === "admin" &&
-        report.status === "submitted" &&
-        !report.confirmed_at && (
-          <ActionButton
-            action={confirmReportAction.bind(null, id, report.updated_at)}
-            confirm="보고서 내용을 확인했습니다."
-          >
-            관리자 확인 완료
-          </ActionButton>
-        )}
-      {report.confirmed_at && (
-        <p className="text-sm text-neutral-600">
-          확인 시각: {formatClassDate(report.confirmed_at)}
-        </p>
-      )}
     </>
   );
 }

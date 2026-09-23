@@ -41,7 +41,7 @@ export function reportFilters(
   const f = {
     from: value("from"),
     to: value("to"),
-    status: value("status") || "all",
+    status: "all",
     author: value("author"),
     session: value("session"),
     page: Number(value("page") || "1"),
@@ -50,7 +50,6 @@ export function reportFilters(
     (f.from && !isDate(f.from)) ||
     (f.to && (!isDate(f.to) || f.to >= "9999-12-31")) ||
     (f.from && f.to && f.from > f.to) ||
-    !["all", "draft", "submitted", "confirmed"].includes(f.status) ||
     (f.author && !isUuid(f.author)) ||
     (f.session && !isUuid(f.session)) ||
     !Number.isInteger(f.page) ||
@@ -76,9 +75,6 @@ export function listReports(
   if (f.from) q = q.gte("class_sessions.start_at", f.from + "T00:00:00+09:00");
   if (f.to)
     q = q.lt("class_sessions.start_at", addDays(f.to, 1) + "T00:00:00+09:00");
-  if (f.status === "confirmed") q = q.not("confirmed_at", "is", null);
-  else if (f.status !== "all")
-    q = q.eq("status", f.status).is("confirmed_at", null);
   return q
     .order("updated_at", { ascending: false })
     .order("id")

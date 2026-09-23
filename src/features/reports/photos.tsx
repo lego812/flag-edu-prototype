@@ -63,7 +63,7 @@ export function Photos({
     }
   }
   return (
-    <section className="space-y-6 border-t border-neutral-200 pt-6">
+    <section className="space-y-6">
       {fields
         .filter((f) => f.field_type === "photo")
         .map((f) => {
@@ -75,10 +75,9 @@ export function Photos({
                 {f.required ? " *" : ""} ({photos.length}/
                 {f.settings.max_files ?? 3})
               </h2>
-              <p className="text-sm text-neutral-600">{f.help_text}</p>
-              <ul className="flex flex-wrap gap-4">
+              <ul className="flex gap-3 overflow-x-auto pb-2">
                 {photos.map((a) => (
-                  <li key={a.id} className="space-y-2">
+                  <li key={a.id} className="relative shrink-0">
                     {a.url ? (
                       <a
                         href={a.url}
@@ -89,7 +88,7 @@ export function Photos({
                         <img
                           src={a.url}
                           alt={f.label + " 첨부 사진"}
-                          className="h-32 w-32 rounded-lg object-cover"
+                          className="size-36 rounded-2xl object-cover sm:size-44"
                         />
                       </a>
                     ) : (
@@ -98,11 +97,12 @@ export function Photos({
                     {editable && (
                       <button
                         type="button"
-                        className="btn-secondary"
+                        aria-label="사진 삭제"
+                        className="absolute right-1 top-1 flex size-11 items-center justify-center rounded-full bg-black/70 text-xl text-white"
                         disabled={busy}
                         onClick={() => remove(a.id)}
                       >
-                        사진 삭제
+                        ×
                       </button>
                     )}
                   </li>
@@ -113,9 +113,12 @@ export function Photos({
                   {[false, true].map((camera) => (
                     <label
                       key={String(camera)}
-                      className="btn-secondary cursor-pointer"
+                      className="flex min-h-20 flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 bg-white px-5 text-sm hover:border-black"
                     >
-                      {camera ? "사진 촬영" : "사진 선택"}
+                      <span aria-hidden="true" className="text-2xl">
+                        {camera ? "◎" : "+"}
+                      </span>
+                      {camera ? "촬영" : "사진 추가"}
                       <input
                         className="sr-only"
                         type="file"

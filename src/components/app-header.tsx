@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction } from "@/features/auth/actions";
 import { AppNavigation } from "./app-navigation";
+import { BackButton } from "./back-button";
 export function AppHeader({
   name,
   isAdmin,
@@ -11,14 +12,17 @@ export function AppHeader({
   return (
     <header className="app-header">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
-        <Link
-          href="/dashboard"
-          className="text-xl font-extrabold tracking-tight"
-        >
-          flag edu.
-        </Link>
+        <div className="order-3 flex shrink-0 items-center gap-1">
+          <BackButton />
+          <Link
+            href="/dashboard"
+            className="text-xl font-extrabold tracking-tight"
+          >
+            flag edu.
+          </Link>
+        </div>
         <AppNavigation isAdmin={isAdmin} />
-        <div className="flex items-center gap-3">
+        <div className="order-2 flex items-center gap-3">
           <span className="hidden max-w-32 truncate text-sm text-neutral-600 lg:inline">
             {name}
           </span>

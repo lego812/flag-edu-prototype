@@ -1,5 +1,3 @@
-import { formatClassDate } from "@/features/classes/dates";
-
 export function ReportMetadata({
   name,
   createdAt,
@@ -9,8 +7,19 @@ export function ReportMetadata({
 }) {
   return (
     <p className="text-sm text-neutral-600">
-      작성자 {name} · 작성일시{" "}
-      <time dateTime={createdAt}>{formatClassDate(createdAt)}</time>
+      {name} ·{" "}
+      <time dateTime={createdAt}>
+        {new Intl.DateTimeFormat("sv-SE", {
+          timeZone: "Asia/Seoul",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+          .format(new Date(createdAt))
+          .replaceAll("-", ".")}
+      </time>
     </p>
   );
 }

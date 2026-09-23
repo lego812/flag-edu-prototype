@@ -87,16 +87,13 @@ export default async function DashboardPage() {
               </h2>
               <p className="mt-4 text-sm text-neutral-600">
                 {drafts.error
-                  ? "작성 중인 기록을 확인하지 못했습니다."
+                  ? "임시저장 기록을 확인하지 못했습니다."
                   : drafts.count
-                    ? "작성 중인 보고서를 이어서 완성해 주세요."
-                    : "작성 중인 보고서가 없어요."}
+                    ? "임시저장한 보고서가 있어요."
+                    : "임시저장한 보고서가 없어요."}
               </p>
             </div>
-            <Link
-              className="btn-secondary mt-8 self-start"
-              href="/reports?status=draft"
-            >
+            <Link className="btn-secondary mt-8 self-start" href="/reports">
               임시저장 {drafts.error ? "—" : (drafts.count ?? 0)}개
               {!drafts.error && !!drafts.count && (
                 <span

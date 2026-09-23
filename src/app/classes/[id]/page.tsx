@@ -56,6 +56,12 @@ export default async function ClassDetailPage({
             </dd>
           </div>
           <div>
+            <dt className="text-sm text-neutral-500">수업 진행방식</dt>
+            <dd className="mt-1 whitespace-pre-wrap break-words">
+              {session.teaching_method || "—"}
+            </dd>
+          </div>
+          <div>
             <dt className="text-sm text-neutral-500">메모</dt>
             <dd className="mt-1 whitespace-pre-wrap break-words">
               {session.memo || "등록된 메모가 없습니다."}

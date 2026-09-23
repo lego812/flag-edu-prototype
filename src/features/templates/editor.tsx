@@ -1,4 +1,5 @@
 "use client";
+import { CountPicker } from "@/components/count-picker";
 import { useActionState, useState } from "react";
 import {
   FIELD_TYPES,
@@ -39,7 +40,7 @@ export function TemplateEditor({ template }: { template?: Template }) {
       })) ?? [],
   );
   const [preview, setPreview] = useState(false);
-  const [name,setName] = useState(template?.name ?? "보고서 양식");
+  const [name, setName] = useState(template?.name ?? "보고서 양식");
   const [state, action, pending] = useActionState(saveTemplateAction, {});
   const update = (i: number, patch: Partial<Editable>) =>
     setFields(fields.map((f, index) => (index === i ? { ...f, ...patch } : f)));
@@ -72,7 +73,17 @@ export function TemplateEditor({ template }: { template?: Template }) {
         게시된 내용은 변경하지 않고 새 버전으로 저장합니다.
       </p>
       <fieldset disabled={pending} className="space-y-6">
-        <label className="block text-sm font-semibold">양식 이름<input className="input mt-2" name="name" required maxLength={100} value={name} onChange={e=>setName(e.target.value)}/></label>
+        <label className="block text-sm font-semibold">
+          양식 이름
+          <input
+            className="input mt-2"
+            name="name"
+            required
+            maxLength={100}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </label>
         <button
           type="button"
           className="btn-secondary"
@@ -179,19 +190,18 @@ export function TemplateEditor({ template }: { template?: Template }) {
                   </label>
                 )}
                 {f.field_type === "photo" && (
-                  <label className="block text-sm">
+                  <div className="block text-sm">
                     최대 사진 수
-                    <input
-                      className="input mt-1"
-                      type="number"
+                    <CountPicker
+                      label="최대 사진 수"
                       min={1}
                       max={10}
-                      value={f.max_files}
-                      onChange={(e) =>
-                        update(i, { max_files: Number(e.target.value) })
+                      value={String(f.max_files)}
+                      onChange={(value) =>
+                        update(i, { max_files: Number(value) })
                       }
                     />
-                  </label>
+                  </div>
                 )}
               </>
             )}

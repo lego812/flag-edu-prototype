@@ -6,10 +6,12 @@ export function ListFilters({
   children,
   from,
   to,
+  selectedLabel,
 }: {
   children: ReactNode;
   from?: string;
   to?: string;
+  selectedLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -59,6 +61,9 @@ export function ListFilters({
           </svg>
         </button>
       </div>
+      {selectedLabel && (
+        <p className="mt-2 text-sm font-medium">{selectedLabel}</p>
+      )}
       <div
         id={panelId}
         hidden={!open}

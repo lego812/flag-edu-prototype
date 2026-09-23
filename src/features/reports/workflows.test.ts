@@ -41,6 +41,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202609220003_reporting_workflows.sql",
       "202609220004_template_names.sql",
       "202609220005_class_recurrence.sql",
+      "202609230001_simplify_reports.sql",
     ]) {
       let sql = await readFile("supabase/migrations/" + file, "utf8");
       sql = sql.replace("create extension if not exists pgcrypto;", "");
@@ -63,6 +64,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       end_at: "2026-09-22T15:00:00Z",
       has_time: false,
       memo: null,
+      teaching_method: "준비 운동 → 팀 활동",
     };
     const items = JSON.stringify([
       item,
@@ -81,6 +83,14 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       [token, items],
     );
     expect(retry.rows[0].id).toBe(first.rows[0].id);
+    expect(
+      (
+        await db.query<{ teaching_method: string }>(
+          "select teaching_method from public.class_sessions where id=$1",
+          [first.rows[0].id],
+        )
+      ).rows[0].teaching_method,
+    ).toBe("준비 운동 → 팀 활동");
     expect(
       (
         await db.query(
@@ -218,12 +228,14 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       db.query("select public.get_or_create_report($1)", [ids.session]),
     ).rejects.toThrow();
   });
-  it("confirms submissions and resets confirmation on edits, rejecting stale saves", async () => {
+  it("removes approval and permits draft saves after submission, rejecting stale saves", async () => {
     await asUser(ids.admin);
-    await db.query("select public.confirm_report_version($1,$2)", [
-      reportId,
-      await version(),
-    ]);
+    await expect(
+      db.query("select public.confirm_report_version($1,$2)", [
+        reportId,
+        await version(),
+      ]),
+    ).rejects.toThrow();
     await asUser(ids.coach);
     const old = await version();
     await db.query("select public.save_and_submit_report($1,$2,$3,false)", [
@@ -239,6 +251,14 @@ describe("reporting PostgreSQL workflows and RLS", () => {
         )
       ).rows[0].confirmed_at,
     ).toBeNull();
+    expect(
+      (
+        await db.query<{ status: string }>(
+          "select status from public.reports where id=$1",
+          [reportId],
+        )
+      ).rows[0].status,
+    ).toBe("draft");
     await expect(
       db.query("select public.save_and_submit_report($1,$2,'[]',false)", [
         reportId,

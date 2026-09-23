@@ -4,7 +4,7 @@ import { requireCurrentProfile } from "@/features/auth/current-user";
 import { redirect } from "next/navigation";
 import { listReports, reportFilters } from "./repository";
 import { ReportMetadata } from "./metadata";
-import { formatClassDate } from "@/features/classes/dates";
+import { ClassSearchPicker } from "@/features/classes/search-picker";
 export async function ReportList({
   params,
   admin = false,
@@ -44,12 +44,14 @@ export async function ReportList({
         .eq("organization_id", profile.organization_id)
         .order("name")
     : { data: [] };
-  const { data: sessions } = await supabase
-    .from("class_sessions")
-    .select("id,title,start_at,has_time")
-    .eq("organization_id", profile.organization_id)
-    .order("start_at", { ascending: false })
-    .limit(200);
+  const { data: selectedSession } = filters.session
+    ? await supabase
+        .from("class_sessions")
+        .select("id,title,start_at,has_time")
+        .eq("organization_id", profile.organization_id)
+        .eq("id", filters.session)
+        .maybeSingle()
+    : { data: null };
   const base = admin ? "/admin-reports" : "/reports";
   const link = (page: number) =>
     base + "?" + new URLSearchParams({ ...filters, page: String(page) });
@@ -58,7 +60,11 @@ export async function ReportList({
       <h1 className="text-2xl font-bold">
         {admin ? "전체 보고서" : "내 보고서"}
       </h1>
-      <ListFilters from={filters.from} to={filters.to}>
+      <ListFilters
+        from={filters.from}
+        to={filters.to}
+        selectedLabel={selectedSession?.title}
+      >
         <form action={base} className="grid grid-cols-1 gap-4">
           <label className="text-sm">
             수업 시작일
@@ -78,19 +84,6 @@ export async function ReportList({
               defaultValue={filters.to}
             />
           </label>
-          <label className="text-sm">
-            상태
-            <select
-              className="input mt-1"
-              name="status"
-              defaultValue={filters.status}
-            >
-              <option value="all">전체</option>
-              <option value="draft">작성 중</option>
-              <option value="submitted">제출 · 미확인</option>
-              <option value="confirmed">확인 완료</option>
-            </select>
-          </label>
           {admin && (
             <label className="text-sm">
               작성자
@@ -108,21 +101,7 @@ export async function ReportList({
               </select>
             </label>
           )}
-          <label className="text-sm">
-            수업 (최근 200개)
-            <select
-              className="input mt-1"
-              name="session"
-              defaultValue={filters.session}
-            >
-              <option value="">전체</option>
-              {sessions?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title} · {formatClassDate(s.start_at, s.has_time)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ClassSearchPicker key={filters.session} selected={selectedSession} />
           <button className="btn self-end">조회</button>
         </form>
       </ListFilters>

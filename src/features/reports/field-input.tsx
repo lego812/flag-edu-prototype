@@ -1,12 +1,15 @@
 import type { Field } from "./model";
+import { CountPicker } from "@/components/count-picker";
 export function FieldInput({
   field: f,
   value,
   disabled = false,
+  onChange,
 }: {
   field: Field;
   value?: unknown;
   disabled?: boolean;
+  onChange?: () => void;
 }) {
   const label = (
     <span className="mb-4 block text-lg font-bold tracking-tight">
@@ -14,9 +17,23 @@ export function FieldInput({
       {f.required && " *"}
     </span>
   );
-  const help = f.help_text && (
-    <span className="mt-1 block text-sm text-neutral-600">{f.help_text}</span>
-  );
+  if (
+    f.field_type === "number" &&
+    /인원|개수|수량|횟수|인수|명|개/.test(f.label)
+  )
+    return (
+      <div>
+        {label}
+        <CountPicker
+          name={f.id}
+          label={f.label}
+          defaultValue={String(value ?? "")}
+          onChange={onChange}
+          disabled={disabled}
+          placeholder={f.help_text || "선택"}
+        />
+      </div>
+    );
   if (f.field_type === "photo")
     return (
       <div>
@@ -24,7 +41,6 @@ export function FieldInput({
         <p className="text-sm text-neutral-600">
           사진 최대 {f.settings.max_files ?? 3}장
         </p>
-        {help}
       </div>
     );
   if (f.field_type === "multi_select")
@@ -50,7 +66,6 @@ export function FieldInput({
             </label>
           ))}
         </div>
-        {help}
       </fieldset>
     );
   return (
@@ -61,6 +76,7 @@ export function FieldInput({
           className="input min-h-48 border-0 p-5 leading-8"
           rows={6}
           name={f.id}
+          placeholder={f.help_text || undefined}
           maxLength={20000}
           defaultValue={String(value ?? "")}
           disabled={disabled}
@@ -72,7 +88,7 @@ export function FieldInput({
           defaultValue={String(value ?? "")}
           disabled={disabled}
         >
-          <option value="">선택해 주세요</option>
+          <option value="">{f.help_text || "선택해 주세요"}</option>
           {f.field_options.map((o) => (
             <option key={o.label}>{o.label}</option>
           ))}
@@ -81,6 +97,7 @@ export function FieldInput({
         <input
           className="input"
           name={f.id}
+          placeholder={f.help_text || undefined}
           type={
             f.field_type === "number"
               ? "number"
@@ -94,7 +111,6 @@ export function FieldInput({
           disabled={disabled}
         />
       )}{" "}
-      {help}
     </label>
   );
 }
