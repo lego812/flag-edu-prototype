@@ -29,6 +29,9 @@ describe("class recurrence", () => {
   });
   it("clamps monthly dates without drifting the following month", () => {
     expect(
+      occurrenceDates("2027-01-31", "month", 1, "2027-03-31", [], 31),
+    ).toEqual(["2027-01-31", "2027-02-28", "2027-03-31"]);
+    expect(
       occurrenceDates("2028-01-31", "month", 1, "2028-03-31", [], 31),
     ).toEqual(["2028-01-31", "2028-02-29", "2028-03-31"]);
   });

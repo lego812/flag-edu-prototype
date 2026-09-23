@@ -65,7 +65,6 @@
         "src/features/classes/class-wizard.test.tsx"
       ],
       "gaps": [
-        "월말·윤년 반복의 브라우저 경계값 검사",
         "수업 취소·개별 수정 E2E"
       ]
     },

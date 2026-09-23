@@ -30,4 +30,19 @@ describe("CountPicker", () => {
       false,
     );
   });
+  it("clears a selected count without turning it into zero", () => {
+    const { container } = render(
+      <form>
+        <CountPicker name="count" label="인원" defaultValue="3" max={10} />
+      </form>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "인원" }));
+    fireEvent.click(screen.getByRole("button", { name: "비우기" }));
+    expect(new FormData(container.querySelector("form")!).get("count")).toBe(
+      "",
+    );
+    expect(screen.getByRole("button", { name: "인원" })).toHaveTextContent(
+      "선택",
+    );
+  });
 });

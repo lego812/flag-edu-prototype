@@ -123,6 +123,11 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
     setStep(next);
     requestAnimationFrame(() => heading.current?.focus());
   }
+  const scheduleTimeLabel = !hasTime
+    ? "시간 미정"
+    : endDay === day
+      ? `${startTime} ~ ${endTime} (한국 시간)`
+      : `${day} ${startTime} ~ ${endDay} ${endTime} (한국 시간)`;
   return (
     <form
       action={submit}
@@ -234,8 +239,8 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
                   </select>
                 </label>
                 {repeat !== "none" && (
-                  <label className="block text-sm font-semibold">
-                    수업 간격
+                  <div className="block text-sm font-semibold">
+                    <p>수업 간격</p>
                     <div className="mt-2 flex items-center gap-3">
                       <CountPicker
                         label="반복 간격"
@@ -253,7 +258,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
                         마다
                       </span>
                     </div>
-                  </label>
+                  </div>
                 )}
               </>
             )}
@@ -418,9 +423,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
           <div className="surface space-y-4 p-6">
             <h3 className="break-words text-xl font-bold">{title}</h3>
             <p className="break-words text-neutral-600">{location}</p>
-            <p>
-              {hasTime ? `${startTime} ~ ${endTime} (한국 시간)` : "시간 미정"}
-            </p>
+            <p>{scheduleTimeLabel}</p>
             <p className="font-semibold">
               총 {preview.length}개 수업
               {session ? " 중 선택한 1건 수정" : " 등록"}
@@ -468,11 +471,18 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
           </Link>
         )}
         {step < 3 ? (
-          <button type="button" className="btn" onClick={() => go(step + 1)}>
+          <button
+            key="next-step"
+            type="button"
+            className="btn"
+            onClick={() => go(step + 1)}
+          >
             다음 →
           </button>
         ) : (
           <button
+            key="submit-schedule"
+            type="submit"
             className="btn"
             disabled={pending || !!previewError || !preview.length}
           >
