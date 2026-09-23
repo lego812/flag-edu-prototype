@@ -1,5 +1,7 @@
 # Aside CLI로 브라우저 QA 실행
 
+개발 기준·계층형 케이스·커버리지·Codex 수정 인계는 [QA 피드백 루프](qa-feedback-loop.md)를 따른다. 실행 시 `project-context.md`와 `development-history.md`도 함께 전달한다.
+
 ## 준비
 
 1. Node.js 24 이상과 Aside CLI를 설치한다. `aside --help`로 확인한다.
@@ -46,6 +48,10 @@ CLI가 PATH에 없으면 Windows 표준 설치 경로 `%LOCALAPPDATA%\Aside\CLI\
 - `prompt.md`: 실제로 전달한 대상·규칙·시나리오
 - `stdout.log`, `stderr.log`: Aside CLI 출력. 실행 전 실패나 dry-run에는 없을 수 있다.
 - `run.json`: 실행 시각, 대상, CLI 종료 코드, timeout/interrupted/completed 등 **실행 상태**
+- `context.md`, `coverage-snapshot.json`: 실행 당시 기준, git commit/dirty 여부, 선택 케이스와 커버리지
+- `results.json`: 형식 검증한 AI 관찰과 분기별 커버리지. 누락/잘못된 결과는 NOT_RUN
+- `coverage.md`: 사람이 읽는 분기별 관찰/통과/차단/미실행 집계와 남은 공백
+- `findings.md`, `codex-handoff.md`: 오류 후보/개선점 분리 및 Codex 수정·재검증 인계
 
 Aside에는 최종 응답에 항목별 `PASS / FAIL / BLOCKED`, 실제 결과와 재현 순서를 남기도록 요청한다. 스크린샷과 다운로드는 Aside가 확보했을 때 경로를 보고하도록 할 뿐, 생성/복사를 보장하지 않는다.
 
