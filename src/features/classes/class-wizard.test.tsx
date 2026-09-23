@@ -46,6 +46,9 @@ describe("class registration wizard", () => {
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "다음 →" }));
     expect(screen.getByText("시간 미정")).toBeInTheDocument();
+    expect(screen.getByText("STEP 4 / 4")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /수업 등록/ })).toBeInTheDocument();
+    expect(screen.getByText(/총 31개 수업/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "이전" }));
     fireEvent.click(screen.getByRole("button", { name: "이전" }));
     fireEvent.click(screen.getByRole("button", { name: "이전" }));

@@ -75,6 +75,11 @@ describe("hierarchical cases and strict QA report handling", () => {
         .counts.PASS,
     ).toBe(1);
     expect(analyzeResult(first + "\n" + different, snapshot).formatError).toBeTruthy();
+    const reviewed = analyzeResult(first + "\n" + different, snapshot, {
+      selectedBlock: 1,
+    });
+    expect(reviewed.counts.FAIL).toBe(1);
+    expect(reviewed.selectedBlock).toBe(1);
   });
   it("accepts a single result block with CLI color codes on the marker", () => {
     const colored = `${output(payload([row("1-a-A")]))}\u001b[0m`;

@@ -4,7 +4,14 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const dir = path.join(root, "artifacts", "aside", "fixtures");
+const sessionArg = process.argv.indexOf("--aside-session");
+const sessionId = sessionArg >= 0 ? process.argv[sessionArg + 1] : null;
+if (sessionArg >= 0 && !/^\d{4}-\d{2}-\d{2}_[A-Za-z0-9]+$/.test(sessionId || "")) {
+  throw new Error("올바른 Aside 세션 ID를 --aside-session 뒤에 지정하세요.");
+}
+const dir = sessionId
+  ? path.join(process.env.USERPROFILE, ".aside", "u", "0", "sessions", sessionId, "tmp")
+  : path.join(root, "artifacts", "aside", "fixtures");
 await mkdir(dir, { recursive: true });
 
 const svg = Buffer.from(
@@ -12,4 +19,4 @@ const svg = Buffer.from(
 );
 await sharp(svg).jpeg({ quality: 85 }).toFile(path.join(dir, "qa-photo.jpg"));
 await sharp(svg).png().toFile(path.join(dir, "qa-photo.png"));
-console.log("비개인 합성 JPEG/PNG fixture를 artifacts/aside/fixtures/에 생성했습니다.");
+console.log(`비개인 합성 JPEG/PNG fixture를 ${dir}에 생성했습니다.`);

@@ -11,7 +11,7 @@ export function caseIdsFromMarkdown(markdown) {
   return ids;
 }
 
-export function analyzeResult(output, snapshot) {
+export function analyzeResult(output, snapshot, { selectedBlock = null } = {}) {
   let parsed, error;
   try {
     // The Aside CLI may append terminal color codes to the closing marker.
@@ -32,7 +32,11 @@ export function analyzeResult(output, snapshot) {
           ?.map(({ id, status }) => [id, status])
           .sort(([a], [b]) => a.localeCompare(b)),
       );
-    if (
+    if (selectedBlock !== null) {
+      if (!Number.isInteger(selectedBlock) || !candidates[selectedBlock])
+        throw new Error("선택한 결과 블록 번호가 범위를 벗어났습니다.");
+      parsed = candidates[selectedBlock];
+    } else if (
       candidates.some(
         (candidate) =>
           candidate.runId !== candidates[0].runId ||
@@ -40,7 +44,7 @@ export function analyzeResult(output, snapshot) {
       )
     )
       throw new Error("여러 결과 블록의 케이스 판정이 서로 다릅니다.");
-    parsed = candidates.at(-1);
+    else parsed = candidates.at(-1);
     if (
       parsed.runId !== snapshot.runId ||
       !Array.isArray(parsed.cases) ||
@@ -113,6 +117,7 @@ export function analyzeResult(output, snapshot) {
   return {
     runId: snapshot.runId,
     sourceCommit: snapshot.sourceCommit,
+    selectedBlock,
     verdict: "REVIEW_REQUIRED",
     formatError: error || null,
     cases,
@@ -137,8 +142,8 @@ export function analyzeResult(output, snapshot) {
 }
 
 const cell = (value) => String(value).replace(/[\r\n|<>`]/g, " ");
-export async function saveAnalysis(dir, output, snapshot) {
-  const report = analyzeResult(output, snapshot);
+export async function saveAnalysis(dir, output, snapshot, options) {
+  const report = analyzeResult(output, snapshot, options);
   await writeFile(
     path.join(dir, "results.json"),
     JSON.stringify(report, null, 2),
@@ -217,7 +222,7 @@ export async function saveAnalysis(dir, output, snapshot) {
 }
 
 async function main() {
-  const [runId, filename = "stdout.log"] = process.argv.slice(2);
+  const [runId, filename = "stdout.log", blockIndex] = process.argv.slice(2);
   if (
     !runId ||
     !/^[A-Za-z0-9-]+$/.test(runId) ||
@@ -226,7 +231,7 @@ async function main() {
     filename === "."
   )
     throw new Error(
-      "사용법: npm run qa:review -- <실행ID> [실행폴더의 응답파일.txt]",
+      "사용법: npm run qa:review -- <실행ID> [실행폴더의 응답파일.txt] [사람이 검토해 선택한 0부터 시작하는 결과 블록 번호]",
     );
   const root = fileURLToPath(new URL("../", import.meta.url));
   const dir = path.join(root, "artifacts", "aside", runId);
@@ -238,6 +243,7 @@ async function main() {
     dir,
     await readFile(path.join(dir, filename), "utf8"),
     snapshot,
+    { selectedBlock: blockIndex === undefined ? null : Number(blockIndex) },
   );
   console.log(
     `검토 파일 생성: ${dir}\n${report.formatError || "형식 확인 완료. AI 관찰의 사실 여부는 검토가 필요합니다."}`,
