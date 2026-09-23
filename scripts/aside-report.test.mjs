@@ -65,11 +65,16 @@ describe("hierarchical cases and strict QA report handling", () => {
     expect(r.formatError).toBeTruthy();
     expect(r.counts.NOT_RUN).toBe(3);
   });
-  it("rejects ambiguous multiple result blocks", () => {
+  it("accepts repeated results only when every case verdict agrees", () => {
+    const first = output(payload([row("1-a-A")]));
+    const same = output(payload([{ ...row("1-a-A"), actual: "재확인" }]));
+    const different = output(payload([row("1-a-A", "FAIL")]));
+    expect(analyzeResult(first + "\n" + same, snapshot).counts.PASS).toBe(1);
     expect(
-      analyzeResult(output(payload([])) + "\n" + output(payload([])), snapshot)
-        .formatError,
-    ).toBeTruthy();
+      analyzeResult(first + "\nBEGIN_FLAG_EDU_QA_RESULT\n{", snapshot)
+        .counts.PASS,
+    ).toBe(1);
+    expect(analyzeResult(first + "\n" + different, snapshot).formatError).toBeTruthy();
   });
   it("accepts a single result block with CLI color codes on the marker", () => {
     const colored = `${output(payload([row("1-a-A")]))}\u001b[0m`;

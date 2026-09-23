@@ -18,12 +18,29 @@ export function analyzeResult(output, snapshot) {
     const plainOutput = output.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "");
     const blocks = [
       ...plainOutput.matchAll(
-        /^BEGIN_FLAG_EDU_QA_RESULT\s*\r?\n([\s\S]*?)^END_FLAG_EDU_QA_RESULT\s*$/gm,
+        /^BEGIN_FLAG_EDU_QA_RESULT\s*\r?\n([^\r\n]+)\r?\nEND_FLAG_EDU_QA_RESULT\s*$/gm,
       ),
     ];
-    if (blocks.length !== 1)
-      throw new Error("구조화 결과 블록이 없거나 여러 개입니다.");
-    parsed = JSON.parse(blocks[0][1]);
+    if (!blocks.length) throw new Error("구조화 결과 블록이 없습니다.");
+    const candidates = blocks.map((block) => JSON.parse(block[1]));
+    // Aside can emit its final answer twice after a queued follow-up. Accept
+    // repeated blocks only when their case verdicts agree; the last complete
+    // block contains the latest observation text.
+    const verdicts = (candidate) =>
+      JSON.stringify(
+        candidate.cases
+          ?.map(({ id, status }) => [id, status])
+          .sort(([a], [b]) => a.localeCompare(b)),
+      );
+    if (
+      candidates.some(
+        (candidate) =>
+          candidate.runId !== candidates[0].runId ||
+          verdicts(candidate) !== verdicts(candidates[0]),
+      )
+    )
+      throw new Error("여러 결과 블록의 케이스 판정이 서로 다릅니다.");
+    parsed = candidates.at(-1);
     if (
       parsed.runId !== snapshot.runId ||
       !Array.isArray(parsed.cases) ||
