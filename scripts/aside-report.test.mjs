@@ -71,6 +71,12 @@ describe("hierarchical cases and strict QA report handling", () => {
         .formatError,
     ).toBeTruthy();
   });
+  it("accepts a single result block with CLI color codes on the marker", () => {
+    const colored = `${output(payload([row("1-a-A")]))}\u001b[0m`;
+    const r = analyzeResult(colored, snapshot);
+    expect(r.formatError).toBeNull();
+    expect(r.counts.PASS).toBe(1);
+  });
   it("separates suggested improvements from observed bugs", () => {
     const r = analyzeResult(
       output({
@@ -91,7 +97,7 @@ describe("hierarchical cases and strict QA report handling", () => {
       all.push(
         ...caseIdsFromMarkdown(await readFile(`qa/aside/${name}.md`, "utf8")),
       );
-    expect(all.length).toBe(93);
+    expect(all.length).toBe(94);
     expect(new Set(all).size).toBe(all.length);
     const mapped = coverage.requirements.flatMap((r) => r.cases);
     expect(mapped.sort()).toEqual([...all].sort());

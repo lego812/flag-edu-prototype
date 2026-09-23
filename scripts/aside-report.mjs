@@ -14,8 +14,10 @@ export function caseIdsFromMarkdown(markdown) {
 export function analyzeResult(output, snapshot) {
   let parsed, error;
   try {
+    // The Aside CLI may append terminal color codes to the closing marker.
+    const plainOutput = output.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "");
     const blocks = [
-      ...output.matchAll(
+      ...plainOutput.matchAll(
         /^BEGIN_FLAG_EDU_QA_RESULT\s*\r?\n([\s\S]*?)^END_FLAG_EDU_QA_RESULT\s*$/gm,
       ),
     ];
