@@ -38,6 +38,9 @@ SUPABASE_SECRET_KEY=your-server-only-secret-key
 
 ## 검증
 
+Aside 브라우저 테스트는 `npm run qa:aside`로 실행합니다. 기본은 조회 전용입니다.
+설정·데이터 생성 테스트·결과 확인은 [Aside QA 안내](docs/aside-qa.md)를 참고하세요.
+
 ```bash
 npm run lint
 npm test
