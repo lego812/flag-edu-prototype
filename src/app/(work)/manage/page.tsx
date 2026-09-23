@@ -7,8 +7,8 @@ export default async function ManagePage() {
   const items = [
     {
       href: "/admin-reports",
-      title: "보고서 확인",
-      description: "제출된 기록을 살펴보고 확인해 주세요.",
+      title: "전체 보고서",
+      description: "작성된 보고서를 살펴보세요.",
     },
     {
       href: "/templates",

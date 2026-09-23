@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/artifacts/aside/
 
 # next.js
 /.next/
