@@ -23,10 +23,13 @@ describe("class registration wizard", () => {
   });
   it("shows weekdays only for weekly recurrence and leaves time optional", () => {
     start();
+    expect(screen.getByText("STEP 2 / 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("수업 날짜")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("반복"), {
       target: { value: "week" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "다음 →" }));
+    expect(screen.getByLabelText("반복 시작일")).toBeInTheDocument();
+    expect(screen.getByLabelText("반복 종료일")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "월" })).toBeInTheDocument();
     expect(
       screen.getByRole("checkbox", { name: "시간 설정 (선택)" }),
@@ -51,14 +54,13 @@ describe("class registration wizard", () => {
     fireEvent.change(screen.getByLabelText("반복"), {
       target: { value: "day" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "다음 →" }));
     expect(
       screen.queryByRole("checkbox", { name: "월" }),
     ).not.toBeInTheDocument();
     const nextButton = screen.getByRole("button", { name: "다음 →" });
     fireEvent.click(nextButton);
     expect(screen.getByText("시간 미정")).toBeInTheDocument();
-    expect(screen.getByText("STEP 4 / 4")).toBeInTheDocument();
+    expect(screen.getByText("STEP 3 / 3")).toBeInTheDocument();
     const submitButton = screen.getByRole("button", { name: /수업 등록/ });
     expect(submitButton).toBeInTheDocument();
     expect(submitButton).not.toBe(nextButton);
@@ -66,12 +68,10 @@ describe("class registration wizard", () => {
     expect(screen.getByText(/총 31개 수업/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "이전" }));
     fireEvent.click(screen.getByRole("button", { name: "이전" }));
-    fireEvent.click(screen.getByRole("button", { name: "이전" }));
     expect(screen.getByLabelText("수업명")).toHaveValue("체육 수업");
   });
   it("shows the end date for an overnight class before registration", () => {
     start();
-    fireEvent.click(screen.getByRole("button", { name: "다음 →" }));
     fireEvent.click(
       screen.getByRole("checkbox", { name: "시간 설정 (선택)" }),
     );

@@ -56,7 +56,6 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
   const titles = [
     "어떤 수업인가요?",
     "얼마나 자주 진행하나요?",
-    "언제 진행하나요?",
     "등록 내용을 확인해 주세요.",
   ];
   function payload() {
@@ -109,7 +108,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
         setError("반복 간격은 1~365 사이의 정수로 입력해 주세요.");
         return;
       }
-      if (step === 2) {
+      if (step === 1) {
         if ("state" in parsed) {
           setError(Object.values(parsed.state.fieldErrors ?? {}).join(" "));
           return;
@@ -132,7 +131,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
     <form
       action={submit}
       onSubmit={(e) => {
-        if (step !== 3) {
+        if (step !== 2) {
           e.preventDefault();
           go(step + 1);
         }
@@ -165,7 +164,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
       {session && (
         <input type="hidden" name="version" value={session.updated_at} />
       )}
-      <div aria-label={`등록 단계 ${step + 1}/4`} className="flex gap-2">
+      <div aria-label={`등록 단계 ${step + 1}/3`} className="flex gap-2">
         {titles.map((t, i) => (
           <span
             key={t}
@@ -178,7 +177,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
         ))}
       </div>
       <header>
-        <p className="eyebrow">STEP {step + 1} / 4</p>
+        <p className="eyebrow">STEP {step + 1} / 3</p>
         <h2
           ref={heading}
           tabIndex={-1}
@@ -264,7 +263,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
             )}
           </>
         )}
-        {step === 2 && (
+        {step === 1 && (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-semibold">
@@ -419,7 +418,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
             </label>
           </>
         )}
-        {step === 3 && (
+        {step === 2 && (
           <div className="surface space-y-4 p-6">
             <h3 className="break-words text-xl font-bold">{title}</h3>
             <p className="break-words text-neutral-600">{location}</p>
@@ -447,7 +446,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
           </div>
         )}
       </fieldset>
-      {(error || state.error || (step === 3 && previewError)) && (
+      {(error || state.error || (step === 2 && previewError)) && (
         <p role="alert" className="text-sm text-red-700">
           {error || state.error || previewError}
         </p>
@@ -470,7 +469,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
             돌아가기
           </Link>
         )}
-        {step < 3 ? (
+        {step < 2 ? (
           <button
             key="next-step"
             type="button"
