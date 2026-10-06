@@ -167,9 +167,12 @@ describe("export file generation", () => {
         field_id: "photo",
         storage_path: `org/report/photo-${index}.jpg`,
         original_filename: `photo-${index}.jpg`,
+        created_at: `2026-09-${25 - index}T00:00:00Z`,
       })),
     } as Report;
-    const loadPhoto = vi.fn().mockResolvedValue(JPEG);
+    const loadPhoto = vi.fn().mockImplementation(async (attachment) =>
+      attachment.id === "photo-2" ? null : JPEG,
+    );
     const bytes = await generateReportPdf(
       [report],
       new Map([["template", template]]),
@@ -178,5 +181,53 @@ describe("export file generation", () => {
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPageCount()).toBe(2);
     expect(loadPhoto).toHaveBeenCalledTimes(5);
+    expect(loadPhoto.mock.calls.map(([attachment]) => attachment.id)).toEqual([
+      "photo-4",
+      "photo-3",
+      "photo-2",
+      "photo-1",
+      "photo-0",
+    ]);
+  }, 30000);
+  it("wraps maximum-length headings and field labels", async () => {
+    const template = {
+      id: "template",
+      name: "긴 양식 이름 ".repeat(10).slice(0, 100),
+      template_fields: [
+        {
+          id: "short",
+          label: "긴 입력 항목 이름 ".repeat(10).slice(0, 100),
+          field_type: "short_text",
+        },
+      ],
+    } as Template;
+    const report = {
+      id: "report",
+      author_id: "teacher",
+      class_session_id: "session",
+      template_version_id: "template",
+      status: "submitted",
+      submitted_at: "2026-09-23T00:00:00Z",
+      confirmed_at: null,
+      created_at: "2026-09-23T00:00:00Z",
+      updated_at: "2026-09-23T00:00:00Z",
+      profiles: { name: "홍길동" },
+      class_sessions: {
+        title: "긴 수업 이름 ".repeat(15).slice(0, 150),
+        location: "센터",
+        start_at: "2026-09-22T01:00:00Z",
+        end_at: "2026-09-22T02:00:00Z",
+        has_time: true,
+        status: "scheduled",
+      },
+      report_answers: [{ field_id: "short", value: "짧은 답변" }],
+      report_attachments: [],
+    } as Report;
+    const bytes = await generateReportPdf(
+      [report],
+      new Map([["template", template]]),
+      vi.fn().mockResolvedValue(null),
+    );
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(0);
   }, 30000);
 });

@@ -14,7 +14,10 @@ import type {
   Report,
   Template,
 } from "@/features/reports/model";
-import { reportStatus } from "@/features/reports/model";
+import {
+  compareAttachmentsByUpload,
+  reportStatus,
+} from "@/features/reports/model";
 import { formatClassDate } from "@/features/classes/dates";
 
 const PAGE_WIDTH = 595;
@@ -211,20 +214,39 @@ function drawTableRow(
   );
 }
 
+function tableRowHeight(
+  label: string,
+  valueLines: string[],
+  font: PDFFont,
+  minimumHeight = 34,
+) {
+  const labelLines = wrapText(label, font, TEXT_SIZE, LABEL_WIDTH - 16);
+  return Math.max(
+    minimumHeight,
+    Math.max(labelLines.length, valueLines.length) * LINE_HEIGHT + 14,
+  );
+}
+
 function drawReportHeading(
   page: PDFPage,
   title: string,
   font: PDFFont,
   continuation = false,
 ) {
+  const text = continuation ? `${title} - 계속` : title;
+  const size = 14;
+  const lineHeight = 20;
+  const lines = wrapText(text, font, size, CONTENT_WIDTH - 14);
   page.drawRectangle({ x: MARGIN_X, y: TOP - 3, width: 6, height: 6 });
-  page.drawText(continuation ? `${title} - 계속` : title, {
-    x: MARGIN_X + 14,
-    y: TOP - 7,
-    font,
-    size: 14,
+  lines.forEach((line, index) => {
+    page.drawText(line, {
+      x: MARGIN_X + 14,
+      y: TOP - 7 - index * lineHeight,
+      font,
+      size,
+    });
   });
-  return TOP - 28;
+  return TOP - Math.max(28, lines.length * lineHeight + 8);
 }
 
 function drawPhotoGrid(
@@ -305,13 +327,16 @@ async function embedPhotos(
   attachments: Attachment[],
   loadPhoto: PhotoLoader,
 ) {
-  const embedded: { image: PDFImage | null }[] = [];
+  const embedded = new Map<string, PDFImage | null>();
   for (const attachment of attachments) {
     try {
       const bytes = await loadPhoto(attachment);
-      embedded.push({ image: bytes ? await pdf.embedJpg(bytes) : null });
+      embedded.set(
+        attachment.id,
+        bytes ? await pdf.embedJpg(bytes) : null,
+      );
     } catch {
-      embedded.push({ image: null });
+      embedded.set(attachment.id, null);
     }
   }
   return embedded;
@@ -338,6 +363,13 @@ export async function generateReportPdf(
   for (const report of reports) {
     const template = templates.get(report.template_version_id);
     if (!template) throw new Error("보고서 양식이 없습니다.");
+    const attachments = [...report.report_attachments].sort(
+      compareAttachmentsByUpload,
+    );
+    const embeddedPhotos = await embedPhotos(pdf, attachments, loadPhoto);
+    const failedPhotoCount = [...embeddedPhotos.values()].filter(
+      (image) => !image,
+    ).length;
     let page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     let y = drawReportHeading(
       page,
@@ -368,37 +400,52 @@ export async function generateReportPdf(
       ["작성 일시", formatClassDate(report.created_at)],
     ];
     for (const [label, value] of metadata) {
+      const cleanLabel = cleanText(label, supported);
       const lines = wrapText(
         cleanText(value, supported),
         font,
         TEXT_SIZE,
         VALUE_WIDTH - 16,
       );
-      const height = Math.max(32, lines.length * LINE_HEIGHT + 14);
+      const height = tableRowHeight(cleanLabel, lines, font, 32);
+      if (y - height < BOTTOM) nextPage();
       drawTableRow(
         page,
         y,
         height,
-        cleanText(label, supported),
+        cleanLabel,
         lines,
         font,
       );
       y -= height;
     }
 
+    if (failedPhotoCount) {
+      const label = "사진 안내";
+      const lines = [`사진 ${failedPhotoCount}장을 포함하지 못했습니다.`];
+      const height = tableRowHeight(label, lines, font);
+      if (y - height < BOTTOM) nextPage();
+      drawTableRow(page, y, height, label, lines, font);
+      y -= height;
+    }
+
     for (const field of template.template_fields) {
       const label = cleanText(field.label, supported);
       if (field.field_type === "photo") {
-        const attachments = report.report_attachments.filter(
+        const fieldAttachments = attachments.filter(
           (attachment) => attachment.field_id === field.id,
         );
-        if (!attachments.length) {
-          if (y - 34 < BOTTOM) nextPage();
-          drawTableRow(page, y, 34, label, ["미첨부"], font);
-          y -= 34;
+        if (!fieldAttachments.length) {
+          const lines = ["미첨부"];
+          const height = tableRowHeight(label, lines, font);
+          if (y - height < BOTTOM) nextPage();
+          drawTableRow(page, y, height, label, lines, font);
+          y -= height;
           continue;
         }
-        const items = await embedPhotos(pdf, attachments, loadPhoto);
+        const items = fieldAttachments.map((attachment) => ({
+          image: embeddedPhotos.get(attachment.id) ?? null,
+        }));
         let offset = 0;
         let continuation = false;
         while (offset < items.length) {
@@ -438,16 +485,19 @@ export async function generateReportPdf(
       let continuation = false;
       while (lines.length) {
         const minimumHeight = field.field_type === "long_text" ? 88 : 34;
-        const desiredHeight = Math.max(
+        const currentLabel = continuation ? `${label} (계속)` : label;
+        const desiredHeight = tableRowHeight(
+          currentLabel,
+          lines,
+          font,
           minimumHeight,
-          lines.length * LINE_HEIGHT + 14,
         );
         if (desiredHeight <= y - BOTTOM) {
           drawTableRow(
             page,
             y,
             desiredHeight,
-            continuation ? `${label} (계속)` : label,
+            currentLabel,
             lines,
             font,
           );
@@ -455,7 +505,13 @@ export async function generateReportPdf(
           lines = [];
           continue;
         }
-        if (y - BOTTOM < minimumHeight) {
+        const labelMinimumHeight = tableRowHeight(
+          currentLabel,
+          [""],
+          font,
+          minimumHeight,
+        );
+        if (y - BOTTOM < labelMinimumHeight) {
           nextPage();
           continue;
         }
@@ -465,12 +521,17 @@ export async function generateReportPdf(
           continue;
         }
         const chunk = lines.slice(0, maxLines);
-        const height = Math.max(minimumHeight, chunk.length * LINE_HEIGHT + 14);
+        const height = tableRowHeight(
+          currentLabel,
+          chunk,
+          font,
+          minimumHeight,
+        );
         drawTableRow(
           page,
           y,
           height,
-          continuation ? `${label} (계속)` : label,
+          currentLabel,
           chunk,
           font,
         );
