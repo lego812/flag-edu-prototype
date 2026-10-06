@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseSeoulDateTime, seoulToday, toSeoulInput } from "./dates";
-import { parseClassFilters, parseClassForm } from "./validation";
+import { addMonths, monthRange, parseSeoulDateTime, seoulToday, toSeoulInput } from "./dates";
+import { parseClassCalendarFilters, parseClassFilters, parseClassForm } from "./validation";
 import { canManageClass, type ClassSession } from "./model";
 
 export const formData = () => {
@@ -37,6 +37,15 @@ describe("Korean class dates and validation", () => {
     for (const params of [{ from: "2026-02-30" }, { from: "2026-10-01", to: "2026-09-01" }, { status: "unknown" }, { page: "0" }, { from: ["2026-01-01"] }]) {
       expect(parseClassFilters(params).error).toBeDefined();
     }
+  });
+  it("validates calendar months and handles month boundaries", () => {
+    expect(parseClassCalendarFilters({ month: "2028-02", status: "cancelled" })).toEqual({
+      filters: { month: "2028-02", status: "cancelled" },
+    });
+    expect(parseClassCalendarFilters({ month: "2026-13" }).error).toBeDefined();
+    expect(parseClassCalendarFilters({ month: ["2026-10"] }).error).toBeDefined();
+    expect(addMonths("2026-12", 1)).toBe("2027-01");
+    expect(monthRange("2028-02")).toEqual({ from: "2028-02-01", to: "2028-02-29" });
   });
 });
 describe("class modification permissions", () => {

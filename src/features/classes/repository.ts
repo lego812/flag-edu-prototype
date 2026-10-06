@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { addDays } from "./dates";
-import type { ClassActor, ClassInput, ClassSession } from "./model";
-import type { ClassFilters } from "./validation";
+import { addDays, monthRange } from "./dates";
+import type {
+  ClassActor,
+  ClassCalendarSession,
+  ClassInput,
+  ClassSession,
+} from "./model";
+import type { ClassCalendarFilters, ClassFilters } from "./validation";
 
 export const CLASS_PAGE_SIZE = 20;
 export function classRepository(client: SupabaseClient, actor: ClassActor) {
@@ -14,6 +19,19 @@ export function classRepository(client: SupabaseClient, actor: ClassActor) {
         .order("start_at").order("id");
       if (filters.status !== "all") query = query.eq("status", filters.status);
       return query.range((filters.page - 1) * CLASS_PAGE_SIZE, filters.page * CLASS_PAGE_SIZE - 1).returns<ClassSession[]>();
+    },
+    async calendar(filters: ClassCalendarFilters) {
+      const range = monthRange(filters.month);
+      let query = client.from("class_sessions").select(
+        "id,title,location,start_at,has_time,status",
+        { count: "exact" },
+      )
+        .eq("organization_id", actor.organization_id)
+        .gte("start_at", range.from + "T00:00:00+09:00")
+        .lt("start_at", addDays(range.to, 1) + "T00:00:00+09:00")
+        .order("start_at").order("id");
+      if (filters.status !== "all") query = query.eq("status", filters.status);
+      return query.range(0, 999).returns<ClassCalendarSession[]>();
     },
     async get(id: string) {
       return client.from("class_sessions").select("*")

@@ -25,6 +25,10 @@ export type ClassInput = Pick<
   | "has_time"
   | "teaching_method"
 >;
+export type ClassCalendarSession = Pick<
+  ClassSession,
+  "id" | "title" | "location" | "start_at" | "has_time" | "status"
+>;
 export type ClassActor = {
   id: string;
   organization_id: string;

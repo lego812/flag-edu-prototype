@@ -31,6 +31,30 @@ export function addDays(day: string, count: number) {
   return date.toISOString().slice(0, 10);
 }
 
+export function addMonths(month: string, count: number) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const date = new Date(Date.UTC(year, monthNumber - 1 + count, 1));
+  return date.toISOString().slice(0, 7);
+}
+
+export function monthRange(month: string) {
+  const from = `${month}-01`;
+  return { from, to: addDays(`${addMonths(month, 1)}-01`, -1) };
+}
+
+export function seoulDateKey(utc: string) {
+  return toSeoulInput(utc).slice(0, 10);
+}
+
+export function formatClassTime(utc: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(utc));
+}
+
 export function formatClassDate(utc: string, hasTime = true) {
   return (
     new Intl.DateTimeFormat("ko-KR", {
