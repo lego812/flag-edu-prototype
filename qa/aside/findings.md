@@ -29,6 +29,12 @@
 | `2026-10-06-export-seven-day-retention` | APPROVED IMPROVEMENT | R08 / 8-b-C | `expires_at`이 nullable이고 생성·정리 경로에서 사용되지 않아 내보내기 파일이 계속 누적됐다. | VERIFIED | 기존/신규 이력의 만료를 7일로 강제하는 마이그레이션, 만료 다운로드 410, 이력 만료 표시, 인증된 Vercel 일일 Cron의 Storage 삭제·경로 제거를 추가. | `ca6af62`, `7c56976`; PGlite 7일 기본값·Cron 인증 회귀 통과. 원격 마이그레이션 001~004 적용, Vercel Production/Preview 비밀값 등록, 배포 `dpl_FMo1YZ1DPjQsDm6jMkq6adKc4WDy`. 수동 Cron HTTP 200 후 만료 경로 2건과 Storage 객체 2건 삭제, 잔여 0건 확인 |
 | `2026-10-06-export-cleanup-service-role-grant` | BUG | R08 / 8-b-C | 첫 운영 Cron 실행에서 `service_role`에 `export_jobs`의 `SELECT/UPDATE` 테이블 권한이 없어 HTTP 500과 PostgreSQL `42501`이 재현됐다. 올바른 Supabase 서버 키로 교체해도 동일해 키가 아니라 마이그레이션 권한 누락으로 확정했다. | VERIFIED | 정리 작업에 필요한 `SELECT/UPDATE`만 `service_role`에 부여하고, 단계별 Supabase 오류를 비밀값·파일 경로 없이 서버 로그에 남겼다. PGlite에서 `service_role` 조회·경로 제거 회귀 테스트를 추가했다. | `7c56976`; 대상 회귀 `19/19`, 전체 `141/141`, 린트·타입·빌드 통과. 원격 권한 적용 후 Vercel Cron HTTP 200, 만료 `storage_path` 잔여 0건 및 `report-exports` 객체 0건 확인. 비인증 요청은 HTTP 401 |
 
+## 2026-10-06 의존성 보안 업데이트
+
+| ID | 종류 | 기준 | 재현·원인 | 상태 | 변경·회귀 테스트 | 커밋·재검증 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `2026-10-06-dependency-security-update` | SECURITY | R09 | `npm audit`에서 운영 의존성 `next@16.3.5`의 `next/og ImageResponse` 원격 코드 실행 권고와 `source-map-js@1.2.1`의 이벤트 루프 서비스 거부 권고를 확인했다. 저장소에는 `next/og`·`ImageResponse` 사용이 없어 전자의 직접 입력 경로는 없었지만 운영 의존성이므로 패치가 필요했다. | VERIFIED | Next.js와 `eslint-config-next`를 16.3.8로 맞추고 `source-map-js`를 1.2.2로 갱신했다. 깨끗한 `npm ci` 후 `npm audit --omit=dev` 0건, 전체 `144/144` 테스트·린트·타입·프로덕션 빌드 통과. 남은 전체 감사 5건은 ESLint 개발 도구의 동일 `braces` 경고 연쇄이며 npm의 강제 해결안이 Next 14 린트 설정으로의 비호환 다운그레이드라 적용하지 않았다. | `3110782`; 로그인된 로컬 브라우저에서 대시보드, 10월 캘린더 22건·예정 필터·목록 전환, 보고서 5건, 관리 카드 4개와 콘솔 오류 0건을 조회 전용으로 재검증 |
+
 ## 2026-09-23 조회 전용 실행 검토
 
 실행 ID: `2026-09-23T01-21-44-856Z-f69b97b0`. 로컬 개발 앱에서 Aside가 28개 말단 케이스를 실행했다. 원본 관찰은 PASS 19 / FAIL 후보 2 / BLOCKED 7이며, 아래 판정은 코드와 재현 근거를 검토한 결과다. 원본 로그와 스크린샷은 Git 제외 경로에만 있다.
