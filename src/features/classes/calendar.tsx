@@ -71,9 +71,9 @@ export function ClassCalendar({
                           title={`${session.title} · ${session.location}`}
                           className={`block truncate rounded-md px-1.5 py-1 text-[11px] font-medium leading-tight hover:brightness-95 ${session.status === "cancelled" ? "bg-neutral-100 text-neutral-500 line-through" : "bg-amber-100 text-neutral-900"}`}
                         >
-                          {session.status === "cancelled" && (
-                            <span className="sr-only">취소 </span>
-                          )}
+                          <span className="font-bold">
+                            {session.status === "cancelled" ? "취소" : "예정"} ·{" "}
+                          </span>
                           {session.has_time === false ? "미정" : formatClassTime(session.start_at)} {session.title}
                         </Link>
                       ))}
@@ -101,7 +101,7 @@ export function ClassCalendar({
                       <span className="block truncate text-xs text-neutral-500">{session.location}</span>
                     </span>
                     <span className="shrink-0 text-xs font-medium text-neutral-700">
-                      {session.status === "cancelled" && "취소 · "}
+                      {session.status === "cancelled" ? "취소" : "예정"} ·{" "}
                       {session.has_time === false ? "시간 미정" : formatClassTime(session.start_at)}
                     </span>
                   </Link>

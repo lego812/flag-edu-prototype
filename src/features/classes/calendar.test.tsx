@@ -33,7 +33,7 @@ describe("ClassCalendar", () => {
 
     expect(screen.getByRole("region", { name: "2026년 10월 수업 캘린더" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /수업 a/ })[0]).toHaveAttribute("href", "/classes/a");
-    expect(screen.getAllByText("시간 미정").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /예정.*시간 미정/ }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "10월 1일" })).toBeInTheDocument();
   });
 
