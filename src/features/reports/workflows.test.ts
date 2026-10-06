@@ -345,12 +345,14 @@ describe("reporting PostgreSQL workflows and RLS", () => {
         )
       ).rows[0].status,
     ).toBe("draft");
+    const conflictStartedAt = performance.now();
     await expect(
       db.query("select public.save_and_submit_report($1,$2,'[]',false)", [
         reportId,
         old,
       ]),
     ).rejects.toMatchObject({ code: "PT409" });
+    expect(performance.now() - conflictStartedAt).toBeLessThan(1000);
   });
   it("protects the last administrator and cross-organization members", async () => {
     await asUser(ids.admin);
