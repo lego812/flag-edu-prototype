@@ -1,29 +1,173 @@
 # Flag Edu
 
-코치가 수업별 보고서를 작성하고 관리자가 확인·취합하는 모바일 우선 PWA입니다.
-Next.js 애플리케이션은 Vercel에 배포하고, 인증·데이터베이스·파일 저장은
-Supabase를 사용합니다.
+## 프로젝트 소개
 
-## 기술 구성
+Flag Edu는 교육 기관의 수업 일정, 코치 보고서, 관리자 확인과 내보내기를 한곳에서 관리하는 모바일 우선 PWA입니다.
 
-- Next.js App Router, React, TypeScript
-- Tailwind CSS
-- Supabase Auth, PostgreSQL, Storage
-- 설치형 PWA
-- Vitest, Testing Library
-- Vercel 배포
+- 관리자 초대로만 가입하는 폐쇄형 서비스입니다.
+- 관리자와 코치는 같은 기관의 수업 일정을 목록 또는 월간 캘린더로 확인합니다.
+- 코치는 수업별 보고서를 임시저장·수정·제출하고 사진을 첨부합니다.
+- 관리자는 전체 보고서, 동적 보고서 양식, 구성원 권한, PDF·Excel 내보내기를 관리합니다.
+- 기관·역할·작성자 기준 권한은 화면뿐 아니라 PostgreSQL RLS와 RPC에서도 검사합니다.
+
+## 사용 기술
+
+| 영역 | 기술 |
+| --- | --- |
+| 프론트엔드 | Next.js 16 App Router, React 19, TypeScript, Tailwind CSS 4 |
+| 인증·데이터 | Supabase Auth, PostgreSQL, Row Level Security, RPC |
+| 파일 | Supabase Storage, `pdf-lib`, ExcelJS |
+| 품질 | Vitest, Testing Library, PGlite, ESLint, Aside 브라우저 QA |
+| 운영 | Vercel, Vercel Cron, 설치형 PWA |
+
+## 앱 기능 가이드
+
+아래 화면은 `http://localhost:3000`에서 관리자·코치 로그인 세션으로 실제 동작을 확인하며 캡처한 QA 예시입니다. 수업명, 작성자명, 개수와 날짜는 환경 데이터에 따라 달라질 수 있습니다.
+
+### 공통
+
+#### 1. 로그인과 계정
+
+- 루트 주소에 접속하면 로그인 화면으로 바로 이동합니다.
+- 회원가입은 이메일 초대로만 가능합니다.
+- 초대받은 사용자는 이메일 링크에서 비밀번호를 설정한 뒤 로그인합니다.
+- 비밀번호 설정 전 `pending` 사용자는 업무 데이터에 접근할 수 없습니다.
+- 로그인 후 상단 또는 하단 메뉴에서 `홈`, `수업`, `내 보고서`로 이동합니다.
+
+#### 2. 홈 대시보드
+
+다가오는 수업, 임시저장 보고서 수, 가까운 수업 일정과 최근 기록을 한 화면에서 확인합니다. `수업 확인 · 기록하기`를 누르면 해당 수업 상세로 이동합니다.
+
+![공통 홈 대시보드](docs/images/common-dashboard.jpg)
+
+#### 3. 수업 일정
+
+- `목록`은 기간·상태 필터와 페이지 단위로 수업을 표시합니다.
+- `캘린더`는 월 이동과 전체·예정·취소 필터를 제공합니다.
+- 모바일 캘린더는 날짜별 수업명, 장소, 상태, 시간을 읽을 수 있는 목록을 함께 제공합니다.
+- 시간 미정 수업에는 임의의 자정 대신 `시간 미정`을 표시합니다.
+
+![공통 월간 수업 캘린더](docs/images/common-calendar.jpg)
+
+#### 4. 수업 등록
+
+수업 등록은 다음 3단계로 진행합니다.
+
+1. 수업명과 장소 또는 기관명 입력
+2. 반복, 날짜·시간, 진행방식, 메모 입력
+3. 생성될 일정을 확인한 뒤 등록
+
+반복은 없음·일·주·월 중 선택할 수 있습니다. 반복 유형에 따라 간격, 시작·종료일, 요일 또는 매월 날짜가 같은 화면에 자동으로 표시됩니다. 주간 반복은 여러 요일을 선택할 수 있고, 월간 반복에서 해당 날짜가 없는 달은 말일을 사용합니다.
+
+![공통 수업 등록 일정 입력](docs/images/common-class-registration.jpg)
+
+#### 5. 권한 요약
+
+| 기능 | 관리자 | 코치 |
+| --- | :---: | :---: |
+| 홈·기관 수업 목록·캘린더 조회 | O | O |
+| 수업 등록 | O | O |
+| 기관 수업 수정·취소 | 모든 수업 | 본인이 등록한 수업 |
+| 본인 보고서 작성·사진 관리 | O | O |
+| 기관 전체 보고서 조회 | O | X |
+| 보고서 양식 관리 | O | X |
+| 구성원 초대·권한·상태 관리 | O | X |
+| PDF·Excel 내보내기 | O | X |
+
+다른 기관 데이터, 다른 작성자의 보고서 수정, 관리자의 타인 사진 삭제는 DB 정책에서도 차단합니다. 취소된 수업은 기존 기록만 보존하며 보고서 답변·사진을 더 이상 변경하거나 제출할 수 없습니다.
+
+### 관리자
+
+관리자에게는 공통 메뉴에 `관리`가 추가됩니다. 관리 허브에서 전체 보고서, 보고서 양식, 구성원, 내보내기로 이동합니다.
+
+![관리자 기능 허브](docs/images/admin-manage.jpg)
+
+#### 1. 전체 보고서
+
+- 기관의 모든 작성자 보고서를 조회합니다.
+- 기간, 작성자와 수업으로 결과를 좁힙니다.
+- 관리자는 다른 사용자의 보고서를 읽을 수 있지만 대신 수정하거나 사진을 삭제할 수 없습니다.
+
+#### 2. 보고서 양식
+
+- 양식 이름과 최대 50개 필드를 구성합니다.
+- 짧은 글, 긴 글, 숫자, 날짜, 단일 선택, 복수 선택, 사진 필드를 지원합니다.
+- 사진 필드는 허용 장수를 설정하고 선택형 필드는 선택지를 관리합니다.
+- 초안은 저장·수정할 수 있고 게시 시 새 활성 버전이 됩니다.
+- 과거 보고서는 작성 당시 양식 버전을 계속 참조하므로 양식을 바꿔도 구조가 유지됩니다.
+
+![관리자 보고서 양식 버전](docs/images/admin-templates.jpg)
+
+#### 3. 구성원
+
+- 이름과 이메일을 입력해 코치를 초대합니다.
+- 대기 구성원에게 초대 또는 비밀번호 설정 메일을 다시 보냅니다.
+- 활성 구성원의 코치·관리자 역할과 활성·비활성 상태를 변경합니다.
+- 마지막 활성 관리자를 코치로 내리거나 비활성화하는 동작은 차단됩니다.
+
+#### 4. PDF·Excel 내보내기
+
+- 수업 시작일, 종료일, 작성자와 수업으로 보고서 범위를 선택합니다.
+- 한 번에 최대 200개 보고서를 Excel 또는 PDF로 생성합니다.
+- PDF는 보고서별 양식 순서, 긴 글 자동 높이, 사진 1열 배치와 페이지 분할을 적용합니다.
+- PDF에 포함할 원본 사진 합계는 15MiB까지 허용합니다.
+- 일부 사진 로딩 실패 시 나머지 PDF는 만들고 첫 페이지와 해당 행에 경고를 표시합니다.
+- 생성 파일은 요청한 관리자만 7일간 다시 다운로드할 수 있으며 이후 정리 작업이 Storage 파일을 삭제합니다.
+
+![관리자 보고서 내보내기](docs/images/admin-exports.jpg)
+
+### 코치
+
+코치에게는 `홈`, `수업`, `내 보고서`만 표시됩니다. `/manage`, `/members`, `/templates`, `/admin-reports`, `/exports` 같은 관리자 주소에 직접 접근해도 업무 화면으로 되돌아갑니다.
+
+#### 1. 수업 관리
+
+- 기관 수업을 목록과 캘린더로 확인합니다.
+- 새 수업과 반복 일정을 등록합니다.
+- 본인이 등록한 수업만 수정하거나 취소할 수 있습니다.
+- 수업 상세에서 보고서가 없으면 `보고서 작성`, 있으면 기존 보고서 링크가 표시됩니다.
+
+#### 2. 보고서 작성
+
+- 본인의 보고서만 조회하고 수정합니다.
+- 필수 항목이 덜 채워져도 `임시저장`할 수 있습니다.
+- `제출`할 때 필수 답변과 필수 사진을 검증합니다.
+- 제출한 보고서를 다시 수정하면 임시저장 상태로 돌아가며 재제출이 필요합니다.
+- 같은 보고서를 오래된 화면에서 저장하면 덮어쓰지 않고 새로고침 안내를 즉시 표시합니다.
+
+![내 보고서 목록](docs/images/coach-report-list.jpg)
+
+![보고서 작성 화면](docs/images/coach-report-editor.jpg)
+
+#### 3. 사진
+
+- 1MiB 이하 JPG 사진을 필드별 허용 장수 안에서 추가합니다.
+- 사진은 작은 가로 썸네일 목록으로 표시되며 화면 폭을 넘으면 좌우로 스크롤합니다.
+- 업로드 순서는 `created_at`, `id` 기준으로 고정됩니다.
+- 사진을 추가하거나 삭제하면 제출된 보고서도 임시저장 상태가 되어 재제출해야 합니다.
+- 취소 수업의 기존 보고서는 답변과 사진을 읽을 수만 있고 추가·삭제할 수 없습니다.
 
 ## 로컬 실행
 
 Node.js 24 이상과 npm이 필요합니다.
 
 ```bash
-npm install
+npm ci
 copy .env.example .env.local
 npm run dev
 ```
 
-`.env.local`에 개발 Supabase 프로젝트 값을 입력합니다.
+브라우저에서 `http://localhost:3000`에 접속합니다.
+
+### 환경변수
+
+| 이름 | 공개 여부 | 역할 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | 브라우저 공개 | 연결할 Supabase 프로젝트 API 주소 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 브라우저 공개 | 로그인과 RLS 범위의 클라이언트 요청에 사용하는 Publishable Key |
+| `NEXT_PUBLIC_SITE_URL` | 브라우저 공개 | 초대·비밀번호 설정 콜백을 생성할 앱 기준 주소 |
+| `SUPABASE_SECRET_KEY` | 서버 전용 | 관리자 초대와 서버 관리 작업에 사용하는 Supabase Secret Key |
+| `CRON_SECRET` | 서버 전용 | Vercel Cron 정리 API 호출을 인증하는 16자 이상의 무작위 문자열 |
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
@@ -33,72 +177,24 @@ SUPABASE_SECRET_KEY=your-server-only-secret-key
 CRON_SECRET=replace-with-a-random-string-at-least-16-characters
 ```
 
-`SUPABASE_SECRET_KEY`는 관리자 초대 API를 위한 서버 전용 값입니다. 절대로
-`NEXT_PUBLIC_` 접두사를 붙이지 않습니다. DB 비밀번호, Secret key 및 기존
-`service_role` 키는 브라우저 코드나 저장소에 넣지 않습니다.
-`CRON_SECRET`은 16자 이상의 무작위 서버 전용 값으로 설정합니다. Vercel의
-일일 Cron이 이 값을 사용해 보관 기한 7일이 지난 내보내기 파일을 삭제합니다.
+`.env.local`, DB 비밀번호, Secret Key, 기존 `service_role` 키, 로그인 정보는 Git에 커밋하지 않습니다. 다른 PC에서 작업할 때는 `.env.example`을 복사한 뒤 승인된 별도 채널로 전달받은 실제 값을 다시 설정합니다.
 
-## 검증
+## Supabase 설정
 
-Aside 브라우저 테스트는 `npm run qa:aside`로 실행합니다. 기본은 조회 전용입니다.
-설정·데이터 생성 테스트·결과 확인은 [Aside QA 안내](docs/aside-qa.md)를 참고하세요.
-개발 방향부터 분기 테스트·발견사항·수정 이력까지는 [QA 피드백 루프](docs/qa-feedback-loop.md)로 연결합니다.
-
-```bash
-npm run lint
-npm test
-npm run build
-```
-
-환경변수가 없으면 초기 화면에 누락된 변수 이름이 표시됩니다. 실제 Supabase
-기능을 호출하려면 `.env.local` 설정이 필요합니다.
-
-## Supabase 마이그레이션
-
-초기 스키마는
-`supabase/migrations/202609220001_initial_schema.sql`에 있습니다. Supabase CLI로
-개발 프로젝트에 연결한 뒤 적용합니다.
+### 마이그레이션
 
 ```bash
 npx supabase login
-npx supabase link --project-ref vhlrmudatjcgspwltdix
+npx supabase link --project-ref <PROJECT_REF>
+npx supabase migration list --linked
 npx supabase db push
 ```
 
-적용 전 `npx supabase db diff --linked` 등으로 대상 프로젝트를 확인하세요. 이
-마이그레이션은 아직 원격 개발 DB에 적용하지 않았습니다.
+적용 전 연결된 프로젝트와 미적용 마이그레이션을 반드시 확인합니다.
 
-## Vercel 배포
+### Auth URL
 
-1. 이 GitHub 저장소를 Vercel 프로젝트로 가져옵니다.
-2. Production과 Preview 환경에 Supabase 환경변수와 `CRON_SECRET`을 등록합니다.
-3. 기본 Next.js 빌드 설정으로 배포합니다.
-4. HTTPS 배포 주소에서 홈 화면 설치와 카메라 권한을 확인합니다.
-
-서비스 워커는 프로덕션 빌드에서만 등록됩니다. Android에서는 브라우저의 설치
-메뉴를, iPhone에서는 Safari의 `공유 → 홈 화면에 추가`를 사용합니다.
-
-## 계정 정책
-
-### 초대 재발송과 검증
-
-- 재발송 오류나 발송 한도 초과가 발생해도 Auth 사용자와 프로필을 삭제하지 않습니다.
-- 이메일 인증 전에는 초대 메일, 인증 후 비밀번호 설정 대기 상태에는 비밀번호 설정 메일을 요청합니다.
-- 관리자의 같은 기관 활성 구성원에 대해서만 재발송합니다.
-- 초대 콜백은 링크의 인증 정보를 한 번만 처리하며, 인증 정보가 없는 링크는 기존 로그인 세션으로 대체하지 않습니다.
-- 신규 초대 후 프로필 저장이 실패하면 사용자 삭제 없이 오류를 반환합니다. 운영자는 해당 Auth UID와 기관을 확인해 누락 프로필을 복구해야 합니다.
-
-운영 전 Custom SMTP와 정확한 Site URL/Redirect URL을 설정하고 새 메일로 초대 수락 → 비밀번호 설정 → 로그아웃 → 재로그인을 검증합니다.
-자동 테스트는 발송 한도, 기관/관리자 권한, 계정 보존, 콜백 중복 실행 및 만료 오류를 모의 검증합니다. 실제 메일 도착을 보장하지는 않습니다.
-
-MVP는 공개 회원가입을 제공하지 않습니다. 최초 기관·관리자는 관리 절차로
-부트스트랩하고, 이후 코치는 관리자가 앱의 구성원 화면에서 이메일로 초대합니다.
-
-### 인증 대시보드 설정
-
-Supabase의 Authentication 설정에서 공개 회원가입을 끄고 URL Configuration에
-다음을 등록합니다.
+운영 전 Supabase Authentication의 공개 회원가입을 끄고 URL Configuration을 설정합니다.
 
 ```text
 Site URL: https://flag-edu-prototype.vercel.app
@@ -108,49 +204,42 @@ Redirect URL: https://flag-edu-prototype.vercel.app/auth/callback
 Redirect URL: https://flag-edu-prototype.vercel.app/**
 ```
 
-`NEXT_PUBLIC_SITE_URL` 뒤에 `/auth/callback?next=/set-password`를 붙인 주소가
-Redirect URL 허용 목록과 일치해야 합니다. 허용되지 않은 주소는 Supabase의
-Site URL로 대체되므로 초대·비밀번호 설정 메일이 로그인 화면으로 잘못 이동할 수
-있습니다. Vercel Preview를 인증 테스트에 사용한다면 해당 Preview 패턴도 별도로
-허용합니다.
-
-초대 메일은 관리자 세션과 `profiles.role = 'admin'`을 확인한 서버 액션만 전송할
-수 있습니다. 초대받은 코치는 링크에서 비밀번호를 만든 뒤 로그인합니다.
+Vercel Preview에서 인증을 시험한다면 해당 Preview 패턴을 별도로 추가합니다. 허용되지 않은 콜백은 Supabase의 Site URL로 대체되어 초대 링크가 잘못된 화면으로 이동할 수 있습니다.
 
 ### 최초 기관과 관리자
 
-초대 기능을 처음 사용하려면 초기 마이그레이션 적용 후 Supabase Dashboard의
-`Authentication → Users`에서 최초 사용자 한 명을 생성합니다. 해당 User UID로
-SQL Editor에서 기관과 관리자 프로필을 연결합니다.
-
-```sql
-begin;
-
-with new_organization as (
-  insert into public.organizations (name)
-  values ('Flag Edu')
-  returning id
-)
-insert into public.profiles (id, organization_id, name, role, status)
-select
-  '<AUTH_USER_UUID>'::uuid,
-  id,
-  '관리자',
-  'admin'::public.member_role,
-  'active'::public.member_status
-from new_organization;
-
-commit;
-```
-
-이 부트스트랩 작업 이후의 코치 계정은 앱의 `구성원 관리`에서 초대합니다.
-최초 관리자와 초대받은 코치는 첫 로그인 또는 초대 링크 진입 시 새 비밀번호를
-설정해야 하며, 완료 전에는 업무 화면에 접근할 수 없습니다.
-
-같은 작업은 로컬의 서버 환경변수를 사용해 다음 명령으로 실행할 수도 있습니다.
+초기 마이그레이션 뒤 Supabase Auth 사용자를 만든 다음 기관과 관리자 프로필을 연결합니다. 로컬 서버 환경변수가 준비되어 있으면 다음 명령을 사용할 수 있습니다.
 
 ```bash
 npm run bootstrap:admin -- <AUTH_USER_UUID>
 ```
 
-기존 프로필과 기관을 확인하므로 명령을 다시 실행해도 중복 생성하지 않습니다.
+이후 코치는 앱의 `구성원 관리`에서 이메일로 초대합니다.
+
+## 검증
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm test
+npm run build
+npm audit --omit=dev --audit-level=high
+```
+
+Aside 브라우저 QA는 기본 조회 전용입니다.
+
+```bash
+npm run qa:aside
+```
+
+- [Aside QA 실행 안내](docs/aside-qa.md)
+- [QA 피드백 루프](docs/qa-feedback-loop.md)
+
+## Vercel 배포
+
+1. GitHub 저장소를 Vercel 프로젝트에 연결합니다.
+2. Production과 Preview에 필요한 환경변수를 각각 등록합니다.
+3. `main`을 배포하고 운영 주소에서 로그인·권한·초대 콜백을 확인합니다.
+4. 설치형 PWA와 모바일 카메라 선택은 HTTPS 실기기에서 최종 확인합니다.
+
+내보내기 정리 작업은 [vercel.json](vercel.json)의 UTC cron 식으로 실행됩니다. 실행 시간을 바꾸려면 `crons[].schedule`을 수정하고 재배포합니다. 현재 `15 18 * * *`는 매일 UTC 18:15, 한국 시간 다음 날 03:15입니다.
