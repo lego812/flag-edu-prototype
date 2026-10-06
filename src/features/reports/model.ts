@@ -31,8 +31,15 @@ export type Attachment = {
   field_id: string;
   storage_path: string;
   original_filename: string;
+  file_size?: number;
+  created_at?: string;
   url?: string;
 };
+
+export function compareAttachmentsByUpload(a: Attachment, b: Attachment) {
+  const created = (a.created_at ?? "").localeCompare(b.created_at ?? "");
+  return created || a.id.localeCompare(b.id);
+}
 export type Report = {
   id: string;
   author_id: string;

@@ -152,13 +152,18 @@
     {
       "id": "R08",
       "name": "내보내기",
-      "cases": ["8-a-A", "8-a-B", "8-a-C", "8-a-D", "8-a-E", "8-b-A", "8-b-B"],
+      "cases": ["8-a-A", "8-a-B", "8-a-C", "8-a-D", "8-a-E", "8-a-F", "8-a-G", "8-b-A", "8-b-B", "8-b-C"],
       "automated": [
         "src/features/exports/generate.test.ts",
-        "src/app/api/exports/route.test.ts"
+        "src/features/exports/policy.test.ts",
+        "src/features/exports/cleanup.test.ts",
+        "src/app/api/exports/route.test.ts",
+        "src/app/api/exports/[id]/route.test.ts",
+        "src/app/api/cron/exports/route.test.ts",
+        "src/features/reports/workflows.test.ts"
       ],
       "gaps": [
-        "PDF 시각적 페이지 깨짐 검사",
+        "실제 Storage 사진을 포함한 PDF 다운로드 E2E",
         "실제 모바일 다운로드·이력 재다운로드"
       ]
     },

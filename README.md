@@ -30,11 +30,14 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SUPABASE_SECRET_KEY=your-server-only-secret-key
+CRON_SECRET=replace-with-a-random-string-at-least-16-characters
 ```
 
 `SUPABASE_SECRET_KEY`는 관리자 초대 API를 위한 서버 전용 값입니다. 절대로
 `NEXT_PUBLIC_` 접두사를 붙이지 않습니다. DB 비밀번호, Secret key 및 기존
 `service_role` 키는 브라우저 코드나 저장소에 넣지 않습니다.
+`CRON_SECRET`은 16자 이상의 무작위 서버 전용 값으로 설정합니다. Vercel의
+일일 Cron이 이 값을 사용해 보관 기한 7일이 지난 내보내기 파일을 삭제합니다.
 
 ## 검증
 
@@ -69,7 +72,7 @@ npx supabase db push
 ## Vercel 배포
 
 1. 이 GitHub 저장소를 Vercel 프로젝트로 가져옵니다.
-2. Production과 Preview 환경에 두 Supabase 환경변수를 등록합니다.
+2. Production과 Preview 환경에 Supabase 환경변수와 `CRON_SECRET`을 등록합니다.
 3. 기본 Next.js 빌드 설정으로 배포합니다.
 4. HTTPS 배포 주소에서 홈 화면 설치와 카메라 권한을 확인합니다.
 

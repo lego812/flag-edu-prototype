@@ -5,7 +5,16 @@ import {
   listReports,
   reportFilters,
 } from "@/features/reports/repository";
-import { exportRows, generateExport } from "@/features/exports/generate";
+import {
+  exportRows,
+  generateExport,
+  generateReportPdf,
+} from "@/features/exports/generate";
+import {
+  exportExpiresAt,
+  MAX_PDF_PHOTO_BYTES,
+  totalPhotoBytes,
+} from "@/features/exports/policy";
 import { revalidatePath } from "next/cache";
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -59,6 +68,14 @@ export async function POST(request: Request) {
       },
       { status: 400 },
     );
+  if (format === "pdf" && totalPhotoBytes(reports) > MAX_PDF_PHOTO_BYTES)
+    return NextResponse.json(
+      {
+        error:
+          "PDF에 포함할 사진이 15MiB를 초과합니다. 기간이나 사진 수를 줄여 주세요.",
+      },
+      { status: 400 },
+    );
   const { data: job, error: jobError } = await supabase
     .from("export_jobs")
     .insert({
@@ -67,6 +84,7 @@ export async function POST(request: Request) {
       format,
       filters,
       status: "processing",
+      expires_at: exportExpiresAt(),
     })
     .select("id")
     .single();
@@ -86,7 +104,16 @@ export async function POST(request: Request) {
         ),
       ),
     );
-    const bytes = await generateExport(format, exportRows(reports, templates));
+    const bytes =
+      format === "pdf"
+        ? await generateReportPdf(reports, templates, async (attachment) => {
+            const { data, error: downloadError } = await supabase.storage
+              .from("report-images")
+              .download(attachment.storage_path);
+            if (downloadError || !data) return null;
+            return new Uint8Array(await data.arrayBuffer());
+          })
+        : await generateExport("xlsx", exportRows(reports, templates));
     const mime =
       format === "pdf"
         ? "application/pdf"

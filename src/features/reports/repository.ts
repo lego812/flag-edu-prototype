@@ -1,10 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Report, Template } from "./model";
+import { compareAttachmentsByUpload } from "./model";
 import { addDays, isDate } from "@/features/classes/dates";
 import { isUuid } from "@/features/classes/model";
 
 export const REPORT_SELECT =
-  "*, class_sessions!inner(title,location,start_at,end_at,status,has_time), profiles!reports_author_id_fkey(name), report_answers(field_id,value), report_attachments(id,field_id,storage_path,original_filename)";
+  "*, class_sessions!inner(title,location,start_at,end_at,status,has_time), profiles!reports_author_id_fkey(name), report_answers(field_id,value), report_attachments(id,field_id,storage_path,original_filename,file_size,created_at)";
+
+function sortReportAttachments(report: Report) {
+  report.report_attachments.sort(compareAttachmentsByUpload);
+  return report;
+}
 export async function getTemplate(client: SupabaseClient, id: string) {
   const { data, error } = await client
     .from("template_versions")
@@ -19,11 +25,13 @@ export async function getTemplate(client: SupabaseClient, id: string) {
   return data;
 }
 export async function getReport(client: SupabaseClient, id: string) {
-  return client
+  const result = await client
     .from("reports")
     .select(REPORT_SELECT)
     .eq("id", id)
     .maybeSingle<Report>();
+  if (result.data) sortReportAttachments(result.data);
+  return result;
 }
 export type ReportFilters = {
   from: string;
@@ -59,7 +67,7 @@ export function reportFilters(
     throw new Error("조회 조건을 확인해 주세요.");
   return f;
 }
-export function listReports(
+export async function listReports(
   client: SupabaseClient,
   org: string,
   f: ReportFilters,
@@ -75,9 +83,11 @@ export function listReports(
   if (f.from) q = q.gte("class_sessions.start_at", f.from + "T00:00:00+09:00");
   if (f.to)
     q = q.lt("class_sessions.start_at", addDays(f.to, 1) + "T00:00:00+09:00");
-  return q
+  const result = await q
     .order("updated_at", { ascending: false })
     .order("id")
     .range((f.page - 1) * limit, f.page * limit - 1)
     .returns<Report[]>();
+  result.data?.forEach(sortReportAttachments);
+  return result;
 }

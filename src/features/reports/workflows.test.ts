@@ -59,6 +59,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
     for (const file of [
       "202610060001_add_pending_member_status.sql",
       "202610060002_authorization_hardening.sql",
+      "202610060003_export_retention.sql",
     ]) {
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     }
@@ -547,6 +548,14 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "insert into public.export_jobs(organization_id,requested_by,format) values($1,$2,'pdf')",
       [ids.org, ids.admin],
     );
+    expect(
+      (
+        await db.query<{ retention_days: number }>(
+          "select extract(day from expires_at-created_at)::int retention_days from public.export_jobs where requested_by=$1",
+          [ids.admin],
+        )
+      ).rows[0].retention_days,
+    ).toBe(7);
     await db.query(
       "insert into storage.objects(bucket_id,name) values('report-exports',$1)",
       [`${ids.org}/${ids.admin}/report.pdf`],
