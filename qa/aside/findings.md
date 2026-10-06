@@ -117,4 +117,10 @@
 
 | ID | 종류 | 기준·케이스 | 재현·원인 | 상태 | 변경·재검증 |
 | --- | --- | --- | --- | --- | --- |
-| `QA-2026-10-06-auth-redirect-allowlist` | 운영 설정 결함 | R02 / 2-a-B, 2-a-C | 대기 구성원의 실제 비밀번호 설정 메일을 열자 요청한 `http://localhost:3000/auth/callback?next=/set-password` 대신 과거 Vercel 미리보기 루트로 이동했고, 복구 토큰이 `/login`에서 처리되지 않아 가입을 계속할 수 없었다. 원격 Supabase Auth 설정을 조회해 Site URL이 과거 미리보기 주소이고 localhost·현재 운영 콜백이 Redirect 허용 목록에 없음을 확인했다. | FIXED_PENDING_RETEST | Supabase Auth Site URL을 `https://flag-edu-prototype.vercel.app`로 변경하고 localhost·운영 `/auth/callback`과 하위 경로를 허용했다. Management API 재조회에서 새 Site URL과 허용 목록 반영을 확인했고 관련 콜백·재발송 회귀 테스트 9건과 ESLint가 통과했다. 기존 메일 토큰은 정상 콜백으로 수동 연결해 `/set-password` 도착까지 확인했지만, 설정 변경 후 새 메일 발송·수락 E2E는 외부 메일 재발송 승인이 필요하므로 VERIFIED로 올리지 않는다. |
+| `QA-2026-10-06-auth-redirect-allowlist` | 운영 설정 결함 | R02 / 2-a-B, 2-a-C | 대기 구성원의 실제 비밀번호 설정 메일을 열자 요청한 `http://localhost:3000/auth/callback?next=/set-password` 대신 과거 Vercel 미리보기 루트로 이동했고, 복구 토큰이 `/login`에서 처리되지 않아 가입을 계속할 수 없었다. 원격 Supabase Auth 설정을 조회해 Site URL이 과거 미리보기 주소이고 localhost·현재 운영 콜백이 Redirect 허용 목록에 없음을 확인했다. | VERIFIED | Supabase Auth Site URL을 `https://flag-edu-prototype.vercel.app`로 변경하고 localhost·운영 `/auth/callback`과 하위 경로를 허용했다. Management API 재조회와 관련 콜백·재발송 회귀 테스트 9건, ESLint 통과 뒤 2026-10-06 19:49 KST에 새 비밀번호 설정 메일을 재발송했다. 새 메일의 `redirect_to`가 `http://localhost:3000/auth/callback?next=/set-password`임을 확인하고 링크를 실제 수락해 `http://localhost:3000/set-password`에 도착했다. 비밀번호 입력·최종 가입 제출은 사용자 직접 수행 대상으로 남겼다. |
+
+## 2026-10-06 쓰기 통합 재검증
+
+| ID | 범위 | 결과 | 재검증 근거 |
+| --- | --- | --- | --- |
+| `QA-2026-10-06-write-integration-retest` | 수업 등록, 보고서 작성·제출, 사진 추가·삭제, XLSX·PDF 생성, 구성원 메일 재발송 | VERIFIED | `QA-WRITE-RETEST-20261006-1945` 수업과 보고서를 실제 생성해 참여 인원 3명 및 모든 입력값의 제출 후 조회를 확인했다. QA 합성 JPG를 전용 보고서 경로에 추가해 화면의 `1/3장` 썸네일을 확인한 뒤 삭제했고, Storage 객체와 `report_attachments` 행이 모두 제거됨을 재조회했다. 해당 수업 필터로 XLSX와 PDF를 각각 생성해 19:48 KST 이력의 `완료` 상태와 다운로드 링크를 확인했다. `suwontaran@hs.ac.kr` 대기 계정에는 비밀번호 설정 메일을 재발송해 성공 메시지와 새 메일 수신을 확인했다. Chrome 확장의 로컬 파일 접근이 꺼져 있어 사진 추가는 Supabase CLI로 동일 Storage·DB 구조에 반영했고, 삭제는 실제 화면 동작과 사후 DB 조회로 검증했다. |
