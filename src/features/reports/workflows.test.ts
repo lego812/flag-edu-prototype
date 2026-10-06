@@ -61,6 +61,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202610060002_authorization_hardening.sql",
       "202610060003_export_retention.sql",
       "202610060004_export_cleanup_service_role.sql",
+      "202610060005_report_mutation_guards.sql",
     ]) {
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     }
@@ -349,7 +350,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
         reportId,
         old,
       ]),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: "PT409" });
   });
   it("protects the last administrator and cross-organization members", async () => {
     await asUser(ids.admin);
@@ -466,7 +467,57 @@ describe("reporting PostgreSQL workflows and RLS", () => {
         await version(),
         JSON.stringify([{ fieldId, value: "수업 완료" }]),
       ]),
+    ).rejects.toMatchObject({ code: "PT409" });
+    await expect(
+      db.query("select public.save_and_submit_report($1,$2,$3,false)", [
+        reportId,
+        await version(),
+        JSON.stringify([{ fieldId, value: "수정 시도" }]),
+      ]),
+    ).rejects.toMatchObject({ code: "PT409" });
+
+    const cancelledPath = `${ids.org}/${reportId}/40000000-0000-4000-8000-000000000003.jpg`;
+    await expect(
+      db.query(
+        "insert into storage.objects(bucket_id,name) values('report-images',$1)",
+        [cancelledPath],
+      ),
     ).rejects.toThrow();
+
+    await db.exec("reset role");
+    await db.query(
+      "insert into storage.objects(bucket_id,name) values('report-images',$1)",
+      [cancelledPath],
+    );
+    await asUser(ids.coach);
+    const photoField = (
+      await db.query<{ id: string }>(
+        "select id from public.template_fields where template_version_id=$1 and field_type='photo'",
+        [templateId],
+      )
+    ).rows[0].id;
+    await expect(
+      db.query(
+        "insert into public.report_attachments(organization_id,report_id,field_id,storage_path,original_filename,file_size) values($1,$2,$3,$4,'photo.jpg',123)",
+        [ids.org, reportId, photoField, cancelledPath],
+      ),
+    ).rejects.toThrow();
+    expect(
+      (
+        await db.query(
+          "delete from public.report_attachments where id=$1 returning id",
+          [photoId],
+        )
+      ).rows,
+    ).toHaveLength(0);
+    expect(
+      (
+        await db.query(
+          "delete from storage.objects where bucket_id='report-images' and name=$1 returning name",
+          [photoPath],
+        )
+      ).rows,
+    ).toHaveLength(0);
   });
   it("isolates another coach's reports and private photos in the same organization", async () => {
     const second = "10000000-0000-4000-8000-000000000004";

@@ -4,6 +4,9 @@ import { isUuid } from "@/features/classes/model";
 import { revalidatePath } from "next/cache";
 const fail = (error: string, status = 400) =>
   NextResponse.json({ error }, { status });
+const sessionStatus = (
+  sessions: { status: string } | { status: string }[],
+) => (Array.isArray(sessions) ? sessions[0]?.status : sessions.status);
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -32,11 +35,13 @@ export async function POST(
     return fail("JPG 형식을 확인해 주세요.");
   const { data: report } = await supabase
     .from("reports")
-    .select("id,template_version_id")
+    .select("id,template_version_id,class_sessions!inner(status)")
     .eq("id", id)
     .eq("author_id", profile.id)
     .single();
   if (!report) return fail("본인 보고서만 변경할 수 있습니다.", 403);
+  if (sessionStatus(report.class_sessions) === "cancelled")
+    return fail("취소된 수업의 보고서는 변경할 수 없습니다.", 409);
   const { data: target } = await supabase
     .from("template_fields")
     .select("id")
@@ -91,11 +96,13 @@ export async function DELETE(
     return fail("잘못된 사진입니다.");
   const { data: report } = await supabase
     .from("reports")
-    .select("id")
+    .select("id,class_sessions!inner(status)")
     .eq("id", id)
     .eq("author_id", profile.id)
     .single();
   if (!report) return fail("본인 보고서만 변경할 수 있습니다.", 403);
+  if (sessionStatus(report.class_sessions) === "cancelled")
+    return fail("취소된 수업의 보고서는 변경할 수 없습니다.", 409);
   const { data: a } = await supabase
     .from("report_attachments")
     .select("storage_path")
@@ -103,16 +110,19 @@ export async function DELETE(
     .eq("report_id", id)
     .single();
   if (!a) return fail("사진을 찾을 수 없습니다.");
-  const removed = await supabase.storage
-    .from("report-images")
-    .remove([a.storage_path]);
-  if (removed.error) return fail("사진 삭제 실패. 다시 시도해 주세요.");
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from("report_attachments")
     .delete()
     .eq("id", attachmentId)
-    .eq("report_id", id);
-  if (error) return fail("사진 기록 정리 실패. 다시 삭제를 시도해 주세요.");
+    .eq("report_id", id)
+    .select("id");
+  if (error || !deleted?.length)
+    return fail("사진 기록 정리 실패. 다시 삭제를 시도해 주세요.");
+  const removed = await supabase.storage
+    .from("report-images")
+    .remove([a.storage_path]);
+  if (removed.error)
+    return fail("사진 파일 정리에 실패했습니다. 관리자에게 문의해 주세요.");
   revalidatePath("/reports/" + id);
   return NextResponse.json({ ok: true });
 }

@@ -11,6 +11,7 @@ export function ReportEditor({
   report: Report;
   fields: Field[];
 }) {
+  const immutable = report.class_sessions.status === "cancelled";
   const router = useRouter();
   const [draft, setDraft] = useState<Record<string, unknown>>(() =>
     Object.fromEntries(report.report_answers.map((a) => [a.field_id, a.value])),
@@ -65,7 +66,7 @@ export function ReportEditor({
       className="max-w-2xl space-y-8 py-4"
     >
       <input type="hidden" name="version" value={report.updated_at} />
-      <fieldset disabled={pending} className="space-y-10">
+      <fieldset disabled={pending || immutable} className="space-y-10">
         {fields
           .filter((f) => f.field_type !== "photo")
           .map((f) => (
@@ -86,7 +87,7 @@ export function ReportEditor({
             className="btn"
             name="intent"
             value="submit"
-            disabled={report.class_sessions.status === "cancelled"}
+            disabled={immutable}
           >
             제출
           </button>

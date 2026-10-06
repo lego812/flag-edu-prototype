@@ -48,4 +48,19 @@ describe("ReportEditor navigation", () => {
     );
     expect(mocks.push).not.toHaveBeenCalled();
   });
+
+  it("disables every mutation control for a cancelled class", () => {
+    render(
+      <ReportEditor
+        report={{
+          ...report,
+          class_sessions: { ...report.class_sessions, status: "cancelled" },
+        }}
+        fields={[]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "임시저장" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "제출" })).toBeDisabled();
+  });
 });

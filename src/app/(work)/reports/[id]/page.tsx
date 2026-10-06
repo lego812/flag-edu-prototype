@@ -21,7 +21,8 @@ export default async function ReportPage({
   if (!report) notFound();
   const template = await getTemplate(supabase, report.template_version_id);
   const mine = report.author_id === profile.id;
-  const editing = mine && (await searchParams).edit === "1";
+  const mutable = mine && report.class_sessions.status !== "cancelled";
+  const editing = mutable && (await searchParams).edit === "1";
   const attachments = await Promise.all(
     report.report_attachments.map(async (a) => {
       const { data } = await supabase.storage
@@ -48,11 +49,11 @@ export default async function ReportPage({
         />
         {report.class_sessions.status === "cancelled" && (
           <p className="text-red-700">
-            취소된 수업입니다. 기존 기록은 유지되며 새 제출은 불가능합니다.
+            취소된 수업입니다. 기존 기록은 유지되며 변경하거나 제출할 수 없습니다.
           </p>
         )}
       </header>
-      {mine && (
+      {mutable && (
         <Link
           className="btn-secondary w-fit"
           href={editing ? `/reports/${id}` : `/reports/${id}?edit=1`}

@@ -35,6 +35,8 @@ export async function saveReportAction(
   const { data: report } = await getReport(supabase, id);
   if (!report || report.author_id !== profile.id)
     return { error: "본인의 보고서만 수정할 수 있습니다." };
+  if (report.class_sessions.status === "cancelled")
+    return { error: "취소된 수업의 보고서는 변경할 수 없습니다." };
   let answers;
   try {
     const template = await getTemplate(supabase, report.template_version_id);
@@ -62,7 +64,9 @@ export async function saveReportAction(
   if (error)
     return {
       error:
-        error.code === "40001"
+        error.code === "PT409" && error.message.includes("cancelled")
+          ? "취소된 수업의 보고서는 변경할 수 없습니다."
+          : error.code === "40001" || error.code === "PT409"
           ? "다른 화면에서 보고서가 변경됐습니다. 입력 내용을 복사한 뒤 새로고침해 주세요."
           : "저장하지 못했습니다. 취소 여부와 필수 항목, DB 설정을 확인해 주세요.",
     };

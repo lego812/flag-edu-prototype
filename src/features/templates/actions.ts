@@ -34,7 +34,7 @@ export async function saveTemplateAction(
   if (error)
     return {
       error:
-        error.code === "40001"
+        error.code === "40001" || error.code === "PT409"
           ? "다른 사용자가 변경했습니다. 새로고침해 주세요."
           : "저장하지 못했습니다. 항목과 DB 마이그레이션 적용 여부를 확인해 주세요.",
     };

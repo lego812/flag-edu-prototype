@@ -81,4 +81,28 @@ describe("report read/edit mode", () => {
       screen.queryByRole("link", { name: "수정" }),
     ).not.toBeInTheDocument();
   });
+  it("keeps a cancelled report read-only even for its author", async () => {
+    mocks.report.mockResolvedValue({
+      data: {
+        id,
+        author_id: "owner",
+        template_version_id: "template",
+        profiles: { name: "홍길동" },
+        created_at: "2026-09-23T00:00:00Z",
+        class_sessions: { title: "체육", status: "cancelled" },
+        report_attachments: [],
+        report_answers: [{ field_id: "field", value: "수업 기록" }],
+      },
+    });
+    render(
+      await ReportPage({
+        params: Promise.resolve({ id }),
+        searchParams: Promise.resolve({ edit: "1" }),
+      }),
+    );
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "수정" })).not.toBeInTheDocument();
+    expect(screen.getByText("사진 조회")).toBeInTheDocument();
+    expect(screen.getByText(/취소된 수업입니다/)).toBeInTheDocument();
+  });
 });
