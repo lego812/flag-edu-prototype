@@ -117,6 +117,7 @@
       "automated": [
         "src/components/count-picker.test.tsx",
         "src/features/reports/photo.test.ts",
+        "src/features/reports/photos.test.tsx",
         "src/features/reports/field-input.test.tsx"
       ],
       "gaps": ["실기기 카메라·HEIC", "실제 Storage 업로드 장애"]

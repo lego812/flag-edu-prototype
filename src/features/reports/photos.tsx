@@ -68,75 +68,87 @@ export function Photos({
         .filter((f) => f.field_type === "photo")
         .map((f) => {
           const photos = attachments.filter((a) => a.field_id === f.id);
+          const maxFiles = f.settings.max_files ?? 3;
           return (
-            <div key={f.id} className="space-y-3">
-              <h2 className="font-semibold">
-                {f.label}
-                {f.required ? " *" : ""} ({photos.length}/
-                {f.settings.max_files ?? 3})
-              </h2>
-              <ul className="flex gap-3 overflow-x-auto pb-2">
-                {photos.map((a) => (
-                  <li key={a.id} className="relative shrink-0">
-                    {a.url ? (
-                      <a
-                        href={a.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label="첨부 사진 크게 보기"
-                      >
-                        <img
-                          src={a.url}
-                          alt={f.label + " 첨부 사진"}
-                          className="size-36 rounded-2xl object-cover sm:size-44"
-                        />
-                      </a>
-                    ) : (
-                      <p>사진을 열지 못했습니다. 새로고침해 주세요.</p>
-                    )}
-                    {editable && (
-                      <button
-                        type="button"
-                        aria-label="사진 삭제"
-                        className="absolute right-1 top-1 flex size-11 items-center justify-center rounded-full bg-black/70 text-xl text-white"
-                        disabled={busy}
-                        onClick={() => remove(a.id)}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {editable && photos.length < (f.settings.max_files ?? 3) && (
-                <div className="flex flex-wrap gap-3">
-                  {[false, true].map((camera) => (
-                    <label
-                      key={String(camera)}
-                      className="flex min-h-20 flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 bg-white px-5 text-sm hover:border-black"
+            <div key={f.id} className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="font-semibold">
+                  {f.label}
+                  {f.required ? " *" : ""}
+                </h2>
+                <span className="shrink-0 text-sm text-neutral-500">
+                  {photos.length}/{maxFiles}장
+                </span>
+              </div>
+              {!!photos.length && (
+                <ul
+                  aria-label={`${f.label} ${photos.length}장`}
+                  tabIndex={0}
+                  className="-mx-1 flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto px-1 pb-3 focus-visible:outline-2 focus-visible:outline-black"
+                >
+                  {photos.map((a, index) => (
+                    <li
+                      key={a.id}
+                      className="relative size-20 shrink-0 snap-start sm:size-24"
                     >
-                      <span aria-hidden="true" className="text-2xl">
-                        {camera ? "◎" : "+"}
-                      </span>
-                      {camera ? "촬영" : "사진 추가"}
-                      <input
-                        className="sr-only"
-                        type="file"
-                        aria-label={
-                          f.label + (camera ? " 사진 촬영" : " 사진 선택")
-                        }
-                        accept="image/*"
-                        capture={camera ? "environment" : undefined}
-                        disabled={busy}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) void upload(f.id, file);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
+                      {a.url ? (
+                        <a
+                          href={a.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${f.label} ${index + 1} 크게 보기`}
+                          className="block size-full rounded-xl focus-visible:outline-2 focus-visible:outline-black"
+                        >
+                          <img
+                            src={a.url}
+                            alt={`${f.label} ${index + 1}`}
+                            className="size-full rounded-xl border border-neutral-200 object-cover"
+                          />
+                        </a>
+                      ) : (
+                        <p className="flex size-full items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 p-2 text-center text-xs text-neutral-500">
+                          사진을 열지 못했습니다.
+                        </p>
+                      )}
+                      {editable && (
+                        <button
+                          type="button"
+                          aria-label={`${f.label} ${index + 1} 삭제`}
+                          className="absolute right-0 top-0 flex size-11 items-start justify-end rounded-xl p-1 focus-visible:outline-2 focus-visible:outline-black"
+                          disabled={busy}
+                          onClick={() => remove(a.id)}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="flex size-6 items-center justify-center rounded-full bg-black/75 text-base leading-none text-white"
+                          >
+                            ×
+                          </span>
+                        </button>
+                      )}
+                    </li>
                   ))}
-                </div>
+                </ul>
+              )}
+              {editable && photos.length < maxFiles && (
+                <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-neutral-300 bg-white px-5 text-sm font-semibold hover:border-black">
+                  <span aria-hidden="true" className="text-lg">
+                    +
+                  </span>
+                  사진 추가
+                  <input
+                    className="sr-only"
+                    type="file"
+                    aria-label={`${f.label} 선택`}
+                    accept="image/*"
+                    disabled={busy}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void upload(f.id, file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
               )}
             </div>
           );
