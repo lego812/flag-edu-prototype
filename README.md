@@ -235,6 +235,26 @@ npm run qa:aside
 - [Aside QA 실행 안내](docs/aside-qa.md)
 - [QA 피드백 루프](docs/qa-feedback-loop.md)
 
+## 데모 데이터 교체
+
+계정·프로필·기관은 보존하면서 수업, 보고서, 양식, 사진, 내보내기 이력을 현실적인 데모 시나리오로 교체할 수 있습니다. 기본 실행은 조회 전용 dry-run이며 현재 삭제 대상 건수만 보여 줍니다.
+
+```bash
+npm run seed:demo -- --admin-email=<관리자 이메일> --coach-email=<코치 이메일>
+```
+
+출력된 기관과 계정 역할, 삭제 대상 건수를 확인한 뒤에만 실제 교체 확인 문자열을 추가합니다.
+
+```bash
+npm run seed:demo -- --admin-email=<관리자 이메일> --coach-email=<코치 이메일> --confirm=REPLACE-DEMO-DATA
+```
+
+- 관리자 계정은 `admin/active`, 코치 계정은 `coach/active`로 맞춥니다.
+- 다른 Auth 사용자와 모든 프로필·기관 정보는 삭제하지 않습니다.
+- 기존 업무 데이터와 `report-images`, `report-exports` 객체는 제거합니다.
+- 주간 기초반, 방문형 수업, 체험 수업, 시간 미정 워크숍, 우천 취소 일정과 제출·임시저장 보고서, 합성 활동 사진, XLSX 이력을 생성합니다.
+- 서버 전용 `SUPABASE_SECRET_KEY`가 필요하며 실행 결과나 키를 커밋하지 않습니다.
+
 ## Vercel 배포
 
 1. GitHub 저장소를 Vercel 프로젝트에 연결합니다.

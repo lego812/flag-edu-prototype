@@ -15,6 +15,7 @@
     "start": "next start",
     "lint": "eslint .",
     "require-password-change": "node --env-file=.env.local scripts/require-password-change.mjs",
+    "seed:demo": "node --env-file=.env.local scripts/seed-demo-data.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "qa:aside": "node scripts/aside-qa.mjs",
