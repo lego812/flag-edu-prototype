@@ -27,9 +27,10 @@
     {
       "id": "R02",
       "name": "초대·로그인",
-      "cases": ["2-a-A", "2-a-B", "2-a-C", "2-b-A", "2-b-B", "2-b-C", "2-b-D"],
+      "cases": ["2-a-A", "2-a-B", "2-a-C", "2-b-A", "2-b-B", "2-b-C", "2-b-D", "2-b-E"],
       "automated": [
         "src/features/auth/validation.test.ts",
+        "src/features/auth/actions.test.ts",
         "src/features/members/actions.test.ts",
         "src/app/auth/callback/page.test.tsx"
       ],
@@ -143,7 +144,7 @@
     {
       "id": "R07",
       "name": "양식",
-      "cases": ["7-a-A", "7-a-B", "7-b-A", "7-b-B", "7-b-C"],
+      "cases": ["7-a-A", "7-a-B", "7-b-A", "7-b-B", "7-b-C", "7-b-D"],
       "automated": ["src/features/reports/workflows.test.ts"],
       "gaps": ["게시·버전 보존 E2E: 양식 변경 승인 필요"]
     },
@@ -163,12 +164,12 @@
     {
       "id": "R09",
       "name": "권한·데이터 보호",
-      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-b-A", "9-b-B", "9-b-C"],
+      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-b-A", "9-b-B", "9-b-C", "9-b-D"],
       "automated": [
         "src/features/reports/workflows.test.ts",
         "src/features/classes/actions.test.ts"
       ],
-      "gaps": ["다른 기관/코치 전용 계정으로 RLS·Storage E2E: 별도 준비 필요"]
+      "gaps": ["개발 Supabase의 전용 pending/관리자/코치 계정으로 RLS·Storage E2E: 별도 준비 필요"]
     }
   ],
   "scenarios": {

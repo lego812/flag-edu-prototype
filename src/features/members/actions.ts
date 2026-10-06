@@ -86,7 +86,7 @@ export async function inviteCoachAction(
       organization_id: profile.organization_id,
       name,
       role: "coach",
-      status: "active",
+      status: "pending",
     });
 
     if (profileError) {
@@ -126,17 +126,6 @@ export async function resendCoachInvitationAction(
   try {
     const env = requireServerEnv();
     const adminClient = createAdminClient();
-    const { data: authData, error: authError } =
-      await adminClient.auth.admin.getUserById(userId);
-
-    if (authError || !authData.user.email) {
-      return { error: "초대 사용자를 찾을 수 없습니다." };
-    }
-
-    if (authData.user.user_metadata?.must_change_password !== true) {
-      return { error: "이미 비밀번호 설정을 완료한 구성원입니다." };
-    }
-
     const { data: invitedProfile, error: profileError } = await adminClient
       .from("profiles")
       .select("name, organization_id, status")
@@ -144,8 +133,15 @@ export async function resendCoachInvitationAction(
       .eq("organization_id", currentProfile.organization_id)
       .single();
 
-    if (profileError || !invitedProfile || invitedProfile.status !== "active") {
+    if (profileError || !invitedProfile || invitedProfile.status !== "pending") {
       return { error: "같은 기관의 초대 구성원을 찾을 수 없습니다." };
+    }
+
+    const { data: authData, error: authError } =
+      await adminClient.auth.admin.getUserById(userId);
+
+    if (authError || !authData.user.email) {
+      return { error: "초대 사용자를 찾을 수 없습니다." };
     }
 
     const email = authData.user.email.toLowerCase();

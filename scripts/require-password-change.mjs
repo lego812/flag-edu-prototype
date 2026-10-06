@@ -28,6 +28,16 @@ if (readError) {
   throw readError;
 }
 
+const { error: profileError } = await supabase
+  .from("profiles")
+  .update({ status: "pending" })
+  .eq("id", userId)
+  .eq("status", "active");
+
+if (profileError) {
+  throw profileError;
+}
+
 const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
   user_metadata: {
     ...data.user.user_metadata,

@@ -78,7 +78,7 @@ const { error: profileInsertError } = await supabase.from("profiles").insert({
   organization_id: organization.id,
   name: adminName,
   role: "admin",
-  status: "active",
+  status: "pending",
 });
 
 if (profileInsertError) {
@@ -112,6 +112,6 @@ console.log(
     result: "created",
     organization: organization.name,
     role: "admin",
-    status: "active",
+    status: "pending",
   }),
 );

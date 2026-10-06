@@ -70,8 +70,7 @@ export default async function MembersPage() {
                 {(() => {
                   const authUser = authUserById.get(member.id);
                   const isInvitationPending =
-                    Boolean(authUser) &&
-                    authUser?.user_metadata?.must_change_password === true;
+                    Boolean(authUser) && member.status === "pending";
 
                   return (
                     <div className="flex flex-wrap items-center gap-3">
@@ -97,17 +96,19 @@ export default async function MembersPage() {
                     </div>
                   );
                 })()}
-                <details className="w-full">
-                  <summary className="cursor-pointer py-2 text-sm text-neutral-600">
-                    권한·상태 변경
-                  </summary>
-                  <ManageMemberForm
-                    id={member.id}
-                    role={member.role}
-                    status={member.status}
-                    self={member.id === profile.id}
-                  />
-                </details>
+                {member.status !== "pending" && (
+                  <details className="w-full">
+                    <summary className="cursor-pointer py-2 text-sm text-neutral-600">
+                      권한·상태 변경
+                    </summary>
+                    <ManageMemberForm
+                      id={member.id}
+                      role={member.role}
+                      status={member.status}
+                      self={member.id === profile.id}
+                    />
+                  </details>
+                )}
               </li>
             ))}
           </ul>
