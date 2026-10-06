@@ -112,3 +112,9 @@
 | ID | 종류 | 기준·케이스 | 원인·변경 | 상태 | 회귀 테스트·재검증 |
 | --- | --- | --- | --- | --- | --- |
 | `CLIENT-2026-10-06-inline-class-schedule` | APPROVED IMPROVEMENT | R03 / 3-b-B~3-b-E, 3-c, 3-d | 기존 등록 흐름은 반복 유형을 고른 뒤 다음 단계로 이동해야 날짜·시간 세부 입력을 볼 수 있었다. 등록 흐름을 3단계로 줄이고 `얼마나 자주 진행하나요?`의 반복 필드 아래에 반복 유형별 간격·시작/종료일·요일·매월 날짜와 선택 시간·진행방식·메모를 함께 렌더링했다. 다음은 확인 화면으로 바로 이동한다. | VERIFIED | 커밋 `6a249db`. `class-wizard.test.tsx`에서 STEP 2/3 인라인 날짜, 주 반복 시작/종료일·요일, 일 반복 확인 화면, 익일 종료를 검증하고 전체 32개 파일 146개 테스트·ESLint·TypeScript·production build 통과. 로그인된 로컬 `@브라우저`에서 반복 안 함의 날짜·시간 입력, 주 선택 시 간격·기간·요일 추가, STEP 3/3의 월요일 4회 미리보기를 확인했다. 등록 버튼은 누르지 않았고 목록 17건 유지와 `QA-INLINE-SCHEDULE-preview` 미생성을 재확인했다. |
+
+## 2026-10-06 초대 콜백 Redirect 설정 복구
+
+| ID | 종류 | 기준·케이스 | 재현·원인 | 상태 | 변경·재검증 |
+| --- | --- | --- | --- | --- | --- |
+| `QA-2026-10-06-auth-redirect-allowlist` | 운영 설정 결함 | R02 / 2-a-B, 2-a-C | 대기 구성원의 실제 비밀번호 설정 메일을 열자 요청한 `http://localhost:3000/auth/callback?next=/set-password` 대신 과거 Vercel 미리보기 루트로 이동했고, 복구 토큰이 `/login`에서 처리되지 않아 가입을 계속할 수 없었다. 원격 Supabase Auth 설정을 조회해 Site URL이 과거 미리보기 주소이고 localhost·현재 운영 콜백이 Redirect 허용 목록에 없음을 확인했다. | FIXED_PENDING_RETEST | Supabase Auth Site URL을 `https://flag-edu-prototype.vercel.app`로 변경하고 localhost·운영 `/auth/callback`과 하위 경로를 허용했다. Management API 재조회에서 새 Site URL과 허용 목록 반영을 확인했고 관련 콜백·재발송 회귀 테스트 9건과 ESLint가 통과했다. 기존 메일 토큰은 정상 콜백으로 수동 연결해 `/set-password` 도착까지 확인했지만, 설정 변경 후 새 메일 발송·수락 E2E는 외부 메일 재발송 승인이 필요하므로 VERIFIED로 올리지 않는다. |

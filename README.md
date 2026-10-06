@@ -101,10 +101,18 @@ Supabase의 Authentication 설정에서 공개 회원가입을 끄고 URL Config
 다음을 등록합니다.
 
 ```text
-Site URL: 운영 Vercel URL (배포 전에는 http://localhost:3000)
+Site URL: https://flag-edu-prototype.vercel.app
+Redirect URL: http://localhost:3000/auth/callback
 Redirect URL: http://localhost:3000/**
-Redirect URL: https://<Vercel 프로젝트 주소>/**
+Redirect URL: https://flag-edu-prototype.vercel.app/auth/callback
+Redirect URL: https://flag-edu-prototype.vercel.app/**
 ```
+
+`NEXT_PUBLIC_SITE_URL` 뒤에 `/auth/callback?next=/set-password`를 붙인 주소가
+Redirect URL 허용 목록과 일치해야 합니다. 허용되지 않은 주소는 Supabase의
+Site URL로 대체되므로 초대·비밀번호 설정 메일이 로그인 화면으로 잘못 이동할 수
+있습니다. Vercel Preview를 인증 테스트에 사용한다면 해당 Preview 패턴도 별도로
+허용합니다.
 
 초대 메일은 관리자 세션과 `profiles.role = 'admin'`을 확인한 서버 액션만 전송할
 수 있습니다. 초대받은 코치는 링크에서 비밀번호를 만든 뒤 로그인합니다.
