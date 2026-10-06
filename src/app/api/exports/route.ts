@@ -5,7 +5,11 @@ import {
   listReports,
   reportFilters,
 } from "@/features/reports/repository";
-import { exportRows, generateExport } from "@/features/exports/generate";
+import {
+  exportRows,
+  generateExport,
+  generateReportPdf,
+} from "@/features/exports/generate";
 import { revalidatePath } from "next/cache";
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -86,7 +90,16 @@ export async function POST(request: Request) {
         ),
       ),
     );
-    const bytes = await generateExport(format, exportRows(reports, templates));
+    const bytes =
+      format === "pdf"
+        ? await generateReportPdf(reports, templates, async (attachment) => {
+            const { data, error: downloadError } = await supabase.storage
+              .from("report-images")
+              .download(attachment.storage_path);
+            if (downloadError || !data) return null;
+            return new Uint8Array(await data.arrayBuffer());
+          })
+        : await generateExport("xlsx", exportRows(reports, templates));
     const mime =
       format === "pdf"
         ? "application/pdf"

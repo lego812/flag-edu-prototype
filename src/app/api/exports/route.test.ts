@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   template: vi.fn(),
   generate: vi.fn(),
+  generatePdf: vi.fn(),
+  download: vi.fn(),
   upload: vi.fn(),
   remove: vi.fn(),
   update: vi.fn(),
@@ -23,6 +25,7 @@ vi.mock("@/features/reports/repository", () => ({
 vi.mock("@/features/exports/generate", () => ({
   exportRows: mocks.rows,
   generateExport: mocks.generate,
+  generateReportPdf: mocks.generatePdf,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const profile = { id: "admin", organization_id: "org", role: "admin" };
@@ -33,7 +36,13 @@ const client = {
     }),
     update: mocks.update,
   }),
-  storage: { from: () => ({ upload: mocks.upload, remove: mocks.remove }) },
+  storage: {
+    from: () => ({
+      download: mocks.download,
+      upload: mocks.upload,
+      remove: mocks.remove,
+    }),
+  },
 };
 function request(format = "xlsx", origin = "http://localhost:3000") {
   const body = new FormData();
@@ -56,6 +65,8 @@ describe("export API", () => {
     mocks.template.mockResolvedValue({});
     mocks.rows.mockReturnValue([]);
     mocks.generate.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    mocks.generatePdf.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    mocks.download.mockResolvedValue({ data: new Blob([new Uint8Array([4])]) });
     mocks.upload.mockResolvedValue({});
     mocks.remove.mockResolvedValue({});
     mocks.update.mockReturnValue({ eq: async () => ({}) });
@@ -94,6 +105,16 @@ describe("export API", () => {
       );
     },
   );
+  it("loads private report photos while generating a PDF", async () => {
+    mocks.generatePdf.mockImplementation(async (_reports, _templates, load) => {
+      expect(
+        await load({ storage_path: "org/report/photo.jpg" }),
+      ).toEqual(new Uint8Array([4]));
+      return new Uint8Array([1, 2, 3]);
+    });
+    expect((await POST(request("pdf"))).status).toBe(200);
+    expect(mocks.download).toHaveBeenCalledWith("org/report/photo.jpg");
+  });
   it("cleans up a failed upload and records failure", async () => {
     mocks.upload.mockResolvedValue({ error: { message: "failed" } });
     expect((await POST(request())).status).toBe(500);

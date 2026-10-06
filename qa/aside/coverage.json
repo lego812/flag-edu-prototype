@@ -158,7 +158,7 @@
         "src/app/api/exports/route.test.ts"
       ],
       "gaps": [
-        "PDF 시각적 페이지 깨짐 검사",
+        "실제 Storage 사진을 포함한 PDF 다운로드 E2E",
         "실제 모바일 다운로드·이력 재다운로드"
       ]
     },
