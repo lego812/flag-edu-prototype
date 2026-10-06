@@ -27,8 +27,11 @@
     {
       "id": "R02",
       "name": "초대·로그인",
-      "cases": ["2-a-A", "2-a-B", "2-a-C", "2-b-A", "2-b-B", "2-b-C", "2-b-D", "2-b-E"],
+      "cases": ["2-a-A", "2-a-B", "2-a-C", "2-a-D", "2-b-A", "2-b-B", "2-b-C", "2-b-D", "2-b-E"],
       "automated": [
+        "next.config.test.ts",
+        "src/app/page.test.tsx",
+        "src/app/login/page.test.tsx",
         "src/features/auth/validation.test.ts",
         "src/features/auth/actions.test.ts",
         "src/features/members/actions.test.ts",

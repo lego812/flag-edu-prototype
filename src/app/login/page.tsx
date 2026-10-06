@@ -25,11 +25,9 @@ export default async function LoginPage() {
         <p className="mt-3 leading-7 text-neutral-600">
           이미 비밀번호를 설정한 계정으로 로그인하세요.
         </p>
-        <div className="mt-4 text-sm leading-6 text-neutral-600">
-          처음이신가요? 초대 이메일의{" "}
-          <strong className="text-black">초대 수락</strong>으로 비밀번호를
-          설정하세요.
-        </div>
+        <p className="mt-4 text-sm leading-6 text-neutral-600">
+          회원가입은 이메일 초대를 통해서만 가능합니다.
+        </p>
         <LoginForm />
         <Link
           href="/forgot-password"
