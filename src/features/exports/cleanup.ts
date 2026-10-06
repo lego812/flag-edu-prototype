@@ -10,7 +10,10 @@ export async function cleanupExpiredExports(
     .not("storage_path", "is", null)
     .lte("expires_at", now)
     .limit(500);
-  if (error) throw new Error("만료된 내보내기 조회 실패");
+  if (error)
+    throw new Error(
+      `만료된 내보내기 조회 실패 (${error.code ?? "unknown"}): ${error.message}`,
+    );
 
   const jobs = (data ?? []).filter(
     (job): job is { id: string; storage_path: string } =>
@@ -21,7 +24,8 @@ export async function cleanupExpiredExports(
   const removed = await client.storage
     .from("report-exports")
     .remove(jobs.map((job) => job.storage_path));
-  if (removed.error) throw new Error("만료된 내보내기 파일 삭제 실패");
+  if (removed.error)
+    throw new Error(`만료된 내보내기 파일 삭제 실패: ${removed.error.message}`);
 
   const cleared = await client
     .from("export_jobs")
@@ -30,6 +34,9 @@ export async function cleanupExpiredExports(
       "id",
       jobs.map((job) => job.id),
     );
-  if (cleared.error) throw new Error("만료된 내보내기 이력 정리 실패");
+  if (cleared.error)
+    throw new Error(
+      `만료된 내보내기 이력 정리 실패 (${cleared.error.code ?? "unknown"}): ${cleared.error.message}`,
+    );
   return jobs.length;
 }

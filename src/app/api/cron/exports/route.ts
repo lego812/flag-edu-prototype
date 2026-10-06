@@ -15,7 +15,11 @@ export async function GET(request: Request) {
   try {
     const removed = await cleanupExpiredExports(createAdminClient());
     return Response.json({ removed });
-  } catch {
+  } catch (error) {
+    console.error(
+      "Failed to clean up expired exports.",
+      error instanceof Error ? error.message : "Unknown cleanup error",
+    );
     return Response.json(
       { error: "만료된 내보내기 정리에 실패했습니다." },
       { status: 500 },

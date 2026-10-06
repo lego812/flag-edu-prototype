@@ -60,6 +60,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202610060001_add_pending_member_status.sql",
       "202610060002_authorization_hardening.sql",
       "202610060003_export_retention.sql",
+      "202610060004_export_cleanup_service_role.sql",
     ]) {
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     }
@@ -581,5 +582,36 @@ describe("reporting PostgreSQL workflows and RLS", () => {
     expect(
       (await db.query("select id from public.export_jobs")).rows,
     ).toHaveLength(0);
+  });
+  it("lets the service role clear expired export storage references", async () => {
+    await db.exec("reset role");
+    const inserted = await db.query<{ id: string }>(
+      "insert into public.export_jobs(organization_id,requested_by,format,storage_path,expires_at) values($1,$2,'pdf','expired/report.pdf',now()-interval '1 day') returning id",
+      [ids.org, ids.admin],
+    );
+
+    await db.exec("set role service_role");
+    expect(
+      (
+        await db.query(
+          "select id from public.export_jobs where id=$1 and expires_at<=now()",
+          [inserted.rows[0].id],
+        )
+      ).rows,
+    ).toHaveLength(1);
+    await db.query("update public.export_jobs set storage_path=null where id=$1", [
+      inserted.rows[0].id,
+    ]);
+    expect(
+      (
+        await db.query<{ storage_path: string | null }>(
+          "select storage_path from public.export_jobs where id=$1",
+          [inserted.rows[0].id],
+        )
+      ).rows[0].storage_path,
+    ).toBeNull();
+
+    await db.exec("reset role");
+    await db.query("delete from public.export_jobs where id=$1", [inserted.rows[0].id]);
   });
 });
