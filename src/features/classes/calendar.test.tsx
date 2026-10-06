@@ -12,8 +12,10 @@ const session = (
   title: `수업 ${id}`,
   location: "배움터",
   start_at,
+  end_at: start_at,
   has_time: true,
   status: "scheduled",
+  created_by: "coach",
   ...overrides,
 });
 

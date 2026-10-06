@@ -27,7 +27,14 @@ export type ClassInput = Pick<
 >;
 export type ClassCalendarSession = Pick<
   ClassSession,
-  "id" | "title" | "location" | "start_at" | "has_time" | "status"
+  | "id"
+  | "title"
+  | "location"
+  | "start_at"
+  | "end_at"
+  | "has_time"
+  | "status"
+  | "created_by"
 >;
 export type ClassActor = {
   id: string;

@@ -23,7 +23,7 @@ export function classRepository(client: SupabaseClient, actor: ClassActor) {
     async calendar(filters: ClassCalendarFilters) {
       const range = monthRange(filters.month);
       let query = client.from("class_sessions").select(
-        "id,title,location,start_at,has_time,status",
+        "id,title,location,start_at,end_at,has_time,status,created_by",
         { count: "exact" },
       )
         .eq("organization_id", actor.organization_id)
