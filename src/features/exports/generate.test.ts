@@ -9,6 +9,14 @@ import {
   HEADERS,
 } from "./generate";
 import type { Report, Template } from "@/features/reports/model";
+
+const JPEG = Uint8Array.from(
+  Buffer.from(
+    "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2Q==",
+    "base64",
+  ),
+);
+
 describe("export file generation", () => {
   const rows = [
     [
@@ -83,9 +91,14 @@ describe("export file generation", () => {
     } as Template;
     const report = {
       id: "report",
+      author_id: "teacher",
+      class_session_id: "session",
       template_version_id: "template",
       status: "submitted",
+      submitted_at: "2026-09-23T00:00:00Z",
+      confirmed_at: null,
       created_at: "2026-09-23T00:00:00Z",
+      updated_at: "2026-09-23T00:00:00Z",
       profiles: { name: "홍길동" },
       class_sessions: {
         title: "Book-스토리텔링",
@@ -111,13 +124,7 @@ describe("export file generation", () => {
         },
       ],
     } as Report;
-    const jpeg = Uint8Array.from(
-      Buffer.from(
-        "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2Q==",
-        "base64",
-      ),
-    );
-    const loadPhoto = vi.fn().mockResolvedValue(jpeg);
+    const loadPhoto = vi.fn().mockResolvedValue(JPEG);
     const bytes = await generateReportPdf(
       [report],
       new Map([["template", template]]),
@@ -126,5 +133,50 @@ describe("export file generation", () => {
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPageCount()).toBeGreaterThan(1);
     expect(loadPhoto).toHaveBeenCalledWith(report.report_attachments[0]);
+  }, 30000);
+  it("renders each photo as a full-width one-column row", async () => {
+    const template = {
+      id: "template",
+      name: "사진 보고서",
+      template_fields: [
+        { id: "photo", label: "활동 사진", field_type: "photo" },
+      ],
+    } as Template;
+    const report = {
+      id: "report",
+      author_id: "teacher",
+      class_session_id: "session",
+      template_version_id: "template",
+      status: "submitted",
+      submitted_at: "2026-09-23T00:00:00Z",
+      confirmed_at: null,
+      created_at: "2026-09-23T00:00:00Z",
+      updated_at: "2026-09-23T00:00:00Z",
+      profiles: { name: "홍길동" },
+      class_sessions: {
+        title: "사진 수업",
+        location: "센터",
+        start_at: "2026-09-22T01:00:00Z",
+        end_at: "2026-09-22T02:00:00Z",
+        has_time: true,
+        status: "scheduled",
+      },
+      report_answers: [],
+      report_attachments: Array.from({ length: 5 }, (_, index) => ({
+        id: `photo-${index}`,
+        field_id: "photo",
+        storage_path: `org/report/photo-${index}.jpg`,
+        original_filename: `photo-${index}.jpg`,
+      })),
+    } as Report;
+    const loadPhoto = vi.fn().mockResolvedValue(JPEG);
+    const bytes = await generateReportPdf(
+      [report],
+      new Map([["template", template]]),
+      loadPhoto,
+    );
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBe(2);
+    expect(loadPhoto).toHaveBeenCalledTimes(5);
   }, 30000);
 });

@@ -27,8 +27,8 @@ const LABEL_WIDTH = 106;
 const VALUE_WIDTH = CONTENT_WIDTH - LABEL_WIDTH;
 const TEXT_SIZE = 9;
 const LINE_HEIGHT = 14;
-const PHOTO_COLUMNS = 4;
-const PHOTO_CELL_HEIGHT = 96;
+const PHOTO_COLUMNS = 1;
+const PHOTO_CELL_HEIGHT = 220;
 const BORDER = rgb(0.65, 0.65, 0.65);
 const LABEL_FILL = rgb(0.965, 0.965, 0.965);
 
