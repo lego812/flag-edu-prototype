@@ -39,6 +39,9 @@ describe("Aside QA options and scope", () => {
     expect(prompt).toContain("http://localhost:3000");
     expect(prompt).toContain("QA-run-123");
     expect(prompt).toContain("조회 전용");
+    expect(prompt).toContain("대상 원점의 기존 탭");
+    expect(prompt).toContain("새 탭을 열거나 같은 URL로 다시 이동하지 않는다");
+    expect(prompt).toContain("로그인 화면 탭은 건너뛴다");
     expect(prompt).toContain("S01: 홈");
     expect(prompt).toContain("BLOCKED");
   });

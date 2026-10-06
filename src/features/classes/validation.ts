@@ -77,6 +77,30 @@ export type ClassFilters = {
   status: "all" | "scheduled" | "cancelled";
   page: number;
 };
+export type ClassCalendarFilters = {
+  month: string;
+  status: ClassFilters["status"];
+};
+
+export function parseClassCalendarFilters(
+  params: Record<string, string | string[] | undefined>,
+):
+  | { filters: ClassCalendarFilters; error?: undefined }
+  | { error: string; filters?: undefined } {
+  const month = params.month ?? seoulToday().slice(0, 7);
+  const status = params.status ?? "all";
+  if (
+    typeof month !== "string" ||
+    !/^\d{4}-\d{2}$/.test(month) ||
+    !isDate(`${month}-01`) ||
+    month >= "9999-12"
+  )
+    return { error: "올바른 조회 월을 선택해 주세요." };
+  if (status !== "all" && status !== "scheduled" && status !== "cancelled")
+    return { error: "올바른 수업 상태를 선택해 주세요." };
+  return { filters: { month, status } };
+}
+
 export function parseClassFilters(
   params: Record<string, string | string[] | undefined>,
 ):
