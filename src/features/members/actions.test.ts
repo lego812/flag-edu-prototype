@@ -27,10 +27,17 @@ describe("invitation account preservation", () => {
     mocks.current.mockResolvedValue({ profile: { role: "admin", organization_id: "org" } });
     mocks.select.mockReturnValue({ eq: mocks.eq });
     mocks.eq.mockReturnValue({ eq: mocks.eq, single: mocks.single });
-    mocks.single.mockResolvedValue({ data: { name: "코치", status: "active" } });
+    mocks.single.mockResolvedValue({ data: { name: "코치", status: "pending" } });
     mocks.getUser.mockResolvedValue({ data: { user: { email: "coach@example.com", user_metadata: { must_change_password: true } } } });
     mocks.invite.mockResolvedValue({ data: { user: { id: "existing" } }, error: null });
+    mocks.insert.mockResolvedValue({ error: null });
     mocks.recovery.mockResolvedValue({ error: null });
+  });
+  it("creates invited profiles in pending status", async () => {
+    expect((await inviteCoachAction({}, form())).success).toBeDefined();
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "pending", role: "coach" }),
+    );
   });
   it("preserves the account when sending hits the email limit", async () => {
     mocks.invite.mockResolvedValue({ data: {}, error: { code: "over_email_send_rate_limit", status: 429, message: "limited" } });

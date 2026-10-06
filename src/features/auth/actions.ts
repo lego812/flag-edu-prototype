@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { validateEmail, validatePassword } from "./validation";
 
 export type AuthActionState = {
@@ -58,13 +59,51 @@ export async function setPasswordAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.updateUser({
-    password,
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "비밀번호 설정 링크를 다시 확인해 주세요." };
+  }
+
+  const { error: passwordError } = await supabase.auth.updateUser({ password });
+
+  if (passwordError) {
+    return { error: "비밀번호를 설정하지 못했습니다. 초대 링크를 다시 확인해 주세요." };
+  }
+
+  const adminClient = createAdminClient();
+  const { data: profile, error: profileError } = await adminClient
+    .from("profiles")
+    .select("status")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return { error: "구성원 상태를 확인하지 못했습니다. 관리자에게 문의해 주세요." };
+  }
+
+  if (profile.status === "pending") {
+    const { data: activated, error: activationError } = await adminClient
+      .from("profiles")
+      .update({ status: "active" })
+      .eq("id", user.id)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+
+    if (activationError || !activated) {
+      return { error: "가입을 완료하지 못했습니다. 관리자에게 문의해 주세요." };
+    }
+  }
+
+  const { error: metadataError } = await supabase.auth.updateUser({
     data: { must_change_password: false },
   });
 
-  if (error) {
-    return { error: "비밀번호를 설정하지 못했습니다. 초대 링크를 다시 확인해 주세요." };
+  if (metadataError) {
+    return { error: "비밀번호 설정 상태를 저장하지 못했습니다. 다시 시도해 주세요." };
   }
 
   redirect("/dashboard");

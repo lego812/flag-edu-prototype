@@ -28,7 +28,7 @@ const supabase = createClient(supabaseUrl, secretKey, {
 
 const { data: profile, error: profileError } = await supabase
   .from("profiles")
-  .select("role")
+  .select("role, status")
   .eq("id", userId)
   .single();
 
@@ -53,6 +53,18 @@ const { error: updateError } = await supabase.auth.admin.updateUserById(userId, 
 
 if (updateError) {
   throw updateError;
+}
+
+if (profile.status === "pending") {
+  const { error: activationError } = await supabase
+    .from("profiles")
+    .update({ status: "active" })
+    .eq("id", userId)
+    .eq("status", "pending");
+
+  if (activationError) {
+    throw activationError;
+  }
 }
 
 console.log(JSON.stringify({ result: "admin_password_updated" }));
