@@ -184,7 +184,7 @@
         "src/features/reports/workflows.test.ts",
         "src/features/classes/actions.test.ts"
       ],
-      "gaps": ["개발 Supabase의 전용 pending/관리자/코치 계정으로 RLS·Storage E2E: 별도 준비 필요"]
+      "gaps": ["pending·비활성·타 조직 전용 계정과 실제 Storage 객체를 포함한 RLS E2E: 별도 준비 필요"]
     }
   ],
   "scenarios": {
