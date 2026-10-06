@@ -37,7 +37,7 @@
         "src/features/members/actions.test.ts",
         "src/app/auth/callback/page.test.tsx"
       ],
-      "gaps": ["메일 실발송·만료 링크·초대 수락 E2E: 별도 승인 필요"]
+      "gaps": ["만료된 초대·복구 링크 거절 E2E"]
     },
     {
       "id": "R03",

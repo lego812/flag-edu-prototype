@@ -117,7 +117,7 @@
 
 | ID | 종류 | 기준·케이스 | 재현·원인 | 상태 | 변경·재검증 |
 | --- | --- | --- | --- | --- | --- |
-| `QA-2026-10-06-auth-redirect-allowlist` | 운영 설정 결함 | R02 / 2-a-B, 2-a-C | 대기 구성원의 실제 비밀번호 설정 메일을 열자 요청한 `http://localhost:3000/auth/callback?next=/set-password` 대신 과거 Vercel 미리보기 루트로 이동했고, 복구 토큰이 `/login`에서 처리되지 않아 가입을 계속할 수 없었다. 원격 Supabase Auth 설정을 조회해 Site URL이 과거 미리보기 주소이고 localhost·현재 운영 콜백이 Redirect 허용 목록에 없음을 확인했다. | VERIFIED | Supabase Auth Site URL을 `https://flag-edu-prototype.vercel.app`로 변경하고 localhost·운영 `/auth/callback`과 하위 경로를 허용했다. Management API 재조회와 관련 콜백·재발송 회귀 테스트 9건, ESLint 통과 뒤 2026-10-06 19:49 KST에 새 비밀번호 설정 메일을 재발송했다. 새 메일의 `redirect_to`가 `http://localhost:3000/auth/callback?next=/set-password`임을 확인하고 링크를 실제 수락해 `http://localhost:3000/set-password`에 도착했다. 비밀번호 입력·최종 가입 제출은 사용자 직접 수행 대상으로 남겼다. |
+| `QA-2026-10-06-auth-redirect-allowlist` | 운영 설정 결함 | R02 / 2-a-B, 2-a-C | 대기 구성원의 실제 비밀번호 설정 메일을 열자 요청한 `http://localhost:3000/auth/callback?next=/set-password` 대신 과거 Vercel 미리보기 루트로 이동했고, 복구 토큰이 `/login`에서 처리되지 않아 가입을 계속할 수 없었다. 원격 Supabase Auth 설정을 조회해 Site URL이 과거 미리보기 주소이고 localhost·현재 운영 콜백이 Redirect 허용 목록에 없음을 확인했다. | VERIFIED | Supabase Auth Site URL을 `https://flag-edu-prototype.vercel.app`로 변경하고 localhost·운영 `/auth/callback`과 하위 경로를 허용했다. Management API 재조회와 관련 콜백·재발송 회귀 테스트 15건, ESLint 통과 뒤 2026-10-06 19:49 KST에 새 비밀번호 설정 메일을 재발송했다. 새 메일의 `redirect_to`가 `http://localhost:3000/auth/callback?next=/set-password`임을 확인하고 링크를 실제 수락해 `http://localhost:3000/set-password`에 도착했다. 사용자가 비밀번호 설정과 최종 가입을 완료한 뒤 DB에서 계정의 `active`·`coach` 상태, 이메일 확인 및 로그인 이력을 재조회했다. 실제 로그아웃 후 이메일·비밀번호 재로그인으로 코치 대시보드 도착을 확인했고 `/manage` 직접 접근은 `/dashboard`로 되돌아가 관리자 권한이 노출되지 않았다. 비밀번호 값은 문서·로그·저장소에 기록하지 않았다. |
 
 ## 2026-10-06 쓰기 통합 재검증
 
