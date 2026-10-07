@@ -295,3 +295,26 @@ Aside 서비스가 실행되지 않았고 연결 브라우저 런타임도 초�
 최종 localhost 실행은 설치 Chrome·코치 `workspace-sync-chromium-coach-1791340837509`와 모바일 크기 WebKit·관리자 `workspace-sync-webkit-admin-1791340849862`에서 각각 **7/7 PASS**, 합계 **14개 확인**이다. 시나리오는 `2-a-D`, `10-b-F/H/J/K`, `10-b-I`의 Storage/foreground 두 변형이며 전체 CRUD를 이번에 다시 실행한 수치가 아니다. WebKit은 설치 `iPhone 17 Pro Max` 프로필 크기 근사로 실제 iPhone/Safari 검증과 구분한다. uncaught page error와 가로 넘침은 없었고 양쪽 QA 계정의 원래 선택 워크스페이스를 종료 후 DB에서 확인했다. 성공하는 업무 저장·삭제·신규 계정·초대 메일은 실행하지 않았다.
 
 자동 회귀 **42파일 201/201**, ESLint, TypeScript, production build, 운영 의존성 감사 0건, 두 QA 스크립트의 `node --check`, `git diff --check`, 139개 QA ID 매핑 검사가 통과했다. R02/R10·시나리오·coverage v6·README를 함께 갱신했다. 새 DB 마이그레이션은 필요하지 않다. 원본 결과·캡처·인증정보는 Git 제외 경로에만 있으며 커밋하지 않았다. 이 시점의 VERIFIED_LOCAL은 운영 배포 검증을 뜻하지 않는다.
+
+## 2026-10-07 개발·운영 통합 재검증과 모바일 README 갱신
+
+사용자는 현재 작업의 개발·운영 통합 검증, iPhone 18 크기 사진을 포함한 README 갱신과 main 병합을 승인했다. 검증 대상 앱은 `0ef140bdf1a4f90b5f528bc19e17c584abeb0b24`이며 Vercel API에서 배포 `dpl_CsXpu4LS9arJppg6eRUwFhorb8h7`의 READY·main·동일 SHA·운영 alias를 다시 확인했다. 문서·검증 도구의 구현 커밋은 `33fff3b83f842bae498aea2c0faacba728f5e7be`다. 제품 코드·의존성·DB 마이그레이션은 이번에 변경하지 않았다.
+
+연결 브라우저 런타임 초기화와 Aside 세션 연결이 실패해 설치 Chrome·WebKit을 Playwright로 직접 실행했다. Aside CLI 실행 또는 실제 iPhone/Safari 검증으로 집계하지 않는다. 개발·운영은 같은 Supabase를 사용하며 승인된 QA 태그 계정과 기존 QA 워크스페이스만 조회했다. 성공하는 업무 CRUD·권한 변경·초대 메일·내보내기 생성은 새로 실행하지 않았다. 워크스페이스 동기화 확인은 전용 QA 계정의 선택만 전환·복원하며 미저장 입력과 이전 범위 RPC의 거절·업무 원본 보존을 확인한다.
+
+| ID | 원인·변경 | 회귀·실제 재검증 | 상태·커밋 |
+| --- | --- | --- | --- |
+| `DOCS-20261007-mobile-role-guide` | 이전 사진과 최신 워크스페이스·수업/일정 분리·로그인·직접 다운로드 흐름이 일치하지 않았다. 공통/관리자/코치 가이드, 권한표, 사진 입력 한도, 필터 초기화, 내부 버전·취소 보고서 보존, 캡처·QA 한계를 갱신하고 문서용 모바일 JPEG 18장으로 교체했다. 사용하지 않는 기존 편집 사진 1장은 Git 이력으로 복원 가능하다. | 실제 운영 QA 관리자/코치 화면 18장을 402×874 CSS px·DPR 3, 1206×2622 JPEG로 캡처하고 모든 이미지를 육안 확인했다. 예시 이름·이메일·워크스페이스 식별자만 임시 DOM에서 익명화했다. 이미지 참조·alt·크기·EXIF 부재·SHA-256과 최신 안내 회귀 2건을 추가했다. | VERIFIED_DOCUMENTATION / `33fff3b` |
+| `QA-20261007-mobile-guide-readonly` | 현재 두 환경의 로그인·실제 화면·역할 차단·주요 입력/조회 흐름을 과거 성공으로 대체하지 않도록 전용 실행기를 추가했다. 허용 원점·QA 워크스페이스·계정 태그·현재 선택을 검사하고 네트워크 쓰기 관찰·업무 테이블 전후 비교를 적용한다. | 개발 Chrome `mobile-guide-development-1791343187932`, 운영 Chrome `mobile-guide-production-1791343293388` 각각 **43/43 PASS**. 관리자 18개/코치 11개 경로, 익명 로그인/API 차단, 두 역할 필터 초기화·선택 날짜/보기 기억·미저장 주간 미리보기, 관리자 선택지 행 편집, 코치 관리자 경로 6개 차단·기존 사진 디코딩. 오류/DOM 예외/업무 쓰기 0건, 6개 업무 테이블 원본 동일. | VERIFIED_CHROMIUM / `33fff3b`; 앱 기준 `0ef140b` |
+| `QA-20261007-mobile-guide-harness` | 중복 필터 버튼 선택기, 캐시된 RSC 이동 직후 이전 폼 읽기, 옵션 문구가 결합된 label, 시각적 label 아래 숨은 checkbox 클릭에서 하네스가 실패했다. 앱의 문제로 확정하지 않았다. | 필터 버튼 한정, 기대 입력값 DOM 대기, 실제 label/touch tap으로 보완 후 두 환경 Chrome 전체 재실행. 정상 대기/빠른 권한 리다이렉트 대조는 DOM 이동과 응답 200을 확인했다. browser native console·DOM 예외·requestfailed를 독립 관찰하고 동일 역할/정확한 URL/1초 이내 native 취소만 별도 경고로 보존한다. 다른 원점·실제 access denial·유효하지 않은 시각·다른 사용자·prefix URL을 허용하지 않는 회귀 4건 추가. | VERIFIED_HARNESS / `33fff3b`; 미분류 오류는 계속 FAIL |
+| `OBS-20261007-webkit-navigation-fetch` | 직접 document 이동을 반복하는 WebKit에서 workspace 확인과 Next RSC prefetch의 access-control 메시지가 관찰됐다. 요청 가로채기는 사용하지 않았다. 정상 대기 리다이렉트만의 대조에서는 고정 재현되지 않아 기존 interception 결함과 동일 원인으로 단정할 수 없다. | 운영 캡처 실행 `mobile-guide-production-1791343002651`은 화면 43개 PASS·DOM error/unhandledrejection 0·업무 원본 동일이지만 native 메시지 3건으로 최종 browser gate **FAIL**이다. 설치 Playwright의 WebKit console→pageerror 전달 코드를 확인했지만 이 실행의 동일 요청 취소 대응 증거는 충분히 보존되지 않아 경고로 강제 전환하지 않았다. 개발의 계측 실행은 이동 timeout도 발생했다. 실패 원본을 유지하고 Chrome 대조 실행의 깨끗한 성공과 구분했다. | NEEDS_EVIDENCE; 신규 제품 BUG 또는 해결 완료로 분류하지 않음. 실제 Safari 및 native 메뉴 이동 대조가 후속 범위 |
+
+### 캡처와 결과 해석
+
+이미지 매니페스트는 앱 원본 SHA·캡처 시각·엔진·설치 프로필·크기·이미지 해시를 포함한다. `captureValidation.browserGatePassed=false`, 미분류 관찰 3건과 업무 보존을 명시했으며 선별 이미지의 완성과 전체 WebKit QA 성공을 동일시하지 않는다. 사진은 모두 QA 합성 이미지이며 로그인 캡처는 빈 입력값이다. 최신 사용자가 문서 사진 main 반영을 명시적으로 요청한 예외 범위에서만 선별 JPEG·매니페스트를 커밋했다. 원본 실패 화면/로그/다운로드/세션/메일·비밀번호·토큰·서명 URL은 커밋하지 않았다.
+
+캡처는 Apple 18 Pro 해상도를 DPR 3으로 환산한 앱 콘텐츠 크기 근사이며 설치 `iPhone 17 Pro` WebKit 프로필을 사용했다. 실제 iPhone 18·iOS 27 Safari, 주소창·키보드·카메라/HEIC·PWA·파일 앱, 200건/100MiB 대량 내보내기와 실제 초대 메일 E2E는 미실행이다. 조회·미저장 입력 검증의 86개 확인을 전체 운영 CRUD 재검증으로 표현하지 않는다.
+
+자동 회귀 **44파일 207/207**, ESLint(경고 없음), TypeScript, production build, 운영 의존성 감사 0건, `node --check`, `git diff --check` 통과. 기능 기준은 변경하지 않아 coverage v6의 139개 기존 QA ID를 유지했다. 초기 실패와 대조 원본은 ignored artifacts에 그대로 보존했다. 원래 사용자 worktree의 `AGENTS.md` 수정·미추적 사진은 건드리지 않았다.
+
+다른 탭 자동 갱신도 개발 코치 `workspace-sync-chromium-coach-1791343564737`·운영 관리자 `workspace-sync-chromium-admin-1791343576879`에서 각각 **7/7 PASS**로 재확인했다. BroadcastChannel 알림, Storage 대체, 알림·저장소 제한 시 foreground 확인, 실제 A→B→A 홈 이동·역할/데이터 격리, 미저장 수업 원본 보존, 이전 보고서 RPC 거절, 위조 알림 무시와 원래 선택 복원을 확인했다. 정상 업무 저장·사진 삭제는 없으며 이전 보고서 RPC는 `P0002`로 거절됐다. 이번 실행의 범위는 두 환경 조회/입력 확인 86개와 동기화 확인 14개이며 중복 기능·환경이 포함된 관찰 수치다. 전체 CRUD 100개 또는 실제 모바일 100개 성공으로 표현하지 않는다.
