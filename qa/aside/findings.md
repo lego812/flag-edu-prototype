@@ -171,3 +171,13 @@
 | `CLIENT-2026-10-07-direct-export` | APPROVED IMPROVEMENT | R08 / 생성 파일을 Storage와 이력에 보관해 정리 작업과 재다운로드 상태가 필요했고 사진 합계 한도가 15MiB였다. | VERIFIED | XLSX/PDF를 스트리밍 응답으로 즉시 다운로드하고 새 이력·Storage 객체를 만들지 않는다. PDF 사진 상한을 100MiB로 높이고 과거 파일 정리 경로만 유지했다. | `d8784c2`; API가 파일 응답을 반환하면서 저장 호출을 하지 않는 테스트, 100MiB 정책, 레거시 정리 회귀와 전체 `163/163` 통과. 실제 모바일 다운로드는 NOT_RUN |
 | `CLIENT-2026-10-07-admin-edit-scope` | APPROVED IMPROVEMENT | R04/R09 / 관리자는 같은 기관의 타인 수업을 편집할 수 있었지만 보고서 답변·사진은 읽기 전용이라 요청된 통합 관리 권한과 달랐다. | VERIFIED | 같은 기관 활성 관리자가 모든 수업 기본정보·일정·보고서 답변·사진을 수정하도록 UI·액션·RPC·RLS를 맞췄고, 코치·다른 기관 차단과 취소 일정 불변은 유지했다. | `d8784c2`; PGlite에서 관리자 타인 보고서 저장·제출·첨부 추가/삭제 성공 및 코치·타 기관 거절을 직접 실행하고 전체 `163/163`, ESLint, TypeScript, production build 통과. 원격 DB·브라우저는 NOT_RUN |
 | `SEC-2026-10-07-sharp-patch` | SECURITY | 운영 감사에서 `sharp <0.35.5`의 High 권고가 새로 확인됐다. | VERIFIED | 잠금 파일의 `sharp`와 플랫폼 패키지만 0.35.5·libvips 1.3.4로 패치했다. | `d8784c2`; 패치 후 production build 통과, `npm audit --omit=dev --audit-level=high` 0건. 개발 도구의 기존 `braces` 5건은 강제 수정 시 Next 14로 내려가므로 범위 밖으로 유지 |
+
+## 2026-10-07 워크스페이스 기반 다기관 분리
+
+| ID | 종류 | 기준·원인 | 상태 | 변경 | 커밋·회귀 테스트·재검증 |
+| --- | --- | --- | --- | --- | --- |
+| `CLIENT-2026-10-07-workspace-scope` | APPROVED IMPROVEMENT | R10 / 기존 `profiles.organization_id` 한 곳에만 계정이 속해 여러 기관이 서비스를 함께 사용하면 수업·일정·보고서와 역할을 기관별로 나눌 수 없었다. | VERIFIED_LOCAL | `workspace_memberships`를 추가하고 현재 선택한 워크스페이스만 기존 업무 RLS에 연결했다. 한 계정의 다중 멤버십·워크스페이스별 관리자/코치 역할, 상단 전환, 관리자 워크스페이스 생성, 관리 화면을 구현했다. | `295a28d`; PGlite에서 새 워크스페이스 생성 뒤 기존 수업 0건, 원래 워크스페이스 복귀 뒤 기존 수업 재노출, A 관리자/B 코치 역할 차이, 소속 외 전환 거절과 전환 전 데이터 쓰기 0건을 실행했다. 원격 DB·브라우저는 NOT_RUN |
+| `CLIENT-2026-10-07-workspace-invitation` | APPROVED IMPROVEMENT | R02/R10 / 이메일이 이미 Auth에 존재하면 기존 초대 API는 중복 계정 오류가 나므로 다른 워크스페이스에 같은 사용자를 추가할 수 없었다. | VERIFIED_LOCAL | 관리자 전용 이메일 조회·기존 계정 멤버십 추가 RPC를 만들었다. 새 이메일은 대기 프로필과 멤버십을 함께 만들고, 다른 워크스페이스에서도 초대 대기 중인 계정은 새 멤버십도 대기로 유지한 뒤 비밀번호 설정 시 서버 경로에서 모두 활성화한다. | `295a28d`; 기존 활성 이메일은 초대 메일 없이 멤버십만 추가되고 새 이메일은 등록 RPC를 호출하는 액션 테스트를 통과했다. PGlite에서 대기 멤버십 2개가 service-role 활성화 후 모두 `active`가 됨을 실행했다. 실제 메일 발송은 NOT_RUN |
+| `SEC-2026-10-07-workspace-rls` | SECURITY | R09/R10 / 화면 전환만 추가하면 URL·오래된 탭·직접 RPC로 다른 워크스페이스 ID를 사용할 수 있어 DB 경계가 필요했다. | VERIFIED_LOCAL | 현재 프로필의 워크스페이스가 활성 멤버십과 일치할 때만 `current_organization_id`와 역할을 반환한다. 전환 RPC는 본인의 활성 멤버십만 허용하고 역할·상태 변경과 마지막 관리자 검사는 현재 워크스페이스 멤버십 단위로 수행한다. | `295a28d`; 다른 계정의 워크스페이스 전환 예외, 선택 범위 밖 수업 조회 0건, 이전 수업 직접 UPDATE 0건과 원본 제목 보존을 PGlite로 재검증했다. 원격 마이그레이션 적용 전이므로 운영 검증은 NOT_RUN |
+
+최종 로컬 회귀는 전체 38개 파일 173개 테스트, ESLint, TypeScript를 포함한 production build가 통과했고 운영 의존성 감사 결과는 0건이다. R10 기준과 smoke/workflow 시나리오 10건, 자동화 매핑을 함께 갱신했다. 실제 메일·원격 Supabase·로그인 브라우저는 운영 변경 전이므로 실행하지 않았다.
