@@ -1,0 +1,140 @@
+{
+  "sourceCommit": "0ef140bdf1a4f90b5f528bc19e17c584abeb0b24",
+  "capturedAt": "2026-10-07T03:20:43.470Z",
+  "base": "https://flag-edu-prototype.vercel.app",
+  "engine": "webkit",
+  "installedProfile": "iPhone 17 Pro",
+  "intendedSize": "iPhone 18 Pro size approximation",
+  "viewport": {
+    "width": 402,
+    "height": 874
+  },
+  "screen": {
+    "width": 402,
+    "height": 874
+  },
+  "deviceScaleFactor": 3,
+  "physicalPixels": {
+    "width": 1206,
+    "height": 2622
+  },
+  "realDevice": false,
+  "captureValidation": {
+    "checksPassed": 43,
+    "browserGatePassed": false,
+    "unclassifiedBrowserErrors": 3,
+    "domExceptions": 0,
+    "businessDataUnchanged": true
+  },
+  "privacy": "Only tagged QA accounts; example identities anonymized in a disposable DOM; no browser chrome, credentials, signed URLs or raw QA logs.",
+  "images": [
+    {
+      "file": "common-login.jpg",
+      "role": "common",
+      "route": "/login",
+      "sha256": "40c14698d5b2b023546e46a6a8e54b66a37f948e37a84697104af791fe7cc7a1"
+    },
+    {
+      "file": "admin-manage.jpg",
+      "role": "admin",
+      "route": "/manage",
+      "sha256": "76910c2556ce7c45b6b6670abd8f61050b66bbabc1940e3c2bdfa826304e4644"
+    },
+    {
+      "file": "admin-reports.jpg",
+      "role": "admin",
+      "route": "/admin-reports",
+      "sha256": "b23fdd4a10b58d0c2238f1cd6f05deb69da526b5266e704ebf153fee52db78ea"
+    },
+    {
+      "file": "admin-templates.jpg",
+      "role": "admin",
+      "route": "/templates",
+      "sha256": "952828b2217d3f5149e75161800760443e7b9f8b413de5d658db62cc1b45245b"
+    },
+    {
+      "file": "admin-members.jpg",
+      "role": "admin",
+      "route": "/members",
+      "sha256": "1ee0d0bbbebac39b3e94e0e0d9dc3f8569f5da2d0bdad562f77384bf1d7d27c7"
+    },
+    {
+      "file": "admin-exports.jpg",
+      "role": "admin",
+      "route": "/exports",
+      "sha256": "c9da5d05965d4c0d6875625b0329c9afe6283cd7a630bb5c914aeb3e4fa4fa9c"
+    },
+    {
+      "file": "common-workspaces.jpg",
+      "role": "admin",
+      "route": "/workspaces",
+      "sha256": "777f626d0059e707a0a68fe0179c2804fd34431ea8563d751994036e760f5166"
+    },
+    {
+      "file": "admin-template-editor.jpg",
+      "role": "admin",
+      "route": "/templates/new",
+      "sha256": "5c52c2dd5b654e9d11f7d5521a96995126a1c31b0e95590c4b16d44e7ee85b8d"
+    },
+    {
+      "file": "common-dashboard.jpg",
+      "role": "coach",
+      "route": "/dashboard",
+      "sha256": "148719590802dd20aef25526ab152c52f2b5fa1d05dee83a925de630e80f268f"
+    },
+    {
+      "file": "common-courses.jpg",
+      "role": "coach",
+      "route": "/courses",
+      "sha256": "fdb26bfd489523134b2dabc4f6a22daf802971836448ab6ac19b4b9320e5348a"
+    },
+    {
+      "file": "common-course-registration.jpg",
+      "role": "coach",
+      "route": "/courses/new",
+      "sha256": "e7a91f6cefc5d2877a4c252587e4bf517e40cfa6c4489d54047d2541e9777c09"
+    },
+    {
+      "file": "common-schedule-list.jpg",
+      "role": "coach",
+      "route": "/classes",
+      "sha256": "01aded291cd152f92cf1b493a1aaf6bc99116c51b156cb75215782b65746a812"
+    },
+    {
+      "file": "common-calendar.jpg",
+      "role": "coach",
+      "route": "/classes",
+      "sha256": "ba0dab235b46869ae0b96735a4a5574f399fc4bcc27cac27eb71cdf6866369c0"
+    },
+    {
+      "file": "coach-report-list.jpg",
+      "role": "coach",
+      "route": "/reports",
+      "sha256": "c05ceba14cf1d9deab82625f0903c8fa14bfc725691318ce642d1947fc83130c"
+    },
+    {
+      "file": "coach-report-view.jpg",
+      "role": "coach",
+      "route": "/reports/:id",
+      "sha256": "df951057e4ee237fd7f8c19b9d8bffb86ac88683ded0b073211cf335a8c0217f"
+    },
+    {
+      "file": "common-schedule-filters.jpg",
+      "role": "coach",
+      "route": "/classes",
+      "sha256": "93650b37bac67361d124171e17526d35e94185a56f3789cfc00ea97e082b8ae2"
+    },
+    {
+      "file": "common-class-registration.jpg",
+      "role": "coach",
+      "route": "/classes/new",
+      "sha256": "95b846f9bac1b63553eeb5dfa730e6e6a27d692be9fd4e167f46cd40d7bc66a2"
+    },
+    {
+      "file": "coach-report-photos.jpg",
+      "role": "coach",
+      "route": "/reports/:id",
+      "sha256": "d9f7fa502a6ab6529b06f5ea671875ae3d44667672bc6b4d494ce500f29803c6"
+    }
+  ]
+}

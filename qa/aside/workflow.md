@@ -165,3 +165,13 @@ node --env-file=.env.local scripts/qa-workspace-sync.mjs admin webkit <설치된
 ```
 
 기본 픽스처는 `iphone18-webkit-20261007`이며 `QA_FIXTURE_RUN`으로 기존 승인 픽스처를 지정할 수 있다. 실행 대상은 기본 localhost이고 운영 재검증 승인 시에만 `QA_BASE_URL='https://flag-edu-prototype.vercel.app'`을 지정한다. 원본 결과와 빈 로그인 화면 캡처는 Git 제외된 `artifacts/aside/workspace-sync-<engine>-<role>-<timestamp>`에 저장한다. WebKit은 설치된 `iPhone 17 Pro Max` 크기 근사이며 실기기 Safari 검증으로 집계하지 않는다. 30초 주기·숨은 탭 대기·조회 실패·동시 요청 순서·cleanup은 `sync-client.test.ts`에서 별도로 회귀 검증한다.
+
+### 개발·운영 모바일 통합 조회와 README 캡처
+
+`scripts/qa-mobile-guide.mjs <앱 기준 URL> <설치된-playwright-index.mjs-경로>`는 localhost와 현재 운영 주소만 허용한다. 기존 QA 계정 태그, QA 워크스페이스 이름 및 현재 선택을 서버에서 확인한 뒤 관리자·코치 화면/관리 경로 차단, 로그인 안내, 필터 초기화, 실제 tap을 통한 날짜별 조회·보기 유지, 미저장 주간 등록 미리보기, 선택지 행 편집, 기존 사진 디코딩을 실행한다. 변경 요청을 네트워크에서 관찰하고 주요 업무 테이블의 실행 전·후 원본을 비교한다. 전역 요청 가로채기는 WebKit RSC 관찰 오류를 만들 수 있어 사용하지 않는다.
+
+이 실행은 성공하는 업무 CRUD·권한 변경·메일·내보내기 생성을 포함하지 않는다. 실제 CRUD를 추가하려면 별도 쓰기 범위를 승인받고 해당 실행 결과와 구분한다. 개발·운영이 같은 Supabase를 사용하는 현재 구조에서는 환경별 앱 검증이지 서로 독립된 DB 검증이 아니다.
+
+`QA_CAPTURE_DOCS=1`과 검증한 40자리 `QA_SOURCE_COMMIT`을 명시한 경우에만 익명화된 문서 JPEG와 매니페스트를 생성한다. 최신 사용자가 README 사진의 main 반영을 명시적으로 요청한 범위에서만 `docs/images/`의 선별 이미지가 커밋 대상이다. 원본 로그·실패 화면·세션·자격증명은 예외 없이 `artifacts/aside/`에 두고 커밋하지 않는다. 캡처는 설치 WebKit의 402×874 CSS px·DPR 3, 앱 콘텐츠 전용 1206×2622 이미지로 iPhone 18 Pro 크기를 근사하며 실기기·iOS 27 인증을 뜻하지 않는다. `scripts/readme-guide.test.mjs`는 README의 모든 이미지 참조·대체 텍스트·크기·EXIF 부재·SHA-256과 한계 안내를 검사한다.
+
+`QA_BROWSER=chromium`은 설치 Chrome 대조 실행용이며 문서 사진 갱신은 WebKit만 허용한다. native WebKit console 메시지 중 동일 역할·정확한 URL·1초 이내 `Load request cancelled`가 대응하는 메시지만 경고로 별도 보존한다. DOM `error`·`unhandledrejection`은 무조건 실패이며 대응 증거 없는 access-control 관찰도 실패로 유지한다. 전체 원본 결과를 덮어쓰지 않고, 업무 테이블 사후 비교는 앞선 화면 검사 실패 여부와 독립적으로 실행한다. 선별 캡처 18장과 데이터 보존이 확인되면 브라우저 게이트 실패 여부·관찰 개수를 명시한 문서 매니페스트를 만들 수 있으나 이는 QA FAIL을 PASS로 바꾸는 동작이 아니다.
