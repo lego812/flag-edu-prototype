@@ -4,12 +4,12 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { findNativeCancellation } from "./qa-browser-observations.mjs";
+import { findNativeCancellation, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
 
 // Read-only integration and curated README captures. Never submits business
 // forms, changes permissions, sends mail, or generates exports.
 const [base, modulePath] = process.argv.slice(2);
-assert.ok(["http://localhost:3000", "https://flag-edu-prototype.vercel.app"].includes(base));
+assert.ok(["http://localhost:3000", "http://localhost:3001", "https://flag-edu-prototype.vercel.app"].includes(base));
 assert.ok(modulePath, "Pass the installed Playwright module path.");
 const sourceRun = process.env.QA_FIXTURE_RUN ?? "iphone18-webkit-20261007";
 assert.match(sourceRun, /^[a-z0-9-]+$/);
@@ -40,6 +40,7 @@ const browser = await (engine === "webkit" ? webkit.launch({ headless: true }) :
 const output = path.resolve("artifacts/aside", `mobile-guide-${base.includes("localhost") ? "development" : "production"}-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const captureDocs = process.env.QA_CAPTURE_DOCS === "1";
+assert.ok(!captureDocs || base !== "http://localhost:3001", "Local production-build comparisons do not replace published guide images.");
 assert.ok(!captureDocs || engine === "webkit", "Published guide images use the recorded WebKit capture profile.");
 if (captureDocs) assert.match(process.env.QA_SOURCE_COMMIT ?? "", /^[a-f0-9]{40}$/, "Record the verified app commit when publishing screenshots.");
 const images = [];
@@ -50,6 +51,8 @@ const failedRequests = [];
 const cancelledRequestWarnings = [];
 const workspaceApiResponses = [];
 const businessWrites = [];
+const developmentDiagnostics = [];
+const startedAt = new Date().toISOString();
 const scrub = value => value.replace(/https?:\/\/[^\s]+/g, "[url]").replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/g, "[qa-id]");
 const publicError = ({ role, phase, message, stack, time }) => ({ role, phase, message, stack, time });
 const publicFailedRequest = ({ role, phase, resource, reason, time }) => ({ role, phase, resource, reason, time });
@@ -149,6 +152,10 @@ try {
     });
     page.on("request", request => {
       const url = new URL(request.url());
+      if (isLocalDevelopmentDiagnostic(base, request.method(), request.url())) {
+        developmentDiagnostics.push({ role, phase, method: request.method(), path: url.pathname, time: Date.now() });
+        return; // Exceptions remain strict failures in TWO independent gates.
+      }
       if (url.origin === base && !["GET", "HEAD", "OPTIONS"].includes(request.method()) && url.pathname !== "/login") businessWrites.push({ role, method: request.method(), path: scrub(url.pathname) });
     });
     try {
@@ -280,7 +287,7 @@ try {
       process.exitCode = 1;
     }
   }
-  await writeFile(path.join(output, "results.json"), JSON.stringify({ base, sourceCommit: process.env.QA_SOURCE_COMMIT ?? "unspecified", engine, viewport: options.viewport, screen: options.screen, deviceScaleFactor: 3, realDevice: false, results, failure, businessWrites, errors: errors.map(publicError), browserExceptions, cancelledRequestWarnings, failedRequests: failedRequests.map(publicFailedRequest), workspaceApiResponses, dataUnchanged, images }, null, 2));
+  await writeFile(path.join(output, "results.json"), JSON.stringify({ base, startedAt, finishedAt: new Date().toISOString(), sourceCommit: process.env.QA_SOURCE_COMMIT ?? "unspecified", engine, viewport: options.viewport, screen: options.screen, deviceScaleFactor: 3, realDevice: false, results, failure, businessWrites, developmentDiagnostics, errors: errors.map(publicError), browserExceptions, cancelledRequestWarnings, failedRequests: failedRequests.map(publicFailedRequest), workspaceApiResponses, dataUnchanged, images }, null, 2));
   // A complete, privacy-checked image set can document observed UI even when
   // the stricter browser gate fails. Record that outcome; never turn FAIL into
   // PASS or overwrite its ignored raw results just to publish a screenshot.

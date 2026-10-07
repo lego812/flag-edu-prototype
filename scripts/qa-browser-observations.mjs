@@ -1,6 +1,12 @@
 // A WebKit native console load-cancellation message is not sufficient evidence
 // of an uncaught JS exception. Callers must also gate DOM error/rejection events
 // and retain this warning. Unmatched access-control errors remain failures.
+export function isLocalDevelopmentDiagnostic(base, method, url) {
+  const target = new URL(url);
+  return base === "http://localhost:3000" && target.origin === base &&
+    method === "POST" && target.pathname === "/__nextjs_original-stack-frames";
+}
+
 export function findNativeCancellation(error, requests) {
   const suffix = " due to access control checks.";
   if (!error.message.endsWith(suffix)) return undefined;

@@ -8,6 +8,14 @@ import { ReportEditor } from "./editor";
 
 const actions = vi.hoisted(() => ({ save: vi.fn() }));
 vi.mock("./actions", () => ({ saveReportAction: actions.save }));
+// Native dialog behavior is covered by photo-preview tests and browser QA.
+vi.mock("./photo-preview", () => ({
+  PhotoPreview: ({ label, onClose }: { label: string; onClose: () => void }) => (
+    <section role="dialog" aria-label={label}>
+      <button onClick={onClose}>닫기</button>
+    </section>
+  ),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -74,6 +82,36 @@ describe("photo thumbnails", () => {
     expect(
       screen.queryByRole("button", { name: /사진 \d 삭제/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows quiet reading labels, attached count and accessible enlargement buttons", () => {
+    render(<Photos reportId="report" fields={[{ ...field, required: true }]} attachments={attachments} editable={false} reading />);
+    expect(screen.getByRole("heading", { name: "활동 사진" })).toHaveClass("text-sm", "text-neutral-600");
+    expect(screen.getByText("4장")).toBeInTheDocument();
+    expect(screen.queryByText("4/5장")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "활동 사진 1 크게 보기" })).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByText("사진을 누르면 크게 볼 수 있습니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("활동 사진 선택")).not.toBeInTheDocument();
+  });
+
+  it("keeps unavailable signed images non-interactive instead of opening an empty preview", () => {
+    render(<Photos reportId="report" fields={[field]} attachments={[{ ...attachments[0], url: undefined }]} editable={false} reading />);
+    expect(screen.getByText("사진을 열지 못했습니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /크게 보기/ })).not.toBeInTheDocument();
+  });
+
+  it("restores focus to the exact thumbnail after a read-only preview closes without fetching", () => {
+    const fetch = vi.spyOn(globalThis, "fetch");
+    render(<Photos reportId="report" fields={[field]} attachments={attachments} editable={false} reading />);
+    const trigger = screen.getByRole("button", { name: "활동 사진 2 크게 보기" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "활동 사진 2" })).toBeInTheDocument();
+    screen.getByRole("button", { name: "닫기" }).focus();
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("uses an in-app confirmation dialog and removes the thumbnail without a page refresh", async () => {

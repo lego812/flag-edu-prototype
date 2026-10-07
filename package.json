@@ -8,6 +8,8 @@
     }
   },
   "scripts": {
+    "postinstall": "node scripts/patch-next-rsc-performance.mjs",
+    "predev": "node scripts/patch-next-rsc-performance.mjs",
     "dev": "next dev",
     "build": "next build",
     "bootstrap:admin": "node --env-file=.env.local scripts/bootstrap-admin.mjs",
