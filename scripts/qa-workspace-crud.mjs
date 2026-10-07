@@ -11,12 +11,19 @@ import assert from "node:assert/strict";
 // node --env-file=.env.local scripts/qa-workspace-crud.mjs <phase> <playwright-module-path>
 const mode = process.argv[2] ?? "inspect";
 const playwrightModule = process.argv[3];
-if (!["setup", "inspect", "crud", "photos", "verify", "administration", "workspaces", "schedules", "schedule-retest", "lifecycle", "teardown", "additional", "onboarding", "smoke"].includes(mode) || !playwrightModule) {
+if (!["setup", "inspect", "crud", "photos", "verify", "administration", "membership", "workspaces", "schedules", "schedule-retest", "lifecycle", "teardown", "additional", "onboarding", "smoke", "mobile", "mobile-image"].includes(mode) || !playwrightModule) {
   throw new Error("Specify a supported phase and the installed Playwright module path.");
 }
-const { chromium } = await import(pathToFileURL(playwrightModule).href);
+const { chromium, webkit, devices } = await import(pathToFileURL(playwrightModule).href);
+const deviceName = process.env.QA_DEVICE;
+if (deviceName && !devices[deviceName]) throw new Error("Unknown installed Playwright device profile.");
+const contextOptions = deviceName ? devices[deviceName] : { viewport: { width: 1280, height: 900 } };
+const engine = deviceName ? contextOptions.defaultBrowserType : "chromium";
+if (!["chromium", "webkit"].includes(engine)) throw new Error("Unsupported QA browser engine.");
 const base = "http://localhost:3000";
-const artifactDir = path.resolve("artifacts/aside/workspace-crud-20261007");
+const runName = process.env.QA_RUN_NAME ?? "workspace-crud-20261007";
+if (!/^[a-z0-9-]+$/.test(runName)) throw new Error("Run name must be a single safe directory name.");
+const artifactDir = path.resolve("artifacts/aside", runName);
 await mkdir(artifactDir, { recursive: true });
 const fixtureFile = path.join(artifactDir, "private-fixture.json");
 const db = createClient(
@@ -34,13 +41,32 @@ const required = async (query) => {
 };
 let fixture;
 if (mode === "setup") {
-  if (await readFile(fixtureFile).then(() => true, () => false)) throw new Error("An existing QA fixture is present; resume its phases instead of overwriting credentials.");
-  const prefix = `QA-WS-CRUD-${Date.now()}`;
-  fixture = { prefix, users: {}, created: {}, results: [] };
-  const organization = await required(db.from("organizations").insert({ name: `${prefix}-A` }).select("id,name").single());
+  const existing = await readFile(fixtureFile, "utf8").then(JSON.parse, () => null);
+  if (existing && (process.env.QA_RESUME_SETUP !== "1" || existing.environment || Object.keys(existing.created).length)) throw new Error("An existing QA fixture is present; resume its phases instead of overwriting credentials.");
+  if (existing && !process.env.QA_REUSE_RUN) throw new Error("Only a tagged-account reuse setup can be resumed automatically.");
+  const prefix = existing?.prefix ?? `QA-WS-CRUD-${Date.now()}`;
+  assert.match(prefix, /^QA-WS-CRUD-\d+$/);
+  fixture = existing ?? { prefix, users: {}, created: {}, results: [] };
+  const organization = existing?.organization ?? await required(db.from("organizations").insert({ name: `${prefix}-A` }).select("id,name").single());
+  assert.equal(organization.name, `${prefix}-A`);
   fixture.organization = organization;
   await writeFile(fixtureFile, JSON.stringify(fixture));
+  const reuseRun = process.env.QA_REUSE_RUN;
+  if (reuseRun && !/^[a-z0-9-]+$/.test(reuseRun)) throw new Error("Invalid QA source run.");
+  const previous = reuseRun ? JSON.parse(await readFile(path.resolve("artifacts/aside", reuseRun, "private-fixture.json"), "utf8")) : null;
   for (const role of ["admin", "coach", "other"]) {
+    if (previous) {
+      const user = previous.users[role];
+      assert.equal((await required(db.auth.admin.getUserById(user.id))).user.user_metadata.qa_fixture, true, "Only explicitly tagged QA accounts may be reused.");
+      fixture.users[role] = user;
+      await writeFile(fixtureFile, JSON.stringify(fixture));
+      const membership = await required(db.from("workspace_memberships").select("user_id").eq("user_id", user.id).eq("organization_id", organization.id).maybeSingle());
+      if (!membership) await required(db.from("workspace_memberships").insert({ user_id: user.id, organization_id: organization.id, role: role === "admin" ? "admin" : "coach", status: "active" }));
+      const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+      await required(client.auth.signInWithPassword({ email: user.email, password: user.password }));
+      await required(client.rpc("switch_workspace", { p_organization_id: organization.id }));
+      continue;
+    }
     const password = randomBytes(24).toString("base64url");
     const email = `${prefix.toLowerCase()}-${role}@example.com`;
     const data = await required(db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { qa_fixture: true } }));
@@ -53,12 +79,15 @@ if (mode === "setup") {
   fixture = JSON.parse(await readFile(fixtureFile, "utf8"));
 }
 
-const browser = await chromium.launch({ channel: "chrome", headless: true });
+fixture.environment = { engine, deviceName: deviceName ?? "Desktop Chrome", viewport: contextOptions.viewport, screen: contextOptions.screen, deviceScaleFactor: contextOptions.deviceScaleFactor ?? 1, isMobile: contextOptions.isMobile ?? false, hasTouch: contextOptions.hasTouch ?? false };
+fixture.executions ??= [];
+fixture.executions.push({ phase: mode, startedAt: new Date().toISOString(), environment: fixture.environment });
+const browser = engine === "webkit" ? await webkit.launch({ headless: true }) : await chromium.launch({ channel: "chrome", headless: true });
 const contexts = {};
 const pages = {};
 for (const role of ["admin", "coach", "other"]) {
   const stateFile = path.join(artifactDir, `private-${role}-state.json`);
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, ...(mode === "setup" ? {} : { storageState: stateFile }) });
+  const context = await browser.newContext({ ...contextOptions, ...(mode === "setup" ? {} : { storageState: stateFile }) });
   contexts[role] = context;
   const page = await context.newPage();
   pages[role] = page;
@@ -83,13 +112,14 @@ async function observe(role, route, name) {
 async function step(name, run) {
   try {
     const detail = await run();
-    fixture.results.push({ name, status: "PASS", detail });
+    fixture.results.push({ name, status: "PASS", detail, environment: fixture.environment });
     console.log(JSON.stringify({ name, status: "PASS", detail }));
   } catch (error) {
-    fixture.results.push({ name, status: "FAIL", error: error.message });
+    fixture.results.push({ name, status: "FAIL", error: error.message, environment: fixture.environment });
     console.log(JSON.stringify({ name, status: "FAIL", error: error.message }));
+    const failureId = Date.now();
     for (const [role, page] of Object.entries(pages)) {
-      await page.screenshot({ path: path.join(artifactDir, `failure-${role}.png`), fullPage: true }).catch(() => {});
+      await page.screenshot({ path: path.join(artifactDir, `failure-${failureId}-${role}.png`), fullPage: true }).catch(() => {});
     }
     throw error;
   } finally {
@@ -101,6 +131,21 @@ async function step(name, run) {
 async function navigate(page, route) {
   await page.goto(`${base}${route}`);
   await page.getByRole("heading", { level: 1 }).waitFor({ timeout: 30000 });
+  // Dev-server lazy bundles can paint the server heading before client controls
+  // hydrate. Wait for those requests to settle, not merely the static heading.
+  await page.waitForLoadState("networkidle", { timeout: 30000 });
+}
+
+async function openFilters(page) {
+  // URL changes before the new RSC filter state has committed. Wait before
+  // reading aria-expanded so we do not inspect the outgoing component.
+  await page.waitForLoadState("networkidle", { timeout: 30000 });
+  const button = page.getByRole("button", { name: "필터", exact: true });
+  if (await button.getAttribute("aria-expanded") === "false") {
+    if (deviceName) await button.tap();
+    else await button.click();
+  }
+  await page.locator('button[aria-expanded="true"]').filter({ hasText: "필터" }).waitFor();
 }
 
 const a = pages.admin;
@@ -338,7 +383,7 @@ try {
       return "report 404; export/photo mutation 403";
     });
   }
-  if (mode === "verify" || mode === "administration") {
+  if (mode === "verify" || mode === "administration" || mode === "membership") {
     await step("member role/status update and active-session enforcement", async () => {
       await navigate(a, "/members");
       async function manage(role, status) {
@@ -353,16 +398,34 @@ try {
         await a.getByRole("heading", { level: 1 }).waitFor();
       }
       await manage("admin", "active");
+      await switchTo(o, "other", fixture.organization.id);
       await navigate(o, "/manage");
       assert.equal(new URL(o.url()).pathname, "/manage");
       await manage("coach", "inactive");
       await o.goto(`${base}/dashboard`);
-      await o.waitForURL("**/access-denied");
+      const otherMemberships = await required(db.from("workspace_memberships").select("organization_id").eq("user_id", fixture.users.other.id).eq("status", "active").neq("organization_id", fixture.organization.id));
+      if (otherMemberships.length) {
+        // Reused QA accounts may have another active workspace: revoking A
+        // must not incorrectly disable their unrelated memberships.
+        await o.getByRole("heading", { level: 1 }).waitFor();
+        const selected = await required(db.from("profiles").select("organization_id").eq("id", fixture.users.other.id).single());
+        assert.notEqual(selected.organization_id, fixture.organization.id);
+        // Class detail was readable as an active A coach; unlike someone
+        // else's report, this proves the newly revoked workspace is denied.
+        await o.goto(`${base}/classes/${fixture.created.session}`);
+        await o.getByRole("heading", { name: "수업을 찾을 수 없습니다", exact: true }).waitFor();
+        await o.goto(`${base}/reports/${fixture.created.report}`);
+        await o.getByText("This page could not be found.").waitFor();
+      } else {
+        await o.waitForURL("**/access-denied");
+      }
       await manage("coach", "active");
-      await navigate(o, "/dashboard");
+      await switchTo(o, "other", fixture.organization.id);
       assert.equal(new URL(o.url()).pathname, "/dashboard");
-      return "promoted, demoted, deactivated and restored only QA account";
+      return { qaOnly: true, promoted: true, deactivatedScopeDenied: true, otherActiveWorkspacesPreserved: otherMemberships.length > 0, restored: true };
     });
+  }
+  if (mode === "verify" || mode === "administration") {
     await step("template logical update preserves past report version", async () => {
       await navigate(a, "/templates");
       await a.getByRole("link", { name: "조회 / 수정" }).click();
@@ -407,7 +470,7 @@ try {
       await a.getByRole("button", { name: "코치 초대", exact: true }).click();
       if (member) await a.getByRole("alert").filter({ hasText: "이미 현재 워크스페이스" }).waitFor();
       else await a.getByRole("status").filter({ hasText: "워크스페이스에 추가했습니다" }).waitFor();
-      const memberships = await required(db.from("workspace_memberships").select("role,status").eq("user_id", fixture.users.coach.id));
+      const memberships = await required(db.from("workspace_memberships").select("role,status").eq("user_id", fixture.users.coach.id).in("organization_id", [fixture.organization.id, fixture.created.workspaceB]));
       assert.equal(memberships.length, 2);
       const user = await required(db.auth.admin.getUserById(fixture.users.coach.id));
       assert.equal(user.user.email, fixture.users.coach.email);
@@ -506,10 +569,10 @@ try {
       await c.waitForURL(/status=completed/);
       await c.locator(`a[href="/classes/${fixture.created.completedSession}"]`).waitFor();
       assert.equal(await c.locator(`a[href="/classes/${fixture.created.session}"]`).count(), 0);
-      if ((await c.getByRole("button", { name: "필터", exact: true }).getAttribute("aria-expanded")) === "false") await c.getByRole("button", { name: "필터", exact: true }).click();
+      await openFilters(c);
       await c.getByRole("link", { name: "필터 초기화", exact: true }).click();
       await c.waitForURL("**/classes?view=list&sort=newest");
-      if ((await c.getByRole("button", { name: "필터", exact: true }).getAttribute("aria-expanded")) === "false") await c.getByRole("button", { name: "필터", exact: true }).click();
+      await openFilters(c);
       assert.equal(await c.getByLabel("조회 시작일").inputValue(), "");
       assert.equal(await c.getByLabel("조회 종료일").inputValue(), "");
       assert.equal(await c.locator('select[name="status"]').inputValue(), "all");
@@ -527,18 +590,139 @@ try {
       assert.equal(await selected.locator('a[href^="/classes/"]').count(), 1);
       await selected.locator(`a[href="/classes/${fixture.created.session}"]`).waitFor();
       await c.getByRole("link", { name: "목록", exact: true }).click();
+      await c.waitForURL(/view=list/);
+      await c.waitForLoadState("networkidle");
       await c.getByRole("link", { name: "캘린더", exact: true }).click();
+      await c.waitForURL(/view=calendar/);
+      await c.waitForLoadState("networkidle");
       await navigate(c, "/dashboard");
       await navigate(c, "/classes");
       assert.equal(await c.getByRole("link", { name: "캘린더", exact: true }).getAttribute("aria-current"), "page");
-      await c.setViewportSize({ width: 390, height: 844 });
+      await c.setViewportSize(deviceName ? contextOptions.viewport : { width: 390, height: 844 });
       for (const route of ["/classes?view=calendar&date=2026-10-10", "/classes?view=list", `/reports/${fixture.created.report}?edit=1`, "/courses"]) {
         await navigate(c, route);
         assert.equal(await c.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, route);
       }
       await c.screenshot({ path: path.join(artifactDir, "mobile-report.png"), fullPage: true });
-      await c.setViewportSize({ width: 1280, height: 900 });
-      return "today default, one selected-day class, view cookie persists, 390px no horizontal overflow";
+      await c.setViewportSize(contextOptions.viewport);
+      return { todayDefault: true, selectedDayOnly: true, viewPersists: true, checkedViewport: deviceName ? contextOptions.viewport : { width: 390, height: 844 } };
+    });
+  }
+  if (mode === "mobile") {
+    assert.equal(contextOptions.hasTouch, true, "Mobile phase requires a touch profile.");
+    await switchTo(c, "coach", fixture.organization.id);
+    await switchTo(a, "admin", fixture.organization.id);
+    await step("mobile touch calendar and filters", async () => {
+      await navigate(c, "/classes?view=calendar&date=2026-10-10");
+      await c.getByRole("link", { name: "목록", exact: true }).tap();
+      await c.waitForURL(/view=list/);
+      await openFilters(c);
+      await c.getByLabel("조회 시작일").fill("2026-10-10");
+      await c.getByLabel("조회 종료일").fill("2026-10-10");
+      await c.getByRole("button", { name: "조회", exact: true }).tap();
+      await c.waitForURL(/from=2026-10-10/);
+      await c.locator(`a[href="/classes/${fixture.created.session}"]`).waitFor();
+      await openFilters(c);
+      await c.getByRole("link", { name: "필터 초기화", exact: true }).tap();
+      await c.waitForURL("**/classes?view=list&sort=newest");
+      await c.getByRole("link", { name: "캘린더", exact: true }).tap();
+      await c.waitForURL(/view=calendar/);
+      await c.waitForLoadState("networkidle");
+      await c.getByRole("link", { name: "10월 10일, 수업 1개", exact: true }).tap();
+      await c.waitForURL(/date=2026-10-10/);
+      const selected = c.getByRole("region", { name: "선택한 날짜의 수업 목록" });
+      await selected.locator(`a[href="/classes/${fixture.created.session}"]`).waitFor();
+      assert.equal(await selected.locator('a[href^="/classes/"]').count(), 1);
+      await selected.locator(`a[href="/classes/${fixture.created.session}"]`).tap();
+      await c.waitForURL(`**/classes/${fixture.created.session}`);
+      return "Touch taps: list/filter/reset/calendar/date/detail; selected-day isolation";
+    });
+    await step("mobile shortened viewport form focus and draft save", async () => {
+      await navigate(c, `/reports/${fixture.created.report}?edit=1`);
+      await c.setViewportSize({ width: contextOptions.viewport.width, height: 420 });
+      const input = c.getByLabel("활동 의견");
+      await input.tap();
+      await input.fill("모바일 화면에서 추가한 활동 의견");
+      await c.getByRole("button", { name: "임시저장", exact: true }).tap();
+      await c.getByRole("status").filter({ hasText: "저장했습니다" }).waitFor();
+      assert.equal(await c.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await c.reload();
+      assert.equal(await input.inputValue(), "모바일 화면에서 추가한 활동 의견");
+      await c.setViewportSize(contextOptions.viewport);
+      return "420px high viewport approximation (not a native iOS keyboard); focus/scroll/save/reload preserved";
+    });
+    await step("mobile network failure preserves report input and retry", async () => {
+      await navigate(c, `/reports/${fixture.created.report}?edit=1`);
+      const before = await required(db.from("reports").select("updated_at").eq("id", fixture.created.report).single());
+      await c.getByLabel("활동 의견").fill("네트워크 실패 후에도 남아 있어야 하는 입력");
+      const matcher = `${base}/reports/${fixture.created.report}*`;
+      await c.route(matcher, async route => {
+        if (route.request().method() === "POST") await route.abort("failed");
+        else await route.continue();
+      });
+      await c.getByRole("button", { name: "임시저장", exact: true }).tap();
+      await c.getByRole("alert").filter({ hasText: "입력 내용은 유지됩니다" }).waitFor();
+      assert.equal(await c.getByLabel("활동 의견").inputValue(), "네트워크 실패 후에도 남아 있어야 하는 입력");
+      assert.equal((await required(db.from("reports").select("updated_at").eq("id", fixture.created.report).single())).updated_at, before.updated_at);
+      await c.unroute(matcher);
+      await c.getByRole("button", { name: "임시저장", exact: true }).tap();
+      await c.getByRole("status").filter({ hasText: "저장했습니다" }).waitFor();
+      await c.reload();
+      assert.equal(await c.getByLabel("활동 의견").inputValue(), "네트워크 실패 후에도 남아 있어야 하는 입력");
+      return "Only this QA browser POST was aborted; error/input/DB preservation and successful retry checked";
+    });
+    await step("mobile photos max/order/dialog and image PDF download", async () => {
+      await navigate(c, `/reports/${fixture.created.report}?edit=1`);
+      const { default: sharp } = await import("sharp");
+      const uploadMs = [];
+      for (const [index, color] of ["#ec9a9a", "#97c7df", "#dfc797"].entries()) {
+        const buffer = await sharp({ create: { width: 2400, height: 1800, channels: 3, background: color } }).jpeg({ quality: 95 }).toBuffer();
+        const started = Date.now();
+        const response = c.waitForResponse(r => r.url().endsWith(`/api/reports/${fixture.created.report}/photos`) && r.request().method() === "POST");
+        await c.getByLabel("활동 사진 선택").setInputFiles({ name: `qa-mobile-${index}.jpg`, mimeType: "image/jpeg", buffer });
+        assert.equal((await response).status(), 200);
+        await c.getByRole("img", { name: `활동 사진 ${index + 1}`, exact: true }).waitFor();
+        uploadMs.push(Date.now() - started);
+      }
+      assert.equal(await c.getByLabel("활동 사진 선택").count(), 0);
+      const rows = await required(db.from("report_attachments").select("id,storage_path").eq("report_id", fixture.created.report).order("created_at").order("id"));
+      assert.equal(rows.length, 3);
+      const srcs = await c.getByRole("img", { name: /^활동 사진 \d+$/ }).evaluateAll(images => images.map(img => decodeURIComponent(img.src)));
+      rows.forEach((row, index) => assert.ok(srcs[index].includes(row.storage_path), "Upload order must match DB order."));
+      await c.waitForFunction(() => [...document.querySelectorAll('img[alt^="활동 사진 "]')].every(img => img.complete && img.naturalWidth > 0));
+      await c.getByRole("button", { name: "활동 사진 2 삭제", exact: true }).tap();
+      const dialog = c.getByRole("dialog", { name: "사진을 삭제할까요?" });
+      await dialog.waitFor();
+      const box = await dialog.boundingBox();
+      assert.ok(box.x >= 0 && box.y >= 0 && box.x + box.width <= contextOptions.viewport.width && box.y + box.height <= contextOptions.viewport.height);
+      await c.screenshot({ path: path.join(artifactDir, "mobile-photo-dialog.png") });
+      await dialog.getByRole("button", { name: "취소", exact: true }).tap();
+      assert.equal((await required(db.from("report_attachments").select("id").eq("report_id", fixture.created.report))).length, 3);
+      await c.getByRole("button", { name: "제출", exact: true }).tap();
+      await c.waitForURL("**/reports");
+      await navigate(a, "/exports");
+      await a.getByLabel("수업 (최근 200개)").selectOption(fixture.created.session);
+      await a.getByLabel("파일 형식").selectOption("pdf");
+      const pendingDownload = a.waitForEvent("download", { timeout: 30000 });
+      await a.getByRole("button", { name: "생성 및 다운로드", exact: true }).tap();
+      const download = await pendingDownload;
+      const output = path.join(artifactDir, "mobile-photos.pdf");
+      await download.saveAs(output);
+      const { PDFDocument, PDFName } = await import("pdf-lib");
+      const pdf = await PDFDocument.load(await readFile(output));
+      const imageCount = pdf.context.enumerateIndirectObjects().filter(([, object]) => object.dict?.get(PDFName.of("Subtype"))?.toString() === "/Image").length;
+      assert.equal(imageCount, 3);
+      assert.equal((await required(db.from("export_jobs").select("id").eq("organization_id", fixture.organization.id))).length, 0);
+      await navigate(c, `/reports/${fixture.created.report}?edit=1`);
+      for (let index = 0; index < 2; index++) {
+        await c.getByRole("button", { name: "활동 사진 2 삭제", exact: true }).tap();
+        await dialog.getByRole("button", { name: "삭제", exact: true }).tap();
+        await dialog.waitFor({ state: "hidden" });
+      }
+      await c.getByRole("button", { name: "임시저장", exact: true }).tap();
+      await c.getByRole("status").filter({ hasText: "저장했습니다" }).waitFor();
+      assert.equal((await required(db.from("report_attachments").select("id").eq("report_id", fixture.created.report))).length, 1);
+      return { uploadMs, pages: pdf.getPageCount(), imageCount, remainingPhotos: 1, cancelPreservedPhotos: true };
     });
   }
   if (mode === "lifecycle") {
@@ -758,7 +942,7 @@ try {
       assert.equal(bypass.error?.code, "42501");
       const pending = await required(db.from("profiles").select("status").eq("id", fixture.users.pending.id).single());
       assert.equal(pending.status, "pending");
-      const context = await browser.newContext();
+      const context = await browser.newContext(contextOptions);
       const page = await context.newPage();
       await page.goto(`${base}/login`);
       await page.locator('[name="email"]').fill(fixture.users.pending.email);
@@ -817,23 +1001,43 @@ try {
       return "fresh coach schedule created, read, edited and persisted (Seoul date verified)";
     });
   }
+  if (mode === "mobile-image") {
+    await step("mobile retained photo decodes after cancellation", async () => {
+      await navigate(c, `/reports/${fixture.created.photoReport}?edit=1`);
+      const image = c.getByRole("img", { name: "활동 사진 1", exact: true });
+      await image.waitFor();
+      await c.waitForFunction(() => {
+        const img = document.querySelector('img[alt="활동 사진 1"]');
+        return img?.complete && img.naturalWidth > 0;
+      });
+      const decoded = await image.evaluate(img => ({ width: img.naturalWidth, height: img.naturalHeight }));
+      assert.deepEqual(decoded, { width: 1280, height: 960 });
+      assert.equal(await c.getByLabel("활동 사진 선택").count(), 0);
+      await c.screenshot({ path: path.join(artifactDir, `mobile-decoded-${deviceName?.replaceAll(" ", "-") ?? "desktop"}.png`), fullPage: true });
+      return { decoded, profile: deviceName, editable: false };
+    });
+  }
   if (mode === "smoke") {
-    await step("final authenticated desktop/mobile smoke", async () => {
+    await step(deviceName ? `final authenticated mobile smoke (${deviceName})` : "final authenticated desktop/mobile smoke", async () => {
       const errors = [];
+      let pageLoads = 0;
       for (const [role, page] of Object.entries(pages)) {
         page.on("pageerror", e => errors.push({ role, error: e.message }));
         const routes = role === "admin" ? ["/dashboard", "/courses", "/classes", "/admin-reports", "/members", "/templates", "/exports", "/workspaces"] : ["/dashboard", "/courses", "/classes", "/reports", `/reports/${fixture.created.report}`];
-        for (const width of [1280, 390]) {
-          await page.setViewportSize({ width, height: 900 });
+        const viewports = deviceName ? deviceName.includes("Pro Max") ? [{ width: 440, height: 763 }, { width: 838, height: 390 }] : [{ width: 402, height: 681 }, { width: 756, height: 352 }] : [{ width: 1280, height: 900 }, { width: 390, height: 900 }];
+        for (const viewport of viewports) {
+          await page.setViewportSize(viewport);
           for (const route of routes) {
             if (role === "other" && route.startsWith("/reports/")) continue;
             await navigate(page, route);
-            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${role}:${width}:${route}`);
+            pageLoads++;
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${role}:${JSON.stringify(viewport)}:${route}`);
+            if (deviceName && role === "admin" && route === "/dashboard") await page.screenshot({ path: path.join(artifactDir, `mobile-${deviceName.replaceAll(" ", "-")}-${viewport.width}.png`), fullPage: true });
           }
         }
       }
       assert.deepEqual(errors, []);
-      return "34 page loads at 1280/390px: no horizontal overflow or uncaught page errors";
+      return { pageLoads, engine, profile: deviceName ?? "Desktop Chrome", errors, horizontalOverflow: false, screenProfile: contextOptions.screen, deviceScaleFactor: contextOptions.deviceScaleFactor ?? 1 };
     });
   }
 } finally {

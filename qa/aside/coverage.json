@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "requirements": [
     {
       "id": "R01",
@@ -16,13 +16,15 @@
         "1-c-C",
         "1-c-D",
         "1-d-A",
-        "1-d-B"
+        "1-d-B",
+        "1-e-A",
+        "1-e-B"
       ],
       "automated": [
         "src/components/app-header.test.tsx",
         "src/components/list-filters.test.tsx"
       ],
-      "gaps": ["실기기 PWA 설치와 모션 감소 시각 검사"]
+      "gaps": ["실기기 PWA 설치와 모션 감소 시각 검사", "실제 iOS 27 Safari·키보드·자동 확대 (WebKit 에뮬레이션과 별도)"]
     },
     {
       "id": "R02",
@@ -37,7 +39,7 @@
         "src/features/members/actions.test.ts",
         "src/app/auth/callback/page.test.tsx"
       ],
-      "gaps": ["만료된 초대·복구 링크 거절 E2E"]
+      "gaps": ["만료된 초대·복구 링크 거절 E2E", "워크스페이스 적용 후 실제 초대 메일 발송·수신·링크 수락 E2E"]
     },
     {
       "id": "R03",
@@ -143,7 +145,7 @@
         "src/features/reports/field-input.test.tsx",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["실기기 카메라·HEIC", "연결된 @브라우저 확장의 OS 파일 선택기(설치 Chrome의 파일 입력·실제 업로드는 검증)"]
+      "gaps": ["실기기 카메라·HEIC", "연결된 @브라우저 확장의 OS 파일 선택기(설치 Chrome/WebKit의 파일 입력·실제 업로드와 별도)"]
     },
     {
       "id": "R06",
@@ -190,7 +192,7 @@
         "src/app/api/cron/exports/route.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["실제 모바일 직접 다운로드"]
+      "gaps": ["실제 iOS Safari의 파일 앱 저장·공유 (WebKit 다운로드 이벤트와 별도)"]
     },
     {
       "id": "R09",

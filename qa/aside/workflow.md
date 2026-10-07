@@ -125,13 +125,28 @@ Aside 파일 선택기는 세션 밖 경로를 거부할 수 있다. 그 경우 
 | 10-b-F | 전환 전 상세/편집 탭이 열린 상태            | 다른 워크스페이스 전환 후 이전 탭 저장 | 오래된 워크스페이스 쓰기 거절, 양쪽 원본 데이터 보존 |
 | 10-b-G | A 보고서 작성자가 B로 전환, A 관리자 | 전체 보고서와 내보내기의 작성자 선택·조회 | 작성자 선택지와 A의 기존 보고서 유지, B 데이터는 섞이지 않음 |
 
-### 설치된 Chrome 통합 QA 보조 실행기
+### 설치된 Chrome/WebKit 통합 QA 보조 실행기
 
-Aside 연결이 불가능하면 `scripts/qa-workspace-crud.mjs`로 실제 Chrome·localhost·개발 Supabase를 교차 검증할 수 있다. 이는 Aside CLI 실행 결과가 아니며, 쓰기 승인이 있을 때만 사용한다.
+Aside 연결이 불가능하면 `scripts/qa-workspace-crud.mjs`로 설치 Chrome 또는 WebKit·localhost·개발 Supabase를 교차 검증할 수 있다. 이는 Aside CLI 실행 결과가 아니며, 쓰기 승인이 있을 때만 사용한다.
 
 ```powershell
 node --env-file=.env.local scripts/qa-workspace-crud.mjs setup <설치된-playwright-index.mjs-경로>
 node --env-file=.env.local scripts/qa-workspace-crud.mjs crud <설치된-playwright-index.mjs-경로>
 ```
 
-이후 `photos`, `verify`, `workspaces`, `schedules`, `lifecycle`, `additional`, `onboarding`, `smoke` 단계를 순서대로 실행한다. 중단된 검증을 이어갈 때만 `administration`, `teardown`, `schedule-retest` 단계를 사용한다. `teardown`도 전체 데이터 청소가 아니라 승인된 취소·양식 비활성화 시나리오다. 고정된 승인 개발 프로젝트만 허용하며 `setup`은 이미 저장된 픽스처를 덮어쓰지 않는다. 업무 데이터는 전용 워크스페이스 두 개에 격리하고 테스트 계정은 무작위 비밀번호로 만든다. 인증정보·세션·원본 결과·캡처·다운로드는 Git 제외된 `artifacts/aside/workspace-crud-20261007`에만 저장하고 자동 삭제하지 않는다. 실제 초대 메일 전송·수신함 링크 수락은 이 보조 실행기에 포함하지 않는다.
+이후 `photos`, `verify`, `workspaces`, `schedules`, `additional`, `onboarding`, `lifecycle`, `smoke` 단계를 순서대로 실행한다. 중단된 검증을 이어갈 때만 `administration`, `teardown`, `schedule-retest` 단계를 사용한다. `teardown`도 전체 데이터 청소가 아니라 승인된 취소·양식 비활성화 시나리오다. 고정된 승인 개발 프로젝트만 허용하며 `setup`은 이미 저장된 픽스처를 덮어쓰지 않는다. 업무 데이터는 전용 워크스페이스 두 개에 격리하고 테스트 계정은 무작위 비밀번호로 만든다. 인증정보·세션·원본 결과·캡처·다운로드는 Git 제외된 `artifacts/aside/<QA_RUN_NAME>`에만 저장하고 자동 삭제하지 않는다. 기본 실행 이름은 `workspace-crud-20261007`이다. 실제 초대 메일 전송·수신함 링크 수락은 이 보조 실행기에 포함하지 않는다.
+
+### 모바일 실행
+
+`QA_DEVICE`에 설치된 Playwright 프로필 이름을 지정하면 해당 프로필의 WebKit·touch·DPR로 모든 단계를 실행한다. 별도 `QA_RUN_NAME`으로 이전 결과를 보존한다. `QA_REUSE_RUN`은 지정 실행의 `qa_fixture: true`로 확인된 계정 세 개만 새 QA 워크스페이스에 재사용하며 실사용자는 변경하지 않는다. 계정 재사용 초기 준비가 완료되기 전에 중단된 경우에만 `QA_RESUME_SETUP=1`로 이어갈 수 있다. 새 계정 생성 중 중단된 준비는 자동 재실행하지 않는다. 기존 업무 데이터나 완료된 픽스처를 덮어쓰지 않는다.
+
+```powershell
+$env:QA_RUN_NAME = 'iphone18-webkit-20261007'
+$env:QA_DEVICE = 'iPhone 17 Pro'
+$env:QA_REUSE_RUN = 'workspace-crud-20261007'
+node --env-file=.env.local scripts/qa-workspace-crud.mjs setup <설치된-playwright-index.mjs-경로>
+```
+
+2026-10-07 설치 Playwright에 iPhone 18 프로필은 없었다. [Apple 공식 18 Pro/Pro Max 규격](https://www.apple.com/iphone-18-pro/specs/)의 1206×2622 / 1320×2868 물리 픽셀에 3배율을 가정하면 402×874 / 440×956 논리 화면이며 설치된 17 Pro/Pro Max 프로필과 크기가 같다. 주소창 영역을 고려한 세로 뷰포트는 각각 402×681 / 440×763, 가로는 756×352 / 838×390을 사용한다. 이는 크기 근사이며 해당 프로필의 iOS 18.7 UA·Safari/WebKit 26.6을 iOS 27이나 실기기로 가장하지 않는다.
+
+`additional`, `onboarding` 뒤, 취소/양식 삭제 전 `mobile`을 실행한다. 실제 터치 이벤트, 축소 뷰포트 입력, 브라우저 POST 실패와 재시도, 사진 3장 한도·순서·삭제 취소/확정, 이미지 3개를 포함한 PDF 다운로드/무보관을 검사한다. 이어 `schedule-retest`, `lifecycle`, `smoke`를 실행한다. 마지막에는 `QA_DEVICE='iPhone 17 Pro Max'`로 `smoke`를 별도 실행해 Max 화면/DPR 컨텍스트에서 가로·세로를 확인한다. `mobile-image`는 취소 후 남은 사진의 실제 브라우저 디코딩(1280×960)을 두 프로필에서 조회 전용으로 확인한다. `membership`은 이미 삭제한 양식을 다시 수정하지 않고 구성원 승격·비활성·범위 차단·복원만 독립 재검증한다. 높이 축소·합성 JPEG·다운로드 이벤트는 실제 키보드·카메라/HEIC·iOS 파일 앱 저장 검증을 대신하지 않는다.
