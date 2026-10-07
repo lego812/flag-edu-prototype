@@ -4,7 +4,8 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { findNativeCancellation, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
+import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
+import { observeReadOnlyNetwork } from "./qa-network-idle.mjs";
 
 // Read-only integration and curated README captures. Never submits business
 // forms, changes permissions, sends mail, or generates exports.
@@ -59,6 +60,7 @@ const publicFailedRequest = ({ role, phase, resource, reason, time }) => ({ role
 let failure;
 let dataUnchanged = false;
 let phase = "setup";
+const settledNetworks = new WeakMap();
 
 async function record(name, run) {
   phase = name;
@@ -67,10 +69,25 @@ async function record(name, run) {
   console.log(JSON.stringify({ environment: base.includes("localhost") ? "development" : "production", name: scrub(name), status: "PASS" }));
 }
 async function visit(page, route) {
-  const response = await page.goto(base + route, { waitUntil: "domcontentloaded" });
-  assert.ok(response.status() < 400, "Authorized page HTTP failure");
+  // Login has already navigated to /dashboard. Do not immediately reload
+  // that document and abort its newly scheduled Link prefetches. This is a
+  // screen assertion, not a reload-stress test. Prefer real application links
+  // for other routes, preserving Next Router and its in-flight prefetches.
+  // Direct-address access remains the fallback for otherwise unreachable
+  // routes; denied administrator paths are tested separately below.
+  if (!isCurrentDocument(page.url(), base + route)) {
+    const link = page.locator(`a[href="${route}"]`).filter({ visible: true }).first();
+    if (await link.count()) {
+      await link.tap();
+      await page.waitForURL(url => isCurrentDocument(url.href, base + route));
+    } else {
+      const response = await page.goto(base + route, { waitUntil: "domcontentloaded" });
+      assert.ok(response.status() < 400, "Authorized page HTTP failure");
+    }
+  }
   await page.getByRole("heading", { level: 1 }).waitFor();
   await page.waitForLoadState("networkidle");
+  await settledNetworks.get(page)?.();
   assert.equal(new URL(page.url()).pathname, route.split("?")[0]);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, "Horizontal overflow");
 }
@@ -106,6 +123,7 @@ async function capture(page, file, role, scrollTo) {
   // idle wait. Finish those requests before the next document navigation.
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await page.waitForLoadState("networkidle");
+  await settledNetworks.get(page)?.();
 }
 
 try {
@@ -130,7 +148,9 @@ try {
 
   for (const role of ["admin", "coach"]) {
     const context = await browser.newContext(options);
+    const settleNetwork = observeReadOnlyNetwork(context, base);
     const page = await context.newPage();
+    settledNetworks.set(page, settleNetwork);
     // WebKit reports some native load-cancellation messages as pageerror too.
     // Observe DOM exception events and failed requests independently; never
     // blanket-ignore access-control messages or intercept application fetches.
@@ -165,6 +185,7 @@ try {
       await page.getByRole("button", { name: "로그인", exact: true }).click();
       await page.waitForURL("**/dashboard");
       await page.waitForLoadState("networkidle");
+      await settleNetwork();
       assert.equal(await page.getByLabel("워크스페이스", { exact: true }).inputValue(), fixture.organization.id);
       const routes = ["/dashboard", "/courses", `/courses/${fixture.created.course}`, "/courses/new", `/courses/${fixture.created.course}/edit`, "/classes?view=list", "/classes?view=calendar&month=2026-10&date=2026-10-10", `/classes/new?course=${fixture.created.course}`, `/classes/${fixture.created.session}`, "/reports", `/reports/${fixture.created.report}`];
       if (role === "admin") routes.push("/manage", "/admin-reports", "/templates", "/templates/new", "/members", "/exports", "/workspaces");

@@ -1,9 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { findNativeCancellation, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
+import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
 
 const request = { role: "coach", url: "https://example.com/api/workspaces/current", reason: "Load request cancelled", time: 10_000 };
 const message = "Fetch API cannot load https://example.com/api/workspaces/current due to access control checks.";
 const error = { role: "coach", rawMessage: message, message, time: 10_100 };
+
+it("does not reload a document already reached by login, but preserves route and filter changes", () => {
+  const current = "https://example.com/dashboard";
+  expect(isCurrentDocument(current, current)).toBe(true);
+  expect(isCurrentDocument(current + "#top", current)).toBe(true);
+  for (const target of [
+    "https://other.example.com/dashboard", "https://example.com/courses",
+    current + "?filter=all", current + "/",
+  ]) expect(isCurrentDocument(current, target)).toBe(false);
+  expect(isCurrentDocument("https://example.com/classes?view=list", "https://example.com/classes?view=calendar")).toBe(false);
+});
 
 it("separates only the exact local Next error-overlay diagnostic POST from business writes", () => {
   const base = "http://localhost:3000";

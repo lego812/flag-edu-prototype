@@ -1,6 +1,14 @@
 // A WebKit native console load-cancellation message is not sufficient evidence
 // of an uncaught JS exception. Callers must also gate DOM error/rejection events
 // and retain this warning. Unmatched access-control errors remain failures.
+export function isCurrentDocument(current, target) {
+  const currentUrl = new URL(current);
+  const targetUrl = new URL(target);
+  return currentUrl.origin === targetUrl.origin &&
+    currentUrl.pathname === targetUrl.pathname &&
+    currentUrl.search === targetUrl.search;
+}
+
 export function isLocalDevelopmentDiagnostic(base, method, url) {
   const target = new URL(url);
   return base === "http://localhost:3000" && target.origin === base &&
