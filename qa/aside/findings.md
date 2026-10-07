@@ -383,4 +383,30 @@ QA 전제 보완 `QA-20261007-native-report-scope`: 첫 native Chrome 실행 `na
 
 이번 실제 브라우저 통합은 조회·미저장 입력·권한 차단·기존 사진·네이티브 메뉴 검증이다. 신규 등록/저장/제출/삭제·계정 변경·메일/내보내기 생성은 재실행하지 않았고 해당 기능의 기존 PGlite/API/컴포넌트 회귀는 전체 자동 테스트에 포함했다. 원래 worktree의 미커밋 파일은 보존했다. main 병합·운영 배포·현재 운영 증거는 아래 후속 기록으로 분리한다.
 
+### 이전 구현 단계의 미확정 관찰 (역사적 원본)
+
 `OBS-20261007-local-build-stream-close`는 NEEDS_EVIDENCE로 별도 보존한다. 보조 서버 종료 때 회수한 누적 출력에 `The destination stream closed early` 7건이 있었으며 요청/시각 매핑은 저장되지 않았다. 같은 로컬 빌드 브라우저 원본에는 `net::ERR_ABORTED` 356건이 기록돼 있지만 이 취소들과 서버 메시지를 일대일로 연결하거나 전부 정상이라고 단정하지 않는다. 브라우저 43개 화면/동작·pageerror/DOM 예외 게이트 통과는 서버·네트워크 전체 무오류를 뜻하지 않는다. 이번에는 요청 취소·서버 진단을 숨기는 패치를 하지 않고 범위를 명시했으며 추가 네트워크/서버 상관 계측은 별도 후속 검토 사항이다. 보조 서버의 3001 포트 종료, 원래 작업 폴더의 미커밋 파일 보존과 main SHA 불변을 최종 확인했다.
+
+## 2026-10-07 승인된 운영 배포·최종 탐색 대조
+
+사용자 승인으로 앞선 보고서 조회·개발 오류 수정 전체를 main `4ad47c4b89f85a14bf8f238e21bbce61e7f16c57`에 병합·푸시했다. Vercel production `dpl_DhmQDit4VVWnLMDpJ7sQBrfc1fFN`은 READY, Git main SHA와 운영 별칭 연결을 재조회했다. 새 DB 마이그레이션은 없다. 이 SHA의 배포와 아래 실행은 과거 배포 기록과 구분한다.
+
+최초 운영 Chrome `mobile-guide-production-1791350248297`은 43/43 PASS·실제 예외/업무 쓰기 0·원본 보존이다. 운영 WebKit `mobile-guide-production-1791350261601`은 화면 43개와 DOM 예외 0·원본 보존에도 정확한 취소 요청과 대응하지 못한 native access-control 3건 때문에 최종 FAIL을 유지했다. 같은 배포의 실제 메뉴/touch만 사용하는 `native-menu-webkit-1791350512812`는 33/33 PASS·경고/DOM/pageerror/쓰기 0·업무 보존이다. 최근 10분 Vercel 오류 로그 조회는 0건이었지만 모든 시간대의 서버 무오류로 확대하지 않는다.
+
+| ID | 원인·변경·원본 | 회귀·상태 |
+| --- | --- | --- |
+| `QA-20261007-navigation-settling` | 최초 full 실행은 로그인으로 이미 도착한 홈을 즉시 `goto`로 다시 로드했다. 같은 화면 재로딩을 피하고 보이는 링크를 우선 touch하도록 보완했다. 이 변경만으로 운영 WebKit의 오류가 사라지지 않았다: `mobile-guide-production-1791350877288`은 12개 뒤 문서 이동 timeout과 native 메시지 2건, `mobile-guide-production-1791351038823`은 43개·DOM 0에도 native 6건으로 FAIL을 보존한다. 설치 Playwright WebKit 소스는 JavaScript 출처의 error-level console도 pageerror로 전달하므로 DOM error/rejection을 독립 기록한다. SPA 뒤 이전 문서의 `networkidle`은 새 prefetch 완료 증거가 아니어서 context의 새 same-origin GET 시작/완료/취소를 별도로 관찰하고 1초 quiet·30초 실패 상한을 추가했다. 어떤 메시지도 필터에 추가하지 않았다. | 현재 주소 비교 1건·새 요청 quiet/취소 관찰/시간 초과 실패 3건 회귀 PASS. 최신 실제 재실행 전 FIXED_PENDING_RETEST. 제품 결함 해결과 구분한다. |
+
+Service Worker 원인 가설은 조회 전용 같은 운영 계정·경로에서 allow/block 비교 시 각각 native 메시지 1건·DOM 0건으로 재현돼 채택하지 않았다. Worker·앱 요청·권한·프레임워크 운영 소스는 이 비교 때문에 수정하지 않는다. 원본 비교·실패 로그는 ignored artifacts에 보존하고 자격증명은 커밋하지 않는다.
+
+위 탐색 보완은 `fix/integration-navigation-verification` 별도 브랜치의 QA·문서 변경이며 앱 소스는 `4ad47c4`와 동일하다. localhost Chrome `mobile-guide-development-1791351052977`은 43/43 PASS·DOM/pageerror/진단/업무 쓰기 0·원본 보존이다. localhost WebKit 문서 캡처 `mobile-guide-development-1791351174017`은 43/43 PASS·18개 선별 이미지·원본 보존, DOM/미분류 오류/쓰기 0건·정확한 취소와 대응한 경고 2건이다. 사진은 앞선 18장과 바이트가 동일하며 sourceCommit을 실제 main으로 갱신했다. 연결 @브라우저나 실제 iPhone 검증으로 표현하지 않는다. 새 업무 CRUD·메일·계정 변경은 하지 않았다. 최신 quiet 대조와 커밋·재배포 결과는 후속 기록에 추가한다.
+
+### 최신 quiet 대조·QA 커밋 후 회귀
+
+QA 보완 커밋은 `57a9e872ea1061b40634d3727e23a98732ea04ed`다. 위 FIXED_PENDING_RETEST는 최신 실제 실행으로 **VERIFIED_HARNESS**로 갱신한다. 앱 소스 `4ad47c4`와 같은 요청·화면 범위에서 이동 대기만 보완한 localhost WebKit `mobile-guide-development-1791351439728`, 운영 WebKit `mobile-guide-production-1791351344656` 각각 **43/43 PASS**다. 두 실행 모두 미분류/pageerror·DOM error/rejection·취소 경고·진단 POST·업무 쓰기 0건, 6개 업무 테이블 동일이다. 운영 Chrome 최신 `mobile-guide-production-1791351214105`도 **43/43 PASS**, 예외/경고/쓰기 0·원본 보존이다. Chrome localhost 최신 결과는 위 `1791351052977`이며 제품 소스는 동일하다.
+
+이는 제품의 네트워크 예외를 숨기거나 Service Worker를 차단해 얻은 결과가 아니다. Worker 기본 allow, 요청 가로채기 없음, 실제 코치 관리자 주소 차단 6곳과 직접 주소 fallback을 유지했다. Playwright의 예전 문서 load-state를 새 SPA 요청 완료로 간주하던 QA 경합을 수정했다. 최초 미대응 native 메시지의 유일한 취소 요청을 소급 단정하지 않고 모든 과거 FAIL과 allow/block 비교를 보존한다. 현재 통합 실행에서 재현되지 않음과 과거 원본의 미확정 상세는 구분한다.
+
+최신 자동 회귀 **48파일 231/231**, lint 경고 0·TypeScript·문법·diff 검사 PASS, 운영 의존성 감사 0건이다. QA 커밋 후 관련 4파일 23개(quiet/주소/매핑/이미지) 재실행도 PASS다. 제품 production 빌드는 이미 main `4ad47c4`에서 통과했고 이 추가 브랜치는 앱·의존성·운영 번들을 바꾸지 않는다. 같은 운영 배포의 최근 10분 5xx 로그 조회도 0건이다. 문서용 18장 무결성은 다시 확인했으며 byte-identical 이미지에 캡처 시각/검증 앱 SHA만 갱신했다.
+
+사용자 승인에 따라 QA·README·기록 보완도 main에 병합·재배포한다. 이후 실제 배포 READY/SHA/별칭과 운영 메뉴 결과는 최종 인계에서 재조회하며, 위 `4ad47c4`의 전체 검증을 다른 배포의 실행으로 바꾸어 적지 않는다. 실제 업무 CRUD·메일 E2E, 실기기 카메라/HEIC·PWA·파일 앱, 개발/운영 DB 분리와 공식 React 수정 포함 안정판 전환은 별도 후속 범위다.
