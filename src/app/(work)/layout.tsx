@@ -9,6 +9,7 @@ export default async function WorkLayout({
   return (
     <>
       <AppHeader
+        userId={profile.id}
         name={profile.name}
         isAdmin={profile.role === "admin"}
         workspace={workspace}

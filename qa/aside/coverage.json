@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "requirements": [
     {
       "id": "R01",
@@ -219,16 +219,22 @@
         "10-b-D",
         "10-b-E",
         "10-b-F",
-        "10-b-G"
+        "10-b-G",
+        "10-b-H",
+        "10-b-I",
+        "10-b-J",
+        "10-b-K"
       ],
       "automated": [
         "src/features/workspaces/actions.test.ts",
         "src/features/workspaces/switcher.test.tsx",
+        "src/features/workspaces/sync-client.test.ts",
+        "src/app/api/workspaces/current/route.test.ts",
         "src/features/members/actions.test.ts",
         "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["계정 전체 선택 변경 뒤 이미 열린 다른 브라우저 탭의 UI 자동 새로고침"]
+      "gaps": []
     }
   ],
   "scenarios": {

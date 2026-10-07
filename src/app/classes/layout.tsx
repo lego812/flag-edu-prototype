@@ -5,6 +5,7 @@ export default async function ClassesLayout({ children }: { children: React.Reac
   const { profile, workspace, workspaces } = await requireCurrentProfile();
   return <div className="min-h-svh">
     <AppHeader
+      userId={profile.id}
       name={profile.name}
       isAdmin={profile.role === "admin"}
       workspace={workspace}

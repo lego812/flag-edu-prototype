@@ -122,8 +122,12 @@ Aside 파일 선택기는 세션 밖 경로를 거부할 수 있다. 그 경우 
 | 10-b-C | 다른 워크스페이스에 가입된 기존 이메일     | 현재 워크스페이스 구성원으로 추가    | Auth 계정 중복 없이 현재 워크스페이스의 활성 코치 멤버십만 추가 |
 | 10-b-D | 같은 계정이 A 관리자·B 코치 멤버십 보유     | A와 B를 번갈아 전환해 관리 화면 접근 | A에서는 관리자 기능 허용, B에서는 관리자 기능 차단 |
 | 10-b-E | 비활성 또는 소속되지 않은 워크스페이스 ID    | 직접 전환 RPC·액션 호출               | 접근 거절, 현재 워크스페이스와 데이터 변경 없음 |
-| 10-b-F | 전환 전 상세/편집 탭이 열린 상태            | 다른 워크스페이스 전환 후 이전 탭 저장 | 오래된 워크스페이스 쓰기 거절, 양쪽 원본 데이터 보존 |
+| 10-b-F | 전환 전 보고서 ID·리비전 및 인증된 요청 픽스처 | 다른 워크스페이스 전환 후 이전 ID로 직접 저장 RPC | UI 자동 이동과 별개로 DB에서 오래된 범위의 쓰기 거절, 양쪽 원본 데이터 보존 |
 | 10-b-G | A 보고서 작성자가 B로 전환, A 관리자 | 전체 보고서와 내보내기의 작성자 선택·조회 | 작성자 선택지와 A의 기존 보고서 유지, B 데이터는 섞이지 않음 |
+| 10-b-H | 동일 QA 계정의 A 목록/상세 탭, A/B 역할·데이터 차이 | 다른 탭에서 A→B→A 전환 | 기존 탭이 각 워크스페이스 홈으로 자동 이동하고 이름·역할·조회 범위가 맞음 |
+| 10-b-I | BroadcastChannel 미지원 또는 저장소 사용 제한 | 전환 알림·탭 활성화·페이지 복원으로 재확인 | Storage 알림 또는 서버 재확인으로 이전 화면 해소. 숨은 탭은 복귀 시 재확인하며 활성 화면은 30초 주기로 보완 |
+| 10-b-J | A 편집 폼에 미저장 입력과 DB 원본 존재 | 다른 탭에서 B 전환 | 이전 편집 화면이 B 홈으로 이동하며 미저장 입력을 자동 저장하지 않고 A/B 원본 보존 |
+| 10-b-K | 같은 워크스페이스 상태의 탭과 별도 계정 알림 | 잘못된/과거 알림, 서버 오류·복구를 검증 | 알림값을 선택 근거로 신뢰하지 않고 타 계정 이벤트 무시. 일시 조회 실패만으로 이동하지 않으며 복구 후 실제 서버 상태 재확인 |
 
 ### 설치된 Chrome/WebKit 통합 QA 보조 실행기
 
@@ -150,3 +154,14 @@ node --env-file=.env.local scripts/qa-workspace-crud.mjs setup <설치된-playwr
 2026-10-07 설치 Playwright에 iPhone 18 프로필은 없었다. [Apple 공식 18 Pro/Pro Max 규격](https://www.apple.com/iphone-18-pro/specs/)의 1206×2622 / 1320×2868 물리 픽셀에 3배율을 가정하면 402×874 / 440×956 논리 화면이며 설치된 17 Pro/Pro Max 프로필과 크기가 같다. 주소창 영역을 고려한 세로 뷰포트는 각각 402×681 / 440×763, 가로는 756×352 / 838×390을 사용한다. 이는 크기 근사이며 해당 프로필의 iOS 18.7 UA·Safari/WebKit 26.6을 iOS 27이나 실기기로 가장하지 않는다.
 
 `additional`, `onboarding` 뒤, 취소/양식 삭제 전 `mobile`을 실행한다. 실제 터치 이벤트, 축소 뷰포트 입력, 브라우저 POST 실패와 재시도, 사진 3장 한도·순서·삭제 취소/확정, 이미지 3개를 포함한 PDF 다운로드/무보관을 검사한다. 이어 `schedule-retest`, `lifecycle`, `smoke`를 실행한다. 마지막에는 `QA_DEVICE='iPhone 17 Pro Max'`로 `smoke`를 별도 실행해 Max 화면/DPR 컨텍스트에서 가로·세로를 확인한다. `mobile-image`는 취소 후 남은 사진의 실제 브라우저 디코딩(1280×960)을 두 프로필에서 조회 전용으로 확인한다. `membership`은 이미 삭제한 양식을 다시 수정하지 않고 구성원 승격·비활성·범위 차단·복원만 독립 재검증한다. 높이 축소·합성 JPEG·다운로드 이벤트는 실제 키보드·카메라/HEIC·iOS 파일 앱 저장 검증을 대신하지 않는다.
+
+### 로그인 안내·워크스페이스 탭 동기화 재검증
+
+`scripts/qa-workspace-sync.mjs`는 기존 `qa_fixture: true` 계정과 A/B 멤버십을 확인한 후 로그인 안내, 양방향 탭 동기화·역할·데이터 격리, Storage 대체 알림, 저장소 제한 시 탭 복귀, 미저장 원본 보존, 잘못된 알림 무시를 검증한다. UI 자동 이동과 별개로 이전 워크스페이스의 보고서 저장 RPC가 거절되는지도 확인한다. 성공하는 업무 저장·삭제·계정 생성·메일 발송은 하지 않으며, QA 계정의 선택 워크스페이스만 변경하고 종료 시 원래 선택으로 복원한다. 이 변경 범위가 승인됐을 때만 실행한다.
+
+```powershell
+node --env-file=.env.local scripts/qa-workspace-sync.mjs coach chromium <설치된-playwright-index.mjs-경로>
+node --env-file=.env.local scripts/qa-workspace-sync.mjs admin webkit <설치된-playwright-index.mjs-경로>
+```
+
+기본 픽스처는 `iphone18-webkit-20261007`이며 `QA_FIXTURE_RUN`으로 기존 승인 픽스처를 지정할 수 있다. 실행 대상은 기본 localhost이고 운영 재검증 승인 시에만 `QA_BASE_URL='https://flag-edu-prototype.vercel.app'`을 지정한다. 원본 결과와 빈 로그인 화면 캡처는 Git 제외된 `artifacts/aside/workspace-sync-<engine>-<role>-<timestamp>`에 저장한다. WebKit은 설치된 `iPhone 17 Pro Max` 크기 근사이며 실기기 Safari 검증으로 집계하지 않는다. 30초 주기·숨은 탭 대기·조회 실패·동시 요청 순서·cleanup은 `sync-client.test.ts`에서 별도로 회귀 검증한다.

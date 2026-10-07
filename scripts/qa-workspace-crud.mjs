@@ -481,6 +481,7 @@ try {
       await switchTo(c, "coach", fixture.organization.id);
       await navigate(c, `/reports/${fixture.created.report}?edit=1`);
       await c.getByLabel("수업 내용", { exact: false }).fill("이 값은 다른 워크스페이스에서 저장되면 안 됩니다");
+      const before = await required(db.from("reports").select("updated_at").eq("id", fixture.created.report).single());
       const fresh = await contexts.coach.newPage();
       await switchTo(fresh, "coach", fixture.created.workspaceB);
       await navigate(fresh, "/manage");
@@ -494,9 +495,11 @@ try {
       await a.locator('select[name="author"]').selectOption(fixture.users.coach.id);
       await a.getByRole("button", { name: "조회", exact: true }).click();
       await a.locator(`a[href="/reports/${fixture.created.report}"]`).waitFor();
-      const before = await required(db.from("reports").select("updated_at").eq("id", fixture.created.report).single());
-      await c.getByRole("button", { name: "임시저장", exact: true }).click();
-      await c.getByRole("alert").filter({ hasText: "권한" }).waitFor();
+      await c.waitForURL("**/dashboard", { timeout: 45000 });
+      const staleClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+      await required(staleClient.auth.signInWithPassword({ email: fixture.users.coach.email, password: fixture.users.coach.password }));
+      const staleSave = await staleClient.rpc("save_and_submit_report", { p_id: fixture.created.report, p_version: before.updated_at, p_answers: [], p_submit: false });
+      assert.equal(staleSave.error?.code, "P0002");
       const after = await required(db.from("reports").select("updated_at").eq("id", fixture.created.report).single());
       assert.equal(before.updated_at, after.updated_at);
       await fresh.goto(`${base}/reports/${fixture.created.report}`);

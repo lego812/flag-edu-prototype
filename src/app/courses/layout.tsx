@@ -11,6 +11,7 @@ export default async function CoursesLayout({
   return (
     <div className="min-h-svh">
       <AppHeader
+        userId={profile.id}
         name={profile.name}
         isAdmin={profile.role === "admin"}
         workspace={workspace}
