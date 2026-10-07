@@ -318,3 +318,20 @@ Aside 서비스가 실행되지 않았고 연결 브라우저 런타임도 초�
 자동 회귀 **44파일 207/207**, ESLint(경고 없음), TypeScript, production build, 운영 의존성 감사 0건, `node --check`, `git diff --check` 통과. 기능 기준은 변경하지 않아 coverage v6의 139개 기존 QA ID를 유지했다. 초기 실패와 대조 원본은 ignored artifacts에 그대로 보존했다. 원래 사용자 worktree의 `AGENTS.md` 수정·미추적 사진은 건드리지 않았다.
 
 다른 탭 자동 갱신도 개발 코치 `workspace-sync-chromium-coach-1791343564737`·운영 관리자 `workspace-sync-chromium-admin-1791343576879`에서 각각 **7/7 PASS**로 재확인했다. BroadcastChannel 알림, Storage 대체, 알림·저장소 제한 시 foreground 확인, 실제 A→B→A 홈 이동·역할/데이터 격리, 미저장 수업 원본 보존, 이전 보고서 RPC 거절, 위조 알림 무시와 원래 선택 복원을 확인했다. 정상 업무 저장·사진 삭제는 없으며 이전 보고서 RPC는 `P0002`로 거절됐다. 이번 실행의 범위는 두 환경 조회/입력 확인 86개와 동기화 확인 14개이며 중복 기능·환경이 포함된 관찰 수치다. 전체 CRUD 100개 또는 실제 모바일 100개 성공으로 표현하지 않는다.
+
+## 2026-10-07 승인된 보고서 조회 시안 구현
+
+사용자가 보고서 조회 시안을 승인해 최신 main `b3a6c80`에서 `feat/report-readable-detail`을 분기했다. 변경 범위는 보고서 상세 읽기와 사진 확대이며 목록·PDF·양식 입력·저장·권한 규칙은 확장하지 않았다. R06 기준, 조회 전용 `4-a-F`·`5-c-H`·`6-a-F`, coverage v7의 142개 ID 매핑과 README 설명을 갱신했다. 기존 문서 사진은 이전 캡처 증거이므로 새 화면 검증으로 대신하지 않고 이번 원본 캡처는 ignored artifacts에만 둔다.
+
+| 발견 ID | 종류·원인 | 변경·회귀 테스트 | 실제 재검증·상태 |
+| --- | --- | --- | --- |
+| `CLIENT-20261007-report-readable-detail` | APPROVED IMPROVEMENT / R04·R05·R06. 기존 상세는 필드명/답변 위계와 구분이 약하고 사진을 모든 답변 뒤에 별도로 배치했다. | 흰 문서형 읽기 영역, 작은 회색 label/큰 진한 답변, 얇은 구분선, 숫자·날짜 행, 선택값 칩, 빈 답변/0 구분, 긴 값 줄바꿈. 사진을 포함한 참조 양식 순서를 유지한다. Reader 5건과 기존 페이지 권한/취소 회귀를 실행한다. | 개발 Chrome `report-reader-chromium-1791347626271`, WebKit `report-reader-webkit-1791347613165` 각각 16/16 PASS. 관리자·코치×402×874 DPR3 모바일/1280×900 PC에서 기존 7유형 답변·0·날짜·칩·순서·취소 잠금·가로 넘침을 확인. 긴 제목·label·본문과 다중 썸네일 경계는 일회성 DOM 변경으로만 검사했다. VERIFIED_LOCAL. |
+| `CLIENT-20261007-photo-preview` | APPROVED IMPROVEMENT / R05·R06. 사진 확대가 앱을 벗어나는 새 탭 링크였다. | private signed URL을 공유 캐시에 넣지 않고 네이티브 dialog에서 비율 유지 확대. 닫기/Escape/배경 클릭, 포커스 제한과 명시적 원래 썸네일 복귀, 스크롤 복원, 이미지 실패 안내. 사진의 업로드·삭제·리비전 처리는 유지한다. | 위 두 엔진에서 기존 사진 디코딩·확대 크기/뷰포트 경계·44px 닫기·Tab·Escape·닫기·배경 tap/click·원래 포커스·스크롤/URL/탭 수 보존을 실제 실행했다. 확대 단위 4건·사진 3건 추가 회귀도 통과. VERIFIED_LOCAL. |
+| `BUG-20261007-photo-preview-lifecycle` | 신규 구현 중 발견된 BUG. 첫 Chrome 실행에서 dialog가 곧 닫혔다. Strict Mode cleanup의 native close 이벤트가 재개방 뒤 도착해 현재 preview까지 해제했다. WebKit에서는 Escape 뒤 원래 버튼 포커스가 돌아오지 않았다. | 현재 열린 dialog에 뒤늦게 전달된 close 이벤트를 무시하고, 사용자 닫기 시 사진 컴포넌트가 정확한 trigger를 직접 focus한다. stale close·정확한 두 번째 썸네일 복귀 테스트를 추가했다. | 실패 원본 `report-reader-chromium-1791347348584`, `1791347415192` 및 `report-reader-webkit-1791347562254`를 보존했다. 수정 후 위 Chrome/WebKit 16/16로 재검증. VERIFIED_LOCAL. 기존 운영의 결함이라고 소급하지 않는다. |
+| `QA-20261007-report-reader-dialog-wait` | QA 하네스 경합. 닫힌 native dialog는 role 조회에서 즉시 사라져 React 실제 unmount·passive cleanup 전에 스크롤을 읽었다. | 실제 DOM 제거와 overflow 복원을 기다린 후 검사하도록 변경. 성공으로 덮어쓰지 않고 실패 실행 `report-reader-chromium-1791347473977`을 보존했다. | 수정 후 두 엔진 반복 닫기·스크롤 복원 PASS. 제품 수정과 구분한 VERIFIED_HARNESS. |
+
+연결 computer-use 런타임은 sandbox ACL 초기화 오류, Aside는 실행 중이 아니어서 설치된 Chrome/WebKit의 Playwright 대체 실행이다. Aside CLI/연결 브라우저/실제 iPhone 18·iOS 27 Safari 성공으로 표현하지 않는다. 설치 `iPhone 17 Pro` 프로필의 402×874·DPR3은 크기 근사다. 화면 캡처도 직접 검토했으며 전체 페이지 캡처에 보이는 고정 하단 탐색의 중간 위치는 full-page 촬영 특성이고 실제 뷰포트/스크롤 검사는 별도로 수행했다.
+
+각 엔진 16개 확인은 같은 기능을 역할/크기에 반복한 관찰 수치이지 전체 CRUD 32건이 아니다. 업무 POST/DELETE 0건, 브라우저 pageerror 0건, 6개 업무 테이블 전후 동일이다. 실제 등록·편집 저장·삭제·초대·메일·내보내기 생성·DB 마이그레이션·운영 배포는 미실행이다. 편집 권한과 취소 잠금은 페이지/컴포넌트/PGlite 전체 자동 회귀로 유지 여부를 확인했다.
+
+자동 회귀 46파일 **219/219**, ESLint, TypeScript, production build, 운영 의존성 감사 0건, 스크립트 문법·`git diff --check` 통과. jsdom 외부 문서 navigation 경고 2건은 기존 테스트 환경 제한이며 브라우저 실패로 합치지 않는다. 구현 커밋 및 커밋 후 최종 실행은 아래 후속 기록에 추가한다. 원래 사용자 worktree의 미커밋 파일·계정·업무 데이터는 건드리지 않았다.

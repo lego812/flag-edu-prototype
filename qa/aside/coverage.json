@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "requirements": [
     {
       "id": "R01",
@@ -97,6 +97,7 @@
         "4-a-C",
         "4-a-D",
         "4-a-E",
+        "4-a-F",
         "4-b-A",
         "4-b-B",
         "4-b-C",
@@ -133,6 +134,7 @@
         "5-c-E",
         "5-c-F",
         "5-c-G",
+        "5-c-H",
         "5-d-A",
         "5-d-B",
         "5-d-C"
@@ -141,6 +143,7 @@
         "src/components/count-picker.test.tsx",
         "src/features/reports/photo.test.ts",
         "src/features/reports/photos.test.tsx",
+        "src/features/reports/photo-preview.test.tsx",
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/field-input.test.tsx",
         "src/features/reports/workflows.test.ts"
@@ -156,6 +159,7 @@
         "6-a-C",
         "6-a-D",
         "6-a-E",
+        "6-a-F",
         "6-b-A",
         "6-b-B",
         "6-b-C",
@@ -164,6 +168,8 @@
       "automated": [
         "src/features/classes/search-picker.test.tsx",
         "src/features/reports/metadata.test.tsx",
+        "src/features/reports/reader.test.tsx",
+        "src/app/(work)/reports/[id]/page.test.tsx",
         "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts"
       ],

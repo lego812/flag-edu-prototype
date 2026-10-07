@@ -1,24 +1,29 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private short-lived URLs are loaded directly, without a shared image cache. */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { compressPhoto } from "./photo";
 import type { Attachment, Field } from "./model";
 import { useReportMutation } from "./mutation-context";
+import { PhotoPreview } from "./photo-preview";
 export function Photos({
   reportId,
   fields,
   attachments,
   editable,
+  reading = false,
 }: {
   reportId: string;
   fields: Field[];
   attachments: Attachment[];
   editable: boolean;
+  reading?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [items, setItems] = useState(attachments);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; label: string } | null>(null);
+  const previewTrigger = useRef<HTMLButtonElement | null>(null);
   const mutation = useReportMutation();
   const disabled = busy || mutation?.busy;
   async function upload(field: string, file: File) {
@@ -82,12 +87,12 @@ export function Photos({
           return (
             <div key={f.id} className="space-y-4">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="font-semibold">
+                <h2 className={reading ? "min-w-0 text-sm font-medium text-neutral-600 [overflow-wrap:anywhere]" : "font-semibold"}>
                   {f.label}
-                  {f.required ? " *" : ""}
+                  {editable && f.required ? " *" : ""}
                 </h2>
                 <span className="shrink-0 text-sm text-neutral-500">
-                  {photos.length}/{maxFiles}장
+                  {reading ? `${photos.length}장` : `${photos.length}/${maxFiles}장`}
                 </span>
               </div>
               {!!photos.length && (
@@ -102,19 +107,22 @@ export function Photos({
                       className="relative size-20 shrink-0 snap-start sm:size-24"
                     >
                       {a.url ? (
-                        <a
-                          href={a.url}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
                           aria-label={`${f.label} ${index + 1} 크게 보기`}
+                          aria-haspopup="dialog"
                           className="block size-full rounded-xl focus-visible:outline-2 focus-visible:outline-black"
+                          onClick={(event) => {
+                            previewTrigger.current = event.currentTarget;
+                            setPreview({ url: a.url!, label: `${f.label} ${index + 1}` });
+                          }}
                         >
                           <img
                             src={a.url}
                             alt={`${f.label} ${index + 1}`}
                             className="size-full rounded-xl border border-neutral-200 object-cover"
                           />
-                        </a>
+                        </button>
                       ) : (
                         <p className="flex size-full items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 p-2 text-center text-xs text-neutral-500">
                           사진을 열지 못했습니다.
@@ -139,6 +147,11 @@ export function Photos({
                     </li>
                   ))}
                 </ul>
+              )}
+              {reading && (
+                <p className="text-xs text-neutral-500">
+                  {photos.length ? "사진을 누르면 크게 볼 수 있습니다." : "첨부된 사진이 없습니다."}
+                </p>
               )}
               {editable && photos.length < maxFiles && (
                 <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-neutral-300 bg-white px-5 text-sm font-semibold hover:border-black">
@@ -168,6 +181,17 @@ export function Photos({
         <p role="alert" className="text-red-700">
           {error}
         </p>
+      )}
+      {preview && (
+        <PhotoPreview
+          url={preview.url}
+          label={preview.label}
+          onClose={() => {
+            setPreview(null);
+            // Safari does not consistently restore focus to clicked buttons.
+            previewTrigger.current?.focus();
+          }}
+        />
       )}
       {deleteTarget && (
         <div

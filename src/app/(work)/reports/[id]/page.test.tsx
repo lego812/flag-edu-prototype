@@ -8,7 +8,10 @@ vi.mock("@/features/auth/current-user", () => ({
 vi.mock("@/features/reports/repository", () => ({
   getReport: mocks.report,
   getTemplate: async () => ({
-    template_fields: [{ id: "field", label: "내용", field_type: "long_text" }],
+    template_fields: [
+      { id: "field", label: "내용", field_type: "long_text" },
+      { id: "photo", label: "활동 사진", field_type: "photo" },
+    ],
   }),
 }));
 vi.mock("@/features/reports/editor", () => ({
