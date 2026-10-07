@@ -9,6 +9,16 @@ export function isCurrentDocument(current, target) {
     currentUrl.search === targetUrl.search;
 }
 
+export function matchesExpectedRoute(current, target) {
+  const currentUrl = new URL(current);
+  const targetUrl = new URL(target);
+  return currentUrl.origin === targetUrl.origin &&
+    currentUrl.pathname === targetUrl.pathname &&
+    [...new Set(targetUrl.searchParams.keys())].every(key =>
+      JSON.stringify(currentUrl.searchParams.getAll(key)) ===
+      JSON.stringify(targetUrl.searchParams.getAll(key)));
+}
+
 export function isLocalDevelopmentDiagnostic(base, method, url) {
   const target = new URL(url);
   return base === "http://localhost:3000" && target.origin === base &&

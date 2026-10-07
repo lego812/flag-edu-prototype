@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
+import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic, matchesExpectedRoute } from "./qa-browser-observations.mjs";
 import { observeReadOnlyNetwork } from "./qa-network-idle.mjs";
 
 // Read-only integration and curated README captures. Never submits business
@@ -79,7 +79,9 @@ async function visit(page, route) {
     const link = page.locator(`a[href="${route}"]`).filter({ visible: true }).first();
     if (await link.count()) {
       await link.tap();
-      await page.waitForURL(url => isCurrentDocument(url.href, base + route));
+      // Bare /classes legitimately restores the saved view with a canonical
+      // query. Explicit filter/date parameters must still match exactly.
+      await page.waitForURL(url => matchesExpectedRoute(url.href, base + route), { waitUntil: "domcontentloaded" });
     } else {
       const response = await page.goto(base + route, { waitUntil: "domcontentloaded" });
       assert.ok(response.status() < 400, "Authorized page HTTP failure");
