@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
+import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic, matchesExpectedRoute } from "./qa-browser-observations.mjs";
 import { observeReadOnlyNetwork } from "./qa-network-idle.mjs";
 
 // Read-only integration and curated README captures. Never submits business
@@ -41,6 +41,8 @@ const browser = await (engine === "webkit" ? webkit.launch({ headless: true }) :
 const output = path.resolve("artifacts/aside", `mobile-guide-${base.includes("localhost") ? "development" : "production"}-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const captureDocs = process.env.QA_CAPTURE_DOCS === "1";
+const verifyPublicWorker = process.env.QA_VERIFY_PUBLIC_WORKER === "1";
+assert.ok(!verifyPublicWorker || base !== "http://localhost:3000", "Service workers are registered only in production mode.");
 assert.ok(!captureDocs || base !== "http://localhost:3001", "Local production-build comparisons do not replace published guide images.");
 assert.ok(!captureDocs || engine === "webkit", "Published guide images use the recorded WebKit capture profile.");
 if (captureDocs) assert.match(process.env.QA_SOURCE_COMMIT ?? "", /^[a-f0-9]{40}$/, "Record the verified app commit when publishing screenshots.");
@@ -51,6 +53,7 @@ const browserExceptions = [];
 const failedRequests = [];
 const cancelledRequestWarnings = [];
 const workspaceApiResponses = [];
+const photoResponses = [];
 const businessWrites = [];
 const developmentDiagnostics = [];
 const startedAt = new Date().toISOString();
@@ -79,7 +82,9 @@ async function visit(page, route) {
     const link = page.locator(`a[href="${route}"]`).filter({ visible: true }).first();
     if (await link.count()) {
       await link.tap();
-      await page.waitForURL(url => isCurrentDocument(url.href, base + route));
+      // Bare /classes legitimately restores the saved view with a canonical
+      // query. Explicit filter/date parameters must still match exactly.
+      await page.waitForURL(url => matchesExpectedRoute(url.href, base + route), { waitUntil: "domcontentloaded" });
     } else {
       const response = await page.goto(base + route, { waitUntil: "domcontentloaded" });
       assert.ok(response.status() < 400, "Authorized page HTTP failure");
@@ -169,6 +174,11 @@ try {
     page.on("requestfailed", request => failedRequests.push({ role, phase, url: request.url(), resource: scrub(request.url().replace(/^https?:\/\//, "")), reason: request.failure()?.errorText, time: Date.now() }));
     page.on("response", response => {
       if (new URL(response.url()).pathname === "/api/workspaces/current") workspaceApiResponses.push({ role, phase, status: response.status() });
+      const url = new URL(response.url());
+      if (url.hostname === "vhlrmudatjcgspwltdix.supabase.co" && url.pathname.startsWith("/storage/v1/object/")) {
+        // Signed photo URLs and tokens never enter the result file.
+        photoResponses.push({ role, phase, status: response.status(), fromServiceWorker: response.fromServiceWorker() });
+      }
     });
     page.on("request", request => {
       const url = new URL(request.url());
@@ -187,6 +197,24 @@ try {
       await page.waitForLoadState("networkidle");
       await settleNetwork();
       assert.equal(await page.getByLabel("워크스페이스", { exact: true }).inputValue(), fixture.organization.id);
+      if (verifyPublicWorker) await record(`${role}:public-only-service-worker`, async () => {
+        await page.waitForFunction(async () => {
+          const registration = await navigator.serviceWorker.getRegistration();
+          return Boolean(navigator.serviceWorker.controller && registration?.active && (await caches.keys()).includes("flag-edu-shell-v3"));
+        });
+        const worker = await page.evaluate(async () => {
+          const registration = await navigator.serviceWorker.getRegistration();
+          const keys = await caches.keys();
+          const cache = await caches.open("flag-edu-shell-v3");
+          return {
+            scriptPath: new URL(navigator.serviceWorker.controller.scriptURL).pathname,
+            updateViaCache: registration.updateViaCache,
+            ownedCaches: keys.filter(key => key.startsWith("flag-edu-shell-")),
+            cachedPaths: (await cache.keys()).map(request => new URL(request.url).pathname).sort(),
+          };
+        });
+        assert.deepEqual(worker, { scriptPath: "/sw.js", updateViaCache: "none", ownedCaches: ["flag-edu-shell-v3"], cachedPaths: ["/icon.svg", "/manifest.webmanifest"] });
+      });
       const routes = ["/dashboard", "/courses", `/courses/${fixture.created.course}`, "/courses/new", `/courses/${fixture.created.course}/edit`, "/classes?view=list", "/classes?view=calendar&month=2026-10&date=2026-10-10", `/classes/new?course=${fixture.created.course}`, `/classes/${fixture.created.session}`, "/reports", `/reports/${fixture.created.report}`];
       if (role === "admin") routes.push("/manage", "/admin-reports", "/templates", "/templates/new", "/members", "/exports", "/workspaces");
       for (const route of routes) {
@@ -248,6 +276,7 @@ try {
           await img.waitFor();
           await img.evaluate(node => node.decode());
           assert.ok(await img.evaluate(node => node.naturalWidth > 0));
+          if (verifyPublicWorker) assert.ok(photoResponses.some(response => response.role === "coach" && response.phase === phase && response.status === 200 && response.fromServiceWorker === false), "Stored photo must load directly, not through the app service worker.");
           await capture(page, "coach-report-photos.jpg", role, page.getByRole("heading", { name: /활동 사진/ }));
         });
       } else await record("admin:unsaved-template-choice-editor", async () => {
@@ -308,7 +337,7 @@ try {
       process.exitCode = 1;
     }
   }
-  await writeFile(path.join(output, "results.json"), JSON.stringify({ base, startedAt, finishedAt: new Date().toISOString(), sourceCommit: process.env.QA_SOURCE_COMMIT ?? "unspecified", engine, viewport: options.viewport, screen: options.screen, deviceScaleFactor: 3, realDevice: false, results, failure, businessWrites, developmentDiagnostics, errors: errors.map(publicError), browserExceptions, cancelledRequestWarnings, failedRequests: failedRequests.map(publicFailedRequest), workspaceApiResponses, dataUnchanged, images }, null, 2));
+  await writeFile(path.join(output, "results.json"), JSON.stringify({ base, startedAt, finishedAt: new Date().toISOString(), sourceCommit: process.env.QA_SOURCE_COMMIT ?? "unspecified", engine, viewport: options.viewport, screen: options.screen, deviceScaleFactor: 3, realDevice: false, verifyPublicWorker, results, failure, businessWrites, developmentDiagnostics, errors: errors.map(publicError), browserExceptions, cancelledRequestWarnings, failedRequests: failedRequests.map(publicFailedRequest), workspaceApiResponses, photoResponses, dataUnchanged, images }, null, 2));
   // A complete, privacy-checked image set can document observed UI even when
   // the stricter browser gate fails. Record that outcome; never turn FAIL into
   // PASS or overwrite its ignored raw results just to publish a screenshot.

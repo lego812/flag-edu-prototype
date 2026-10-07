@@ -49,3 +49,21 @@ it("fails on a request that never completes instead of proceeding to abort it", 
   await vi.advanceTimersByTimeAsync(30_000);
   await failure;
 });
+
+it("identifies an unfinished worker request without logging identifiers or query secrets", async () => {
+  vi.useFakeTimers();
+  const context = new EventEmitter();
+  const settle = observeReadOnlyNetwork(context, "https://example.com");
+  context.emit("request", {
+    ...request("https://example.com/reports/12345678-1234-1234-1234-123456789abc?token=private-example"),
+    resourceType: () => "fetch", serviceWorker: () => ({}),
+  });
+  const waiting = settle().catch(error => error.message);
+  await vi.advanceTimersByTimeAsync(30_000);
+  const message = await waiting;
+  expect(message).toContain('"path":"/reports/:id"');
+  expect(message).toContain('"serviceWorker":true');
+  expect(message).not.toContain("12345678");
+  expect(message).not.toContain("token");
+  expect(message).not.toContain("private-example");
+});

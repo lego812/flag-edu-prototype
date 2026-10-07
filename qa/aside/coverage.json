@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "requirements": [
     {
       "id": "R01",
@@ -22,6 +22,8 @@
       ],
       "automated": [
         "src/components/app-header.test.tsx",
+        "src/components/pwa-registration.test.tsx",
+        "scripts/service-worker.test.mjs",
         "next.config.test.ts",
         "src/components/list-filters.test.tsx",
         "scripts/patch-next-rsc-performance.test.mjs",
@@ -209,6 +211,7 @@
       "name": "권한·데이터 보호",
       "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-a-F", "9-b-A", "9-b-B", "9-b-C", "9-b-D", "9-b-E", "9-b-F", "9-b-G"],
       "automated": [
+        "scripts/service-worker.test.mjs",
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/workflows.test.ts",
         "src/features/classes/actions.test.ts"

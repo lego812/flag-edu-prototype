@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic } from "./qa-browser-observations.mjs";
+import { findNativeCancellation, isCurrentDocument, isLocalDevelopmentDiagnostic, matchesExpectedRoute } from "./qa-browser-observations.mjs";
 
 const request = { role: "coach", url: "https://example.com/api/workspaces/current", reason: "Load request cancelled", time: 10_000 };
 const message = "Fetch API cannot load https://example.com/api/workspaces/current due to access control checks.";
 const error = { role: "coach", rawMessage: message, message, time: 10_100 };
+
+it("accepts a remembered-view canonical URL while strictly checking explicitly requested filters", () => {
+  const base = "https://example.com";
+  expect(matchesExpectedRoute(base + "/classes?view=calendar&date=2026-10-11", base + "/classes")).toBe(true);
+  expect(matchesExpectedRoute(base + "/classes?sort=newest&view=list&status=all", base + "/classes?view=list&sort=newest")).toBe(true);
+  for (const current of [
+    "https://other.example.com/classes?view=list&sort=newest",
+    base + "/courses?view=list&sort=newest",
+    base + "/classes?view=calendar&sort=newest",
+    base + "/classes?view=list&sort=oldest",
+    base + "/classes?view=list&view=calendar&sort=newest",
+  ]) expect(matchesExpectedRoute(current, base + "/classes?view=list&sort=newest")).toBe(false);
+});
 
 it("does not reload a document already reached by login, but preserves route and filter changes", () => {
   const current = "https://example.com/dashboard";
