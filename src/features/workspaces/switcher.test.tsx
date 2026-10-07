@@ -37,4 +37,12 @@ describe("WorkspaceSwitcher", () => {
     expect(screen.getByRole("option", { name: "기관 B" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "전환" })).toBeEnabled();
   });
+
+  it("updates the selected option after a server-confirmed workspace change", () => {
+    const other = { ...current, id: "b91c4416-12ea-49e8-b061-82f9f4f9eb11", name: "기관 B" };
+    const workspaces = [current, other];
+    const { rerender } = render(<WorkspaceSwitcher current={current} workspaces={workspaces} />);
+    rerender(<WorkspaceSwitcher current={other} workspaces={workspaces} />);
+    expect(screen.getByRole("combobox", { name: "워크스페이스" })).toHaveValue(other.id);
+  });
 });

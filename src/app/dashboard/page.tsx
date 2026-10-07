@@ -38,6 +38,7 @@ export default async function DashboardPage() {
   return (
     <>
       <AppHeader
+        userId={profile.id}
         name={profile.name}
         isAdmin={isAdmin}
         workspace={workspace}

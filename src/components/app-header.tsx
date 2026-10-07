@@ -1,14 +1,17 @@
 import { logoutAction } from "@/features/auth/actions";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
 import { WorkspaceSwitcher } from "@/features/workspaces/switcher";
+import { WorkspaceSync } from "@/features/workspaces/sync";
 import { AppNavigation } from "./app-navigation";
 import { HeaderLeading } from "./header-leading";
 export function AppHeader({
+  userId,
   name,
   isAdmin,
   workspace,
   workspaces,
 }: {
+  userId: string;
   name: string;
   isAdmin: boolean;
   workspace: WorkspaceSummary;
@@ -16,6 +19,7 @@ export function AppHeader({
 }) {
   return (
     <header className="app-header">
+      <WorkspaceSync userId={userId} workspaceId={workspace.id} />
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8">
         <HeaderLeading />
         <AppNavigation isAdmin={isAdmin} />

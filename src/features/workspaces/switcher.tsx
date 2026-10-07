@@ -25,6 +25,7 @@ export function WorkspaceSwitcher({
         워크스페이스
       </label>
       <select
+        key={current.id}
         id="workspace-select"
         name="workspaceId"
         defaultValue={current.id}

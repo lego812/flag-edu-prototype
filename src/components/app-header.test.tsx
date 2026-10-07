@@ -6,6 +6,7 @@ vi.mock("@/features/auth/actions", () => ({ logoutAction: vi.fn() }));
 vi.mock("@/features/workspaces/actions", () => ({
   switchWorkspaceAction: vi.fn(),
 }));
+vi.mock("@/features/workspaces/sync", () => ({ WorkspaceSync: () => null }));
 const route = vi.hoisted(() => ({ pathname: "/templates" }));
 vi.mock("next/navigation", () => ({
   usePathname: () => route.pathname,
@@ -27,6 +28,7 @@ describe("AppHeader", () => {
     route.pathname = "/dashboard";
     const { container } = render(
       <AppHeader
+        userId="f8601730-c133-41b8-8d69-316edc982195"
         name="코치"
         isAdmin={false}
         workspace={workspace}
@@ -46,6 +48,7 @@ describe("AppHeader", () => {
     route.pathname = "/dashboard";
     const { rerender, container } = render(
       <AppHeader
+        userId="f8601730-c133-41b8-8d69-316edc982195"
         name="코치"
         isAdmin={false}
         workspace={workspace}
@@ -55,6 +58,7 @@ describe("AppHeader", () => {
     route.pathname = "/reports/123";
     rerender(
       <AppHeader
+        userId="f8601730-c133-41b8-8d69-316edc982195"
         name="코치"
         isAdmin={false}
         workspace={workspace}
@@ -72,6 +76,7 @@ describe("AppHeader", () => {
   it("keeps administrator navigation and logout accessible", () => {
     render(
       <AppHeader
+        userId="f8601730-c133-41b8-8d69-316edc982195"
         name="관리자"
         isAdmin
         workspace={workspace}
@@ -103,6 +108,7 @@ describe("AppHeader", () => {
   it("does not show administrator navigation to coaches", () => {
     render(
       <AppHeader
+        userId="f8601730-c133-41b8-8d69-316edc982195"
         name="코치"
         isAdmin={false}
         workspace={workspace}

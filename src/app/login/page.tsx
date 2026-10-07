@@ -22,12 +22,6 @@ export default async function LoginPage() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-950">
           로그인
         </h1>
-        <p className="mt-3 leading-7 text-neutral-600">
-          이미 비밀번호를 설정한 계정으로 로그인하세요.
-        </p>
-        <p className="mt-4 text-sm leading-6 text-neutral-600">
-          회원가입은 이메일 초대를 통해서만 가능합니다.
-        </p>
         <LoginForm />
         <Link
           href="/forgot-password"
@@ -35,6 +29,9 @@ export default async function LoginPage() {
         >
           비밀번호를 잊으셨나요?
         </Link>
+        <p className="mt-4 text-sm leading-6 text-neutral-600">
+          회원가입은 관리자 계정의 이메일 초대로만 가능합니다.
+        </p>
       </section>
     </main>
   );

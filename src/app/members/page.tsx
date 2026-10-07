@@ -42,6 +42,7 @@ export default async function MembersPage() {
   return (
     <div className="min-h-svh">
       <AppHeader
+        userId={profile.id}
         name={profile.name}
         isAdmin
         workspace={workspace}
