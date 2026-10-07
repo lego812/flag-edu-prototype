@@ -25,7 +25,7 @@ export default async function ClassesPage({
   const params = await searchParams;
   const storedView = (await cookies()).get("flag-edu-class-view")?.value;
   const requestedView = params.view ??
-    (storedView === "calendar" ? "calendar" : "list");
+    (storedView === "list" ? "list" : "calendar");
   const view = requestedView === "calendar" ? "calendar" : "list";
   const viewError =
     requestedView === "list" || requestedView === "calendar"
