@@ -6,6 +6,7 @@ import { ReportEditor } from "@/features/reports/editor";
 import { Photos } from "@/features/reports/photos";
 import { ReportMetadata } from "@/features/reports/metadata";
 import { isUuid } from "@/features/classes/model";
+import { ReportMutationProvider } from "@/features/reports/mutation-context";
 export default async function ReportPage({
   params,
   searchParams,
@@ -34,7 +35,7 @@ export default async function ReportPage({
     }),
   );
   return (
-    <>
+    <ReportMutationProvider version={report.updated_at}>
       <Link
         href={profile.role === "admin" ? "/admin-reports" : "/reports"}
         className="text-sm underline"
@@ -94,6 +95,6 @@ export default async function ReportPage({
         attachments={attachments}
         editable={editing}
       />
-    </>
+    </ReportMutationProvider>
   );
 }

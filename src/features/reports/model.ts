@@ -68,6 +68,7 @@ export type ActionState = {
   error?: string;
   success?: string;
   redirectTo?: string;
+  version?: string;
 };
 export function reportStatus(report: Pick<Report, "status">) {
   return report.status === "submitted" ? "제출" : "임시저장";

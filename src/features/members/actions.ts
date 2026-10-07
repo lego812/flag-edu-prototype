@@ -57,13 +57,41 @@ export async function inviteCoachAction(
     return { error: "이름과 올바른 이메일 주소를 입력해 주세요." };
   }
 
-  const { profile } = await requireCurrentProfile();
+  const { supabase, profile } = await requireCurrentProfile();
 
   if (profile.role !== "admin") {
     return { error: "관리자만 구성원을 초대할 수 있습니다." };
   }
 
   try {
+    const { data: existingUserId, error: existingUserError } =
+      await supabase.rpc("find_workspace_user_by_email", { p_email: email });
+
+    if (existingUserError) {
+      return { error: "기존 계정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요." };
+    }
+
+    if (existingUserId) {
+      const { error: membershipError } = await supabase.rpc(
+        "add_existing_workspace_member",
+        { p_user_id: existingUserId },
+      );
+
+      if (membershipError) {
+        return {
+          error:
+            membershipError.code === "PT409"
+              ? "이미 현재 워크스페이스에 참여한 사용자입니다."
+              : "기존 계정을 현재 워크스페이스에 추가하지 못했습니다.",
+        };
+      }
+
+      revalidatePath("/members");
+      return {
+        success: `${email} 계정을 현재 워크스페이스에 추가했습니다.`,
+      };
+    }
+
     const env = requireServerEnv();
     const adminClient = createAdminClient();
     const redirectTo = `${env.siteUrl}/auth/callback?next=/set-password`;
@@ -81,13 +109,10 @@ export async function inviteCoachAction(
       };
     }
 
-    const { error: profileError } = await adminClient.from("profiles").insert({
-      id: data.user.id,
-      organization_id: profile.organization_id,
-      name,
-      role: "coach",
-      status: "pending",
-    });
+    const { error: profileError } = await supabase.rpc(
+      "register_workspace_invitee",
+      { p_user_id: data.user.id, p_name: name },
+    );
 
     if (profileError) {
       return { error: "초대는 생성됐지만 구성원 등록에 실패했습니다. 관리자에게 문의해 주세요." };
@@ -127,9 +152,9 @@ export async function resendCoachInvitationAction(
     const env = requireServerEnv();
     const adminClient = createAdminClient();
     const { data: invitedProfile, error: profileError } = await adminClient
-      .from("profiles")
-      .select("name, organization_id, status")
-      .eq("id", userId)
+      .from("workspace_memberships")
+      .select("status, profiles!inner(name)")
+      .eq("user_id", userId)
       .eq("organization_id", currentProfile.organization_id)
       .single();
 
@@ -160,7 +185,10 @@ export async function resendCoachInvitationAction(
     }
 
     const { error: invitationError } = await sendInvitation(
-      adminClient, email, invitedProfile.name, redirectTo,
+      adminClient,
+      email,
+      (invitedProfile.profiles as unknown as { name: string }).name,
+      redirectTo,
     );
     if (invitationError) {
       return { error: getEmailDeliveryErrorMessage(invitationError) };

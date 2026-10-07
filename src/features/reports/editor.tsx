@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FieldInput } from "./field-input";
 import type { Field, Report } from "./model";
 import { saveReportAction } from "./actions";
+import { useReportMutation } from "./mutation-context";
 export function ReportEditor({
   report,
   fields,
@@ -13,11 +14,13 @@ export function ReportEditor({
 }) {
   const immutable = report.class_sessions.status === "cancelled";
   const router = useRouter();
+  const mutation = useReportMutation();
   const [draft, setDraft] = useState<Record<string, unknown>>(() =>
     Object.fromEntries(report.report_answers.map((a) => [a.field_id, a.value])),
   );
   const [state, action, pending] = useActionState(
     async (previous: import("./model").ActionState, form: FormData) => {
+      if (mutation && !mutation.start()) return { error: "사진 또는 답변 저장이 끝난 뒤 다시 시도해 주세요." };
       setDraft(
         Object.fromEntries(
           fields
@@ -31,8 +34,11 @@ export function ReportEditor({
         ),
       );
       try {
-        return await saveReportAction(report.id, previous, form);
+        const result = await saveReportAction(report.id, previous, form);
+        mutation?.finish(result.version);
+        return result;
       } catch {
+        mutation?.finish();
         return {
           error:
             "서버에 연결하지 못했습니다. 입력 내용은 유지됩니다. 다시 시도해 주세요.",
@@ -65,8 +71,8 @@ export function ReportEditor({
       }}
       className="max-w-2xl space-y-8 py-4"
     >
-      <input type="hidden" name="version" value={report.updated_at} />
-      <fieldset disabled={pending || immutable} className="space-y-10">
+      <input type="hidden" name="version" value={mutation?.version ?? report.updated_at} />
+      <fieldset disabled={pending || mutation?.busy || immutable} className="space-y-10">
         {fields
           .filter((f) => f.field_type !== "photo")
           .map((f) => (

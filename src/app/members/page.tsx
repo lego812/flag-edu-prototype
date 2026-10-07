@@ -9,15 +9,16 @@ import { ManageMemberForm } from "@/features/members/manage-form";
 export const metadata = { title: "구성원 관리" };
 
 export default async function MembersPage() {
-  const { supabase, profile } = await requireCurrentProfile();
+  const { supabase, profile, workspace, workspaces } = await requireCurrentProfile();
 
   if (profile.role !== "admin") {
     redirect("/dashboard");
   }
 
   const { data: members } = await supabase
-    .from("profiles")
-    .select("id, name, role, status, created_at")
+    .from("workspace_memberships")
+    .select("user_id, role, status, created_at, profiles!inner(name)")
+    .eq("organization_id", profile.organization_id)
     .order("created_at", { ascending: true });
   const adminClient = createAdminClient();
   // Resolve only this organization's members, rather than the global first 1,000 users.
@@ -30,15 +31,22 @@ export default async function MembersPage() {
   for (let offset = 0; offset < (members?.length ?? 0); offset += 10) {
     await Promise.all(
       members!.slice(offset, offset + 10).map(async (member) => {
-        const { data } = await adminClient.auth.admin.getUserById(member.id);
-        authUserById.set(member.id, data.user);
+        const { data } = await adminClient.auth.admin.getUserById(
+          member.user_id,
+        );
+        authUserById.set(member.user_id, data.user);
       }),
     );
   }
 
   return (
     <div className="min-h-svh">
-      <AppHeader name={profile.name} isAdmin />
+      <AppHeader
+        name={profile.name}
+        isAdmin
+        workspace={workspace}
+        workspaces={workspaces}
+      />
       <main className="mx-auto max-w-5xl space-y-8 px-5 py-8">
         <section>
           <h1 className="text-3xl font-bold tracking-tight text-neutral-950">
@@ -61,14 +69,14 @@ export default async function MembersPage() {
           <ul className="divide-y divide-neutral-100">
             {members?.map((member) => (
               <li
-                key={member.id}
+                key={member.user_id}
                 className="flex flex-wrap items-center justify-between gap-3 py-4"
               >
                 <span className="min-w-0 break-words font-medium text-neutral-900">
-                  {member.name}
+                  {(member.profiles as unknown as { name: string }).name}
                 </span>
                 {(() => {
-                  const authUser = authUserById.get(member.id);
+                  const authUser = authUserById.get(member.user_id);
                   const isInvitationPending =
                     Boolean(authUser) && member.status === "pending";
 
@@ -91,7 +99,7 @@ export default async function MembersPage() {
                               : "비활성"}
                       </span>
                       {isInvitationPending && (
-                        <ResendInviteButton userId={member.id} />
+                        <ResendInviteButton userId={member.user_id} />
                       )}
                     </div>
                   );
@@ -102,10 +110,10 @@ export default async function MembersPage() {
                       권한·상태 변경
                     </summary>
                     <ManageMemberForm
-                      id={member.id}
+                      id={member.user_id}
                       role={member.role}
                       status={member.status}
-                      self={member.id === profile.id}
+                      self={member.user_id === profile.id}
                     />
                   </details>
                 )}

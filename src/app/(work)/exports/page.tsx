@@ -1,15 +1,12 @@
 import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { ExportForm } from "@/features/exports/form";
+import { listWorkspaceAuthors } from "@/features/members/repository";
 export default async function ExportsPage() {
   const { supabase, profile } = await requireCurrentProfile();
   if (profile.role !== "admin") redirect("/dashboard");
   const [members, sessions] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id,name")
-      .eq("organization_id", profile.organization_id)
-      .order("name"),
+    listWorkspaceAuthors(supabase, profile.organization_id),
     supabase
       .from("class_sessions")
       .select("id,title")

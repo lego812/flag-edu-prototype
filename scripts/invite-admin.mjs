@@ -65,6 +65,21 @@ if (profileError) {
   throw profileError;
 }
 
+const { error: membershipError } = await supabase
+  .from("workspace_memberships")
+  .insert({
+    user_id: invitation.user.id,
+    organization_id: organizations[0].id,
+    role: "admin",
+    status: "pending",
+  });
+
+if (membershipError) {
+  await supabase.from("profiles").delete().eq("id", invitation.user.id);
+  await supabase.auth.admin.deleteUser(invitation.user.id);
+  throw membershipError;
+}
+
 console.log(
   JSON.stringify({
     result: "invited",

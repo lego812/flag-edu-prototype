@@ -7,7 +7,7 @@ import { ReportMetadata } from "@/features/reports/metadata";
 export const metadata = { title: "홈" };
 
 export default async function DashboardPage() {
-  const { profile, supabase } = await requireCurrentProfile();
+  const { profile, supabase, workspace, workspaces } = await requireCurrentProfile();
   const isAdmin = profile.role === "admin";
   await supabase.rpc("sync_completed_class_sessions", {
     p_organization_id: profile.organization_id,
@@ -37,7 +37,12 @@ export default async function DashboardPage() {
   const nextClass = sessions.data?.[0];
   return (
     <>
-      <AppHeader name={profile.name} isAdmin={isAdmin} />
+      <AppHeader
+        name={profile.name}
+        isAdmin={isAdmin}
+        workspace={workspace}
+        workspaces={workspaces}
+      />
       <main className="mx-auto max-w-5xl space-y-8 px-5 py-6 sm:px-8 sm:py-10">
         <header>
           <p className="eyebrow">

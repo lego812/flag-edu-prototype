@@ -20,7 +20,7 @@ let db: PGlite,
   photoPath: string;
 async function asUser(id: string) {
   await db.exec(
-    `reset role;set request.jwt.claim.sub='${id}';set role authenticated;`,
+    `reset role;set request.jwt.claim.sub='${id}';set request.jwt.claim.role='authenticated';set role authenticated;`,
   );
 }
 async function version() {
@@ -34,9 +34,9 @@ describe("reporting PostgreSQL workflows and RLS", () => {
   beforeAll(async () => {
     db = new PGlite();
     await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;
-      create table auth.users(id uuid primary key,raw_user_meta_data jsonb not null default '{}'::jsonb);
+      create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb not null default '{}'::jsonb);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-      create function auth.role() returns text language sql stable as $$ select current_user::text $$;
+      create function auth.role() returns text language sql stable as $$ select nullif(current_setting('request.jwt.claim.role',true),'') $$;
       create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
       create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);
       alter table storage.objects enable row level security;
@@ -55,7 +55,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       await db.exec(sql);
     }
     await db.exec(
-      `insert into auth.users(id,raw_user_meta_data) values('${ids.admin}','{}'),('${ids.coach}','{}'),('${ids.other}','{}'),('${ids.pending}','{"must_change_password":true}');insert into public.organizations(id,name) values('${ids.org}','기관 A'),('${ids.otherOrg}','기관 B');insert into public.profiles(id,organization_id,name,role,status) values('${ids.admin}','${ids.org}','관리자','admin','active'),('${ids.coach}','${ids.org}','코치','coach','active'),('${ids.other}','${ids.otherOrg}','다른 기관','admin','active'),('${ids.pending}','${ids.org}','초대 대기','coach','active');insert into public.class_sessions(id,organization_id,title,location,start_at,end_at,created_by,updated_by) values('${ids.session}','${ids.org}','수업','서울','2026-09-22 10:00+09','2026-09-22 11:00+09','${ids.coach}','${ids.coach}');`,
+      `insert into auth.users(id,email,raw_user_meta_data) values('${ids.admin}','admin@example.com','{}'),('${ids.coach}','coach@example.com','{}'),('${ids.other}','other@example.com','{}'),('${ids.pending}','pending@example.com','{"must_change_password":true}');insert into public.organizations(id,name) values('${ids.org}','기관 A'),('${ids.otherOrg}','기관 B');insert into public.profiles(id,organization_id,name,role,status) values('${ids.admin}','${ids.org}','관리자','admin','active'),('${ids.coach}','${ids.org}','코치','coach','active'),('${ids.other}','${ids.otherOrg}','다른 기관','admin','active'),('${ids.pending}','${ids.org}','초대 대기','coach','active');insert into public.class_sessions(id,organization_id,title,location,start_at,end_at,created_by,updated_by) values('${ids.session}','${ids.org}','수업','서울','2026-09-22 10:00+09','2026-09-22 11:00+09','${ids.coach}','${ids.coach}');`,
     );
     for (const file of [
       "202610060001_add_pending_member_status.sql",
@@ -65,6 +65,8 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202610060005_report_mutation_guards.sql",
       "202610070000_add_completed_status.sql",
       "202610070001_operational_workflow.sql",
+      "202610070002_workspace_memberships.sql",
+      "202610070003_photo_mutation_version.sql",
     ]) {
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     }
@@ -748,5 +750,191 @@ describe("reporting PostgreSQL workflows and RLS", () => {
     expect(
       (await db.query("select id from public.template_versions where id=$1", [templateId])).rows,
     ).toHaveLength(1);
+  });
+  it("switches workspaces without mixing data and keeps roles workspace-specific", async () => {
+    await asUser(ids.admin);
+    const workspaceId = (
+      await db.query<{ id: string }>(
+        "select public.create_workspace($1) id",
+        ["기관 C"],
+      )
+    ).rows[0].id;
+
+    expect(
+      (
+        await db.query<{ organization_id: string; role: string }>(
+          "select organization_id,role from public.profiles where id=$1",
+          [ids.admin],
+        )
+      ).rows[0],
+    ).toEqual({ organization_id: workspaceId, role: "admin" });
+    expect(
+      (await db.query("select id from public.class_sessions")).rows,
+    ).toHaveLength(0);
+
+    await db.query("select public.add_existing_workspace_member($1)", [ids.coach]);
+    await db.query("select public.add_existing_workspace_member($1)", [ids.pending]);
+    expect(
+      (
+        await db.query<{ status: string }>(
+          "select status from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [ids.pending, workspaceId],
+        )
+      ).rows[0].status,
+    ).toBe("pending");
+    await db.query("select public.manage_member($1,'admin','active')", [ids.coach]);
+    await db.query("select public.switch_workspace($1)", [ids.org]);
+
+    await asUser(ids.coach);
+    expect(
+      (
+        await db.query<{ count: number }>(
+          "select count(*)::int count from public.workspace_memberships where user_id=$1",
+          [ids.coach],
+        )
+      ).rows[0].count,
+    ).toBe(2);
+    await db.query("select public.switch_workspace($1)", [workspaceId]);
+    expect(
+      (
+        await db.query<{ role: string }>(
+          "select public.current_user_role() role",
+        )
+      ).rows[0].role,
+    ).toBe("admin");
+    expect(
+      (await db.query("select id from public.class_sessions")).rows,
+    ).toHaveLength(0);
+    expect(
+      (
+        await db.query(
+          "update public.class_sessions set title='다른 워크스페이스 침범' where id=$1 returning id",
+          [ids.session],
+        )
+      ).rows,
+    ).toHaveLength(0);
+    await db.query("select public.switch_workspace($1)", [ids.org]);
+    expect(
+      (
+        await db.query<{ role: string }>(
+          "select public.current_user_role() role",
+        )
+      ).rows[0].role,
+    ).toBe("coach");
+    expect(
+      (await db.query("select id from public.class_sessions where id=$1", [ids.session])).rows,
+    ).toHaveLength(1);
+    expect(
+      (
+        await db.query<{ title: string }>(
+          "select title from public.class_sessions where id=$1",
+          [ids.session],
+        )
+      ).rows[0].title,
+    ).toBe("수업");
+
+    await asUser(ids.other);
+    await expect(
+      db.query("select public.switch_workspace($1)", [workspaceId]),
+    ).rejects.toThrow();
+  });
+  it("keeps workspace members visible after they select another workspace", async () => {
+    await asUser(ids.admin);
+    const workspaceId = (
+      await db.query<{ id: string }>("select public.create_workspace('작성자 필터 QA') id")
+    ).rows[0].id;
+    await db.query("select public.add_existing_workspace_member($1)", [ids.coach]);
+    await db.query("select public.switch_workspace($1)", [ids.org]);
+    await asUser(ids.coach);
+    await db.query("select public.switch_workspace($1)", [workspaceId]);
+    await asUser(ids.admin);
+    const { rows } = await db.query<{ id: string; name: string }>(
+      "select wm.user_id id,p.name from public.workspace_memberships wm join public.profiles p on p.id=wm.user_id where wm.organization_id=$1 and wm.user_id=$2",
+      [ids.org, ids.coach],
+    );
+    expect(rows).toEqual([{ id: ids.coach, name: "코치" }]);
+    await asUser(ids.coach);
+    await db.query("select public.switch_workspace($1)", [ids.org]);
+  });
+  it("returns atomic photo revisions and rejects stale photo or answer writes", async () => {
+    await db.exec("reset role");
+    const session = (await db.query<{ id: string }>(
+      "insert into public.class_sessions(organization_id,course_id,title,location,start_at,end_at,created_by,updated_by) select $1,course_id,'사진 버전 QA','센터',now()+interval '1 day',now()+interval '2 days',$2,$2 from public.class_sessions where id=$3 returning id",
+      [ids.org, ids.coach, ids.session],
+    )).rows[0].id;
+    const report = (await db.query<{ id: string }>(
+      "insert into public.reports(organization_id,class_session_id,author_id,template_version_id) values($1,$2,$3,$4) returning id",
+      [ids.org, session, ids.coach, templateId],
+    )).rows[0].id;
+    await asUser(ids.coach);
+    const revision = async () => (await db.query<{ version: string }>(
+      "select updated_at::text version from public.reports where id=$1", [report],
+    )).rows[0].version;
+    const oldVersion = await revision();
+    const photo = (await db.query<{ id: string }>(
+      "select id from public.template_fields where template_version_id=$1 and field_type='photo'", [templateId],
+    )).rows[0].id;
+    const path = `${ids.org}/${report}/40000000-0000-4000-8000-000000000009.jpg`;
+    await db.query("insert into storage.objects(bucket_id,name) values('report-images',$1)", [path]);
+    const added = (await db.query<{ result: { attachment: { id: string }; version: string } }>(
+      "select public.mutate_report_photo($1,$2,'insert',$3) result",
+      [report, oldVersion, JSON.stringify({ field_id: photo, storage_path: path, file_size: 123 })],
+    )).rows[0].result;
+    await expect(db.query("select public.save_and_submit_report($1,$2,'[]',false)", [report, oldVersion])).rejects.toMatchObject({ code: "PT409" });
+    await db.query("select public.save_and_submit_report($1,$2,$3,false)", [report, added.version, JSON.stringify([{ fieldId, value: "최신 답변" }])]);
+    await expect(db.query("select public.mutate_report_photo($1,$2,'delete',$3)", [report, added.version, JSON.stringify({ id: added.attachment.id })])).rejects.toMatchObject({ code: "PT409" });
+    const latest = await revision();
+    const deleted = (await db.query<{ result: { version: string } }>(
+      "select public.mutate_report_photo($1,$2,'delete',$3) result", [report, latest, JSON.stringify({ id: added.attachment.id })],
+    )).rows[0].result;
+    await db.query("select public.save_and_submit_report($1,$2,$3,true)", [report, deleted.version, JSON.stringify([{ fieldId, value: "최신 답변" }])]);
+    expect((await db.query("select id from public.report_attachments where report_id=$1", [report])).rows).toHaveLength(0);
+    await asUser(ids.other);
+    await expect(db.query("select public.mutate_report_photo($1,$2,'delete',$3)", [report, deleted.version, JSON.stringify({ id: added.attachment.id })])).rejects.toThrow();
+  });
+  it("rejects direct member helpers that bypass pending and last-admin guards", async () => {
+    await asUser(ids.admin);
+    await expect(
+      db.query("select public.change_member_status($1,'active')", [ids.pending]),
+    ).rejects.toThrow();
+    await expect(
+      db.query("select public.change_member_role($1,'admin')", [ids.pending]),
+    ).rejects.toThrow();
+    expect(
+      (
+        await db.query<{ status: string }>(
+          "select status from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [ids.pending, ids.org],
+        )
+      ).rows[0].status,
+    ).toBe("pending");
+  });
+  it("activates pending memberships only through the service role", async () => {
+    await db.exec("reset role;set request.jwt.claim.role='service_role';set role service_role");
+    await db.query("select public.activate_invited_user($1)", [ids.pending]);
+    expect(
+      (
+        await db.query<{ status: string }>(
+          "select status from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [ids.pending, ids.org],
+        )
+      ).rows[0].status,
+    ).toBe("active");
+    expect(
+      (
+        await db.query<{ count: number }>(
+          "select count(*)::int count from public.workspace_memberships where user_id=$1 and status='pending'",
+          [ids.pending],
+        )
+      ).rows[0].count,
+    ).toBe(0);
+    expect(
+      (
+        await db.query<{ status: string }>(
+          "select status from public.profiles where id=$1",
+          [ids.pending],
+        )
+      ).rows[0].status,
+    ).toBe("active");
   });
 });

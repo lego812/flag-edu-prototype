@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { listReports, reportFilters } from "./repository";
 import { ReportMetadata } from "./metadata";
 import { ClassSearchPicker } from "@/features/classes/search-picker";
+import { listWorkspaceAuthors } from "@/features/members/repository";
 export async function ReportList({
   params,
   admin = false,
@@ -38,11 +39,7 @@ export async function ReportList({
   );
   if (error) throw new Error("보고서 조회 실패");
   const { data: members } = admin
-    ? await supabase
-        .from("profiles")
-        .select("id,name")
-        .eq("organization_id", profile.organization_id)
-        .order("name")
+    ? await listWorkspaceAuthors(supabase, profile.organization_id)
     : { data: [] };
   const { data: selectedSession } = filters.session
     ? await supabase

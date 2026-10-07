@@ -61,6 +61,12 @@ if (!apply) {
       name: "QA 코치", role: "coach", status: "active" }).select("id").single(),
     "QA 프로필",
   );
+  await one(
+    db.from("workspace_memberships").insert({ user_id: auth.user.id,
+      organization_id: admin.organization_id, role: "coach", status: "active" })
+      .select("id").single(),
+    "QA 워크스페이스 멤버십",
+  );
 
   const coach = createClient(url, publishableKey, {
     auth: { autoRefreshToken: false, persistSession: false },
