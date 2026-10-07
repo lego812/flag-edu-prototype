@@ -637,10 +637,12 @@ $$;
 revoke all on function public.activate_invited_user(uuid) from public;
 grant execute on function public.activate_invited_user(uuid) to service_role;
 
-grant execute on function public.change_member_role(uuid, public.member_role)
-  to authenticated;
-grant execute on function public.change_member_status(uuid, public.member_status)
-  to authenticated;
+-- These helpers are internal to the locked manage_member workflow. Exposing
+-- them independently bypasses invitation guards and the last-admin lock.
+revoke all on function public.change_member_role(uuid, public.member_role)
+  from public, anon, authenticated;
+revoke all on function public.change_member_status(uuid, public.member_status)
+  from public, anon, authenticated;
 grant execute on function public.manage_member(
   uuid,
   public.member_role,

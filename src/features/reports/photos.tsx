@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { compressPhoto } from "./photo";
 import type { Attachment, Field } from "./model";
+import { useReportMutation } from "./mutation-context";
 export function Photos({
   reportId,
   fields,
@@ -18,13 +19,17 @@ export function Photos({
   const [error, setError] = useState("");
   const [items, setItems] = useState(attachments);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const mutation = useReportMutation();
+  const disabled = busy || mutation?.busy;
   async function upload(field: string, file: File) {
+    if (mutation && !mutation.start()) return;
     setBusy(true);
     setError("");
     try {
       const blob = await compressPhoto(file);
       const form = new FormData();
       form.set("field", field);
+      form.set("version", mutation?.version ?? "");
       form.set("file", blob, "photo.jpg");
       const response = await fetch(`/api/reports/${reportId}/photos`, {
         method: "POST",
@@ -33,6 +38,7 @@ export function Photos({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       setItems((current) => [...current, result.attachment]);
+      mutation?.finish(result.version);
     } catch (e) {
       setError(
         e instanceof Error
@@ -40,25 +46,29 @@ export function Photos({
           : "사진 업로드 실패. 다시 선택해 주세요.",
       );
     } finally {
+      mutation?.finish();
       setBusy(false);
     }
   }
   async function remove(id: string) {
+    if (mutation && !mutation.start()) return;
     setBusy(true);
     setError("");
     try {
       const response = await fetch(`/api/reports/${reportId}/photos`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, version: mutation?.version }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
       setItems((current) => current.filter((item) => item.id !== id));
       setDeleteTarget(null);
+      mutation?.finish(result.version);
     } catch (e) {
       setError(e instanceof Error ? e.message : "삭제 실패");
     } finally {
+      mutation?.finish();
       setBusy(false);
     }
   }
@@ -115,7 +125,7 @@ export function Photos({
                           type="button"
                           aria-label={`${f.label} ${index + 1} 삭제`}
                           className="absolute right-0 top-0 flex size-11 items-start justify-end rounded-xl p-1 focus-visible:outline-2 focus-visible:outline-black"
-                          disabled={busy}
+                          disabled={disabled}
                           onClick={() => setDeleteTarget(a.id)}
                         >
                           <span
@@ -141,7 +151,7 @@ export function Photos({
                     type="file"
                     aria-label={`${f.label} 선택`}
                     accept="image/*"
-                    disabled={busy}
+                    disabled={disabled}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) void upload(f.id, file);
@@ -164,7 +174,7 @@ export function Photos({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !busy)
+            if (event.target === event.currentTarget && !disabled)
               setDeleteTarget(null);
           }}
         >
@@ -184,7 +194,7 @@ export function Photos({
               <button
                 type="button"
                 className="btn-secondary"
-                disabled={busy}
+                disabled={disabled}
                 onClick={() => setDeleteTarget(null)}
               >
                 취소
@@ -192,7 +202,7 @@ export function Photos({
               <button
                 type="button"
                 className="btn bg-red-700 hover:bg-red-600"
-                disabled={busy}
+                disabled={disabled}
                 onClick={() => void remove(deleteTarget)}
               >
                 {busy ? "삭제 중…" : "삭제"}

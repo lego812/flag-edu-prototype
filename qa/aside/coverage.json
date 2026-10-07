@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "requirements": [
     {
       "id": "R01",
@@ -81,6 +81,7 @@
         "src/features/classes/validation.test.ts",
         "src/features/classes/session-card.test.tsx",
         "src/features/classes/view-switcher.test.tsx",
+        "src/app/classes/page.test.tsx",
         "src/features/reports/workflows.test.ts"
       ],
       "gaps": []
@@ -127,6 +128,9 @@
         "5-c-B",
         "5-c-C",
         "5-c-D",
+        "5-c-E",
+        "5-c-F",
+        "5-c-G",
         "5-d-A",
         "5-d-B",
         "5-d-C"
@@ -136,9 +140,10 @@
         "src/features/reports/photo.test.ts",
         "src/features/reports/photos.test.tsx",
         "src/app/api/reports/[id]/photos/route.test.ts",
-        "src/features/reports/field-input.test.tsx"
+        "src/features/reports/field-input.test.tsx",
+        "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["실기기 카메라·HEIC", "Chrome 확장 로컬 파일 접근을 켠 브라우저 파일 선택 E2E"]
+      "gaps": ["실기기 카메라·HEIC", "연결된 @브라우저 확장의 OS 파일 선택기(설치 Chrome의 파일 입력·실제 업로드는 검증)"]
     },
     {
       "id": "R06",
@@ -156,7 +161,9 @@
       ],
       "automated": [
         "src/features/classes/search-picker.test.tsx",
-        "src/features/reports/metadata.test.tsx"
+        "src/features/reports/metadata.test.tsx",
+        "src/features/members/repository.test.ts",
+        "src/features/reports/workflows.test.ts"
       ],
       "gaps": ["검색 30건 초과·기간 경계·페이지 이동 E2E"]
     },
@@ -188,13 +195,13 @@
     {
       "id": "R09",
       "name": "권한·데이터 보호",
-      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-a-F", "9-b-A", "9-b-B", "9-b-C", "9-b-D", "9-b-E"],
+      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-a-F", "9-b-A", "9-b-B", "9-b-C", "9-b-D", "9-b-E", "9-b-F", "9-b-G"],
       "automated": [
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/workflows.test.ts",
         "src/features/classes/actions.test.ts"
       ],
-      "gaps": ["비활성 기존 세션의 즉시 차단과 타 워크스페이스 실제 Storage RLS E2E"]
+      "gaps": []
     },
     {
       "id": "R10",
@@ -209,12 +216,14 @@
         "10-b-C",
         "10-b-D",
         "10-b-E",
-        "10-b-F"
+        "10-b-F",
+        "10-b-G"
       ],
       "automated": [
         "src/features/workspaces/actions.test.ts",
         "src/features/workspaces/switcher.test.tsx",
         "src/features/members/actions.test.ts",
+        "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
       "gaps": ["계정 전체 선택 변경 뒤 이미 열린 다른 브라우저 탭의 UI 자동 새로고침"]

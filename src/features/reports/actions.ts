@@ -55,7 +55,7 @@ export async function saveReportAction(
       error: e instanceof Error ? e.message : "입력값을 확인해 주세요.",
     };
   }
-  const { error } = await supabase.rpc("save_and_submit_report", {
+  const { data: saved, error } = await supabase.rpc("save_and_submit_report", {
     p_id: id,
     p_version: form.get("version"),
     p_answers: answers,
@@ -75,6 +75,7 @@ export async function saveReportAction(
   revalidatePath("/admin-reports");
   revalidatePath("/dashboard");
   return {
+    version: saved?.updated_at,
     redirectTo: form.get("intent") === "submit" ? "/reports" : undefined,
     success:
       form.get("intent") === "submit" ? "제출했습니다." : "저장했습니다.",

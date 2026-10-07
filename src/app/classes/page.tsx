@@ -98,7 +98,11 @@ export default async function ClassesPage({
 
       {view === "list" && (
         <ListFilters from={filters?.from} to={filters?.to}>
-          <form action="/classes" className="grid grid-cols-1 gap-4">
+          <form
+            key={[filters?.from, filters?.to, filters?.status, filters?.sort].join(":")}
+            action="/classes"
+            className="grid grid-cols-1 gap-4"
+          >
             <input type="hidden" name="view" value="list" />
             <label className="min-w-0 text-sm font-medium">
               시작일

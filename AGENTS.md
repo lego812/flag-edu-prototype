@@ -6,3 +6,13 @@
 - 수정 시 발견 ID·원인·변경·회귀 테스트·커밋·재검증 실행을 `qa/aside/findings.md`에 기록한다. 단순 코드 수정만으로 VERIFIED 처리하지 않는다.
 - 기본 Aside 실행은 조회 전용. 데이터 쓰기 시나리오와 계정/메일/권한 테스트는 사용자 허용 범위 안에서만 수행한다. 자동 삭제·자동 병합·무제한 수정 루프는 금지한다.
 - 실행 로그·스크린샷·다운로드와 인증정보는 커밋하지 않는다. 결과 요약의 개인정보를 제거하고 과거 문서/테스트 성공을 현재 배포나 브라우저 검증으로 오인하지 않는다.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
