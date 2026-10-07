@@ -22,6 +22,7 @@
       ],
       "automated": [
         "src/components/app-header.test.tsx",
+        "next.config.test.ts",
         "src/components/list-filters.test.tsx",
         "scripts/patch-next-rsc-performance.test.mjs",
         "scripts/qa-browser-observations.test.mjs"

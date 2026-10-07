@@ -359,4 +359,8 @@ Aside 서비스가 실행되지 않았고 연결 브라우저 런타임도 초�
 
 `@브라우저` 런타임 재시도는 kernel 초기화 실패, Aside는 실행 중이 아니었다. 설치된 Chrome·WebKit 대체 실행을 사용하며 연결 브라우저/실기기 성공으로 표현하지 않는다. 원본 로그·자격증명은 ignored artifacts에만 둔다. README 문서용 익명화 캡처는 사용자 승인 범위의 선별 이미지만 갱신한다.
 
+추가 발견 `BUG-20261007-dev-indicator-mobile-home`: WebKit native 메뉴 실행 `native-menu-webkit-1791349558795`에서 세 메뉴 이후 하단 홈 tap이 개발 `nextjs-portal`에 가로막혀 timeout, pageerror/DOM 예외는 0건이었다. 빌드 native 메뉴는 33/33 성공해 개발 badge 겹침으로 확정했다. 설치 Next의 `devIndicators.md`에 따라 `devIndicators: false`를 설정해 배지만 제거하고 compile/runtime 오류 표시는 유지한다. 설정 회귀·`1-b-C` 기준과 R01 매핑을 추가했으며 실제 재실행 전 FIXED_PENDING_RETEST다. 실패 원본은 보존한다.
+
+QA 전제 보완 `QA-20261007-native-report-scope`: 첫 native Chrome 실행 `native-menu-chromium-1791349411470`은 관리자 자신의 `/reports`에서 코치 보고서 링크를 찾다가 실패했다. R06에 맞춰 관리자 전체 보고서 메뉴로 이동하도록 하네스만 고쳤다. 빌드 native 실행 `native-menu-chromium-1791349495667`은 33/33 PASS·업무 원본 동일·업무 쓰기/DOM/pageerror 0건, 해당 실행 시각의 서버 오류 0건이었다. 앱의 목록/권한은 변경하지 않았다.
+
 `OBS-20261007-local-build-stream-close`는 NEEDS_EVIDENCE로 별도 보존한다. 보조 서버 종료 때 회수한 누적 출력에 `The destination stream closed early` 7건이 있었으며 요청/시각 매핑은 저장되지 않았다. 같은 로컬 빌드 브라우저 원본에는 `net::ERR_ABORTED` 356건이 기록돼 있지만 이 취소들과 서버 메시지를 일대일로 연결하거나 전부 정상이라고 단정하지 않는다. 브라우저 43개 화면/동작·pageerror/DOM 예외 게이트 통과는 서버·네트워크 전체 무오류를 뜻하지 않는다. 이번에는 요청 취소·서버 진단을 숨기는 패치를 하지 않고 범위를 명시했으며 추가 네트워크/서버 상관 계측은 별도 후속 검토 사항이다. 보조 서버의 3001 포트 종료, 원래 작업 폴더의 미커밋 파일 보존과 main SHA 불변을 최종 확인했다.

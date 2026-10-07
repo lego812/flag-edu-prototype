@@ -1,7 +1,7 @@
 {
-  "sourceCommit": "0ef140bdf1a4f90b5f528bc19e17c584abeb0b24",
-  "capturedAt": "2026-10-07T03:20:43.470Z",
-  "base": "https://flag-edu-prototype.vercel.app",
+  "sourceCommit": "51f4e9480758ee2c8a42d931f313fb60f8cbdd4a",
+  "capturedAt": "2026-10-07T04:58:40.232Z",
+  "base": "http://localhost:3000",
   "engine": "webkit",
   "installedProfile": "iPhone 17 Pro",
   "intendedSize": "iPhone 18 Pro size approximation",
@@ -21,8 +21,8 @@
   "realDevice": false,
   "captureValidation": {
     "checksPassed": 43,
-    "browserGatePassed": false,
-    "unclassifiedBrowserErrors": 3,
+    "browserGatePassed": true,
+    "unclassifiedBrowserErrors": 0,
     "domExceptions": 0,
     "businessDataUnchanged": true
   },
@@ -116,7 +116,7 @@
       "file": "coach-report-view.jpg",
       "role": "coach",
       "route": "/reports/:id",
-      "sha256": "df951057e4ee237fd7f8c19b9d8bffb86ac88683ded0b073211cf335a8c0217f"
+      "sha256": "b0ac948afcd48414414d1025d26c78c04e11806479411b36e3b0d1f42810d058"
     },
     {
       "file": "common-schedule-filters.jpg",
@@ -134,7 +134,7 @@
       "file": "coach-report-photos.jpg",
       "role": "coach",
       "route": "/reports/:id",
-      "sha256": "d9f7fa502a6ab6529b06f5ea671875ae3d44667672bc6b4d494ce500f29803c6"
+      "sha256": "0b1d88691a360eaf80874049075b28351d23a7597776e1caae84cdb6c28932e1"
     }
   ]
 }

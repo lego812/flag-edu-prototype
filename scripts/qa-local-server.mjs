@@ -12,7 +12,7 @@ const output = path.resolve("artifacts/aside", `local-server-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const log = createWriteStream(path.join(output, "server.jsonl"));
 const require = createRequire(import.meta.url);
-const child = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "start", "--port", "3001"], { stdio: ["ignore", "pipe", "pipe"] });
+const child = spawn(process.execPath, ["--import", new URL("./qa-server-request-trace.mjs", import.meta.url).href, require.resolve("next/dist/bin/next"), "start", "--port", "3001"], { stdio: ["ignore", "pipe", "pipe"] });
 for (const stream of ["stdout", "stderr"]) {
   child[stream].on("data", bytes => {
     const text = String(bytes);
