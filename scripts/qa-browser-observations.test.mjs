@@ -1,0 +1,30 @@
+import { describe, expect, it } from "vitest";
+import { findNativeCancellation } from "./qa-browser-observations.mjs";
+
+const request = { role: "coach", url: "https://example.com/api/workspaces/current", reason: "Load request cancelled", time: 10_000 };
+const message = "Fetch API cannot load https://example.com/api/workspaces/current due to access control checks.";
+const error = { role: "coach", rawMessage: message, message, time: 10_100 };
+
+describe("native WebKit cancellation evidence", () => {
+  it("requires a contemporaneous same-role exact-resource cancellation", () => {
+    expect(findNativeCancellation(error, [request])).toBe(request);
+    expect(findNativeCancellation({ ...error, stack: "fetch initiator" }, [request])).toBe(request);
+  });
+  it("does not excuse a real access denial or unrelated network failure", () => {
+    for (const reason of ["Access denied", "Connection refused", "Failed"]) {
+      expect(findNativeCancellation(error, [{ ...request, reason }])).toBeUndefined();
+    }
+    expect(findNativeCancellation({ ...error, message: "TypeError: app failure" }, [request])).toBeUndefined();
+  });
+  it("does not correlate other users, old requests or invalid timestamps", () => {
+    for (const changes of [{ role: "admin" }, { time: 8000 }, { time: NaN }]) {
+      expect(findNativeCancellation(error, [{ ...request, ...changes }])).toBeUndefined();
+    }
+  });
+  it("does not match resource prefixes, another origin or missing evidence", () => {
+    for (const url of ["https://example.com/api/workspaces", "https://other.example.com/api/workspaces/current", undefined]) {
+      expect(findNativeCancellation(error, [{ ...request, url }])).toBeUndefined();
+    }
+    expect(findNativeCancellation(error, [])).toBeUndefined();
+  });
+});
