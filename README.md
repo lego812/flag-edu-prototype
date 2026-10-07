@@ -279,6 +279,10 @@ npm run bootstrap:admin -- <AUTH_USER_UUID>
 
 ## 검증
 
+개발 모드의 React Server Component 음수 시간 계측 결함([React #37561](https://github.com/react/react/issues/37561))은 Next 16.3.8에 맞춘 제한적 소스 패치로 보완합니다. `npm ci`/`npm install` 후 자동 적용되며, `npm run dev` 시작 전에도 확인합니다. 계산되지 않은 aborted/errored 계측만 정상 렌더 계측과 동일한 조건으로 건너뛰며 실제 예외·오류 화면·정상 성능 측정은 유지합니다. 전역 `performance.measure` 재정의나 오류 숨김은 사용하지 않습니다.
+
+패치는 개발용 Flight 클라이언트 6개에만 적용하고 운영 번들은 변경하지 않습니다. Next 버전·원본 SHA-256이 다르면 설치를 실패시켜 검토를 요구합니다. Next를 업데이트할 때 공식 수정 포함 여부를 확인한 후 [패치 스크립트](scripts/patch-next-rsc-performance.mjs)와 `postinstall`/`predev`를 함께 제거하거나 갱신하세요. `--ignore-scripts` 설치 후에는 개발 서버 시작 또는 패치 스크립트를 직접 실행해야 합니다.
+
 개발(`http://localhost:3000`)과 운영 앱은 현재 같은 Supabase를 사용합니다. 테스트 업무 데이터는 별도 QA 워크스페이스에 격리하고 실사용자의 계정·권한·업무 데이터는 변경하지 않습니다. 환경별 Supabase 분리는 별도 운영 과제입니다.
 
 ```bash
