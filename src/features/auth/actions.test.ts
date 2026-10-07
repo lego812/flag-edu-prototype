@@ -7,9 +7,8 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   updateUser: vi.fn(),
   adminFrom: vi.fn(),
+  adminRpc: vi.fn(),
   profileSingle: vi.fn(),
-  profileUpdate: vi.fn(),
-  activationSingle: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -33,28 +32,20 @@ describe("password setup activation", () => {
     mocks.createClient.mockResolvedValue({
       auth: { getUser: mocks.getUser, updateUser: mocks.updateUser },
     });
-    mocks.createAdminClient.mockReturnValue({ from: mocks.adminFrom });
+    mocks.createAdminClient.mockReturnValue({
+      from: mocks.adminFrom,
+      rpc: mocks.adminRpc,
+    });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "member-id" } } });
     mocks.updateUser.mockResolvedValue({ error: null });
     mocks.profileSingle.mockResolvedValue({
       data: { status: "pending" },
       error: null,
     });
-    mocks.activationSingle.mockResolvedValue({
-      data: { id: "member-id" },
-      error: null,
-    });
+    mocks.adminRpc.mockResolvedValue({ error: null });
     mocks.adminFrom.mockReturnValue({
       select: () => ({
         eq: () => ({ single: mocks.profileSingle }),
-      }),
-      update: mocks.profileUpdate,
-    });
-    mocks.profileUpdate.mockReturnValue({
-      eq: () => ({
-        eq: () => ({
-          select: () => ({ maybeSingle: mocks.activationSingle }),
-        }),
       }),
     });
     mocks.redirect.mockImplementation(() => {
@@ -70,14 +61,16 @@ describe("password setup activation", () => {
     expect(mocks.updateUser).toHaveBeenNthCalledWith(1, {
       password: "new-password",
     });
-    expect(mocks.profileUpdate).toHaveBeenCalledWith({ status: "active" });
+    expect(mocks.adminRpc).toHaveBeenCalledWith("activate_invited_user", {
+      p_user_id: "member-id",
+    });
     expect(mocks.updateUser).toHaveBeenNthCalledWith(2, {
       data: { must_change_password: false },
     });
   });
 
   it("keeps the password-change flag when pending activation fails", async () => {
-    mocks.activationSingle.mockResolvedValue({ data: null, error: null });
+    mocks.adminRpc.mockResolvedValue({ error: { code: "P0001" } });
 
     const result = await setPasswordAction({}, passwordForm());
 

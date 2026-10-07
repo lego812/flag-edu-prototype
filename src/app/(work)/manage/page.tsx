@@ -25,6 +25,11 @@ export default async function ManagePage() {
       title: "내보내기",
       description: "기록을 PDF와 Excel로 모아 보세요.",
     },
+    {
+      href: "/workspaces",
+      title: "워크스페이스",
+      description: "업무 자료와 참여 워크스페이스를 분리해 관리합니다.",
+    },
   ];
   return (
     <>

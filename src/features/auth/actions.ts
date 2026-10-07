@@ -85,15 +85,12 @@ export async function setPasswordAction(
   }
 
   if (profile.status === "pending") {
-    const { data: activated, error: activationError } = await adminClient
-      .from("profiles")
-      .update({ status: "active" })
-      .eq("id", user.id)
-      .eq("status", "pending")
-      .select("id")
-      .maybeSingle();
+    const { error: activationError } = await adminClient.rpc(
+      "activate_invited_user",
+      { p_user_id: user.id },
+    );
 
-    if (activationError || !activated) {
+    if (activationError) {
       return { error: "가입을 완료하지 못했습니다. 관리자에게 문의해 주세요." };
     }
   }

@@ -1,19 +1,26 @@
 import { logoutAction } from "@/features/auth/actions";
+import type { WorkspaceSummary } from "@/features/auth/current-user";
+import { WorkspaceSwitcher } from "@/features/workspaces/switcher";
 import { AppNavigation } from "./app-navigation";
 import { HeaderLeading } from "./header-leading";
 export function AppHeader({
   name,
   isAdmin,
+  workspace,
+  workspaces,
 }: {
   name: string;
   isAdmin: boolean;
+  workspace: WorkspaceSummary;
+  workspaces: WorkspaceSummary[];
 }) {
   return (
     <header className="app-header">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8">
         <HeaderLeading />
         <AppNavigation isAdmin={isAdmin} />
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex min-w-0 items-center gap-3">
+          <WorkspaceSwitcher current={workspace} workspaces={workspaces} />
           <span className="hidden max-w-32 truncate text-sm text-neutral-600 lg:inline">
             {name}
           </span>

@@ -34,6 +34,22 @@ if (profileReadError) {
 }
 
 if (existingProfile) {
+  const { error: membershipError } = await supabase
+    .from("workspace_memberships")
+    .upsert(
+      {
+        user_id: userId,
+        organization_id: existingProfile.organization_id,
+        role: existingProfile.role,
+        status: existingProfile.status,
+      },
+      { onConflict: "user_id,organization_id" },
+    );
+
+  if (membershipError) {
+    throw membershipError;
+  }
+
   console.log(
     JSON.stringify({
       result: "already_exists",
@@ -86,6 +102,23 @@ if (profileInsertError) {
     await supabase.from("organizations").delete().eq("id", createdOrganizationId);
   }
   throw profileInsertError;
+}
+
+const { error: membershipInsertError } = await supabase
+  .from("workspace_memberships")
+  .insert({
+    user_id: userId,
+    organization_id: organization.id,
+    role: "admin",
+    status: "pending",
+  });
+
+if (membershipInsertError) {
+  await supabase.from("profiles").delete().eq("id", userId);
+  if (createdOrganizationId) {
+    await supabase.from("organizations").delete().eq("id", createdOrganizationId);
+  }
+  throw membershipInsertError;
 }
 
 const { data: authUser, error: authUserReadError } =

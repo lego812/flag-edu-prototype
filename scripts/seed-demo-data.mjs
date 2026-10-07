@@ -568,6 +568,24 @@ async function main() {
     await client.from("profiles").update({ role: "coach", status: "active" }).eq("id", users.coach.id),
     "코치 역할 설정",
   );
+  await required(
+    await client.from("workspace_memberships").upsert({
+      user_id: users.admin.id,
+      organization_id: users.adminProfile.organization_id,
+      role: "admin",
+      status: "active",
+    }, { onConflict: "user_id,organization_id" }),
+    "관리자 워크스페이스 권한 설정",
+  );
+  await required(
+    await client.from("workspace_memberships").upsert({
+      user_id: users.coach.id,
+      organization_id: users.coachProfile.organization_id,
+      role: "coach",
+      status: "active",
+    }, { onConflict: "user_id,organization_id" }),
+    "코치 워크스페이스 권한 설정",
+  );
 
   const removed = await clearBusinessData(client);
   const created = await seedScenario(client, users);

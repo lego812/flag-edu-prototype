@@ -27,6 +27,7 @@ export function AppNavigation({ isAdmin }: { isAdmin: boolean }) {
                 "/templates",
                 "/admin-reports",
                 "/exports",
+                "/workspaces",
               ].some((p) => pathname.startsWith(p))
             : pathname.startsWith(item.href);
         return (
