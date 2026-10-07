@@ -3,6 +3,9 @@ import { isUuid } from "@/features/classes/model";
 const observedWorkspaces = new Map<string, string>();
 const authDestinations = new Set(["/login", "/set-password", "/access-denied"]);
 export const WORKSPACE_SYNC_INTERVAL = 30_000;
+const requestTimeout = 10_000;
+const retryDelay = 1_000;
+const transientStatuses = new Set([500, 502, 503, 504]);
 
 export function startWorkspaceSync({
   userId,
@@ -20,23 +23,41 @@ export function startWorkspaceSync({
   let checking = false;
   let queued = false;
   let controller: AbortController | undefined;
+  let deadline: number | undefined;
+  let retryTimer: number | undefined;
 
   // Notifications are hints, never an authority for workspace or permissions.
-  async function check() {
+  async function check(attempt = 0) {
     if (disposed || navigating) return;
     if (checking) {
       queued = true;
       return;
     }
+    window.clearTimeout(retryTimer);
+    retryTimer = undefined;
     checking = true;
-    controller = new AbortController();
+    const requestController = new AbortController();
+    controller = requestController;
+    let fetching = true;
+    let timedOut = false;
+    let retryable = false;
+    // Bound both the request and body parsing. Abort alone cannot release a
+    // stalled body/transport that ignores its signal, so race the full check.
+    const timeout = new Promise<never>((_, reject) => {
+      deadline = window.setTimeout(() => {
+        timedOut = true;
+        requestController.abort();
+        reject(new Error("Workspace identity check timed out"));
+      }, requestTimeout);
+    });
     try {
-      const response = await fetch("/api/workspaces/current", {
+      const response = await Promise.race([fetch("/api/workspaces/current", {
         cache: "no-store",
         credentials: "same-origin",
         headers: { Accept: "application/json" },
-        signal: controller.signal,
-      });
+        signal: requestController.signal,
+      }), timeout]);
+      fetching = false;
       if (disposed) return;
       let destination: string | undefined;
       if (response.redirected) {
@@ -47,7 +68,7 @@ export function startWorkspaceSync({
       } else if (response.status === 401) {
         destination = "/login";
       } else if (response.ok) {
-        const identity: unknown = await response.json();
+        const identity: unknown = await Promise.race([response.json(), timeout]);
         if (
           identity && typeof identity === "object" &&
           "userId" in identity && typeof identity.userId === "string" && isUuid(identity.userId) &&
@@ -56,6 +77,8 @@ export function startWorkspaceSync({
         ) {
           destination = "/dashboard";
         }
+      } else {
+        retryable = transientStatuses.has(response.status);
       }
       if (destination && !disposed && !navigating) {
         navigating = true;
@@ -63,13 +86,21 @@ export function startWorkspaceSync({
         // It never saves an old workspace's unsaved input into the new one.
         navigate(destination);
       }
-    } catch {
-      // Offline/aborted checks do not wipe input. Retry on focus or the timer.
+    } catch (error) {
+      // Failed checks never authorize navigation or wipe unsaved input.
+      retryable = fetching || timedOut || error instanceof TypeError;
     } finally {
+      window.clearTimeout(deadline);
+      deadline = undefined;
+      controller = undefined;
       checking = false;
       if (queued && !disposed && !navigating) {
         queued = false;
         void check();
+      } else if (retryable && attempt === 0 && !disposed && !navigating && document.visibilityState === "visible") {
+        // One short retry handles transient outages without an unbounded loop.
+        // The regular foreground/polling checks remain the fallback.
+        retryTimer = window.setTimeout(() => void check(1), retryDelay);
       }
     }
   }
@@ -114,6 +145,8 @@ export function startWorkspaceSync({
   return () => {
     disposed = true;
     controller?.abort();
+    window.clearTimeout(deadline);
+    window.clearTimeout(retryTimer);
     window.clearInterval(timer);
     channel?.close();
     window.removeEventListener("storage", onStorage);
