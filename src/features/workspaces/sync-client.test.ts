@@ -37,7 +37,9 @@ describe("workspace tab synchronization", () => {
     vi.stubGlobal("BroadcastChannel", Channel);
     vi.stubGlobal("fetch", fetchIdentity);
     vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
-    fetchIdentity.mockResolvedValue(identity());
+    // A real fetch returns a fresh body for each check; reusing one Response
+    // would introduce an artificial "body already read" transport failure.
+    fetchIdentity.mockReset().mockImplementation(async () => identity());
   });
   afterEach(() => {
     cleanup?.();
@@ -156,6 +158,69 @@ describe("workspace tab synchronization", () => {
     fetchIdentity.mockResolvedValue(identity(workspaceA, "20000000-0000-4000-8000-000000000001"));
     await start();
     expect(navigate).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("recovers within the polling interval when the identity request never settles", async () => {
+    fetchIdentity.mockImplementationOnce(() => new Promise<Response>(() => {}));
+    await start();
+    const signal = fetchIdentity.mock.calls[0][1].signal as AbortSignal;
+    fetchIdentity.mockResolvedValue(identity(workspaceB));
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SYNC_INTERVAL);
+    expect(signal.aborted).toBe(true);
+    expect(fetchIdentity).toHaveBeenCalledTimes(2);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/dashboard");
+  });
+
+  it("bounds stalled response bodies and ignores their late workspace identities", async () => {
+    const body = Promise.withResolvers<unknown>();
+    fetchIdentity.mockResolvedValueOnce({ ok: true, json: () => body.promise });
+    await start();
+    const signal = fetchIdentity.mock.calls[0][1].signal as AbortSignal;
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SYNC_INTERVAL - 1);
+    expect(signal.aborted).toBe(true);
+    expect(fetchIdentity).toHaveBeenCalledTimes(2);
+    body.resolve({ userId, workspaceId: workspaceB });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("rechecks an initial 503 before the next regular poll without trusting the failed response", async () => {
+    fetchIdentity.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await start();
+    expect(navigate).not.toHaveBeenCalled();
+    fetchIdentity.mockResolvedValue(identity(workspaceB));
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SYNC_INTERVAL - 1);
+    expect(fetchIdentity).toHaveBeenCalledTimes(2);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/dashboard");
+  });
+
+  it("limits consecutive transient failures to one retry per regular check", async () => {
+    fetchIdentity.mockResolvedValue(new Response(null, { status: 503 }));
+    await start();
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SYNC_INTERVAL - 1);
+    expect(fetchIdentity).toHaveBeenCalledTimes(2);
+    expect(navigate).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchIdentity).toHaveBeenCalledTimes(3);
+  });
+
+  it("cancels a scheduled retry on unmount", async () => {
+    fetchIdentity.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await start();
+    cleanup?.();
+    cleanup = undefined;
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SYNC_INTERVAL);
+    expect(fetchIdentity).toHaveBeenCalledOnce();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("keeps authentication expiry authoritative during a retry", async () => {
+    fetchIdentity.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await start();
+    fetchIdentity.mockResolvedValue(new Response(null, { status: 401 }));
+    await vi.advanceTimersByTimeAsync(WORKSPACE_SYNC_INTERVAL - 1);
+    expect(fetchIdentity).toHaveBeenCalledTimes(2);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/login");
   });
 
   it("only follows known same-origin authentication redirects", async () => {
