@@ -410,3 +410,22 @@ QA 보완 커밋은 `57a9e872ea1061b40634d3727e23a98732ea04ed`다. 위 FIXED_PEN
 최신 자동 회귀 **48파일 231/231**, lint 경고 0·TypeScript·문법·diff 검사 PASS, 운영 의존성 감사 0건이다. QA 커밋 후 관련 4파일 23개(quiet/주소/매핑/이미지) 재실행도 PASS다. 제품 production 빌드는 이미 main `4ad47c4`에서 통과했고 이 추가 브랜치는 앱·의존성·운영 번들을 바꾸지 않는다. 같은 운영 배포의 최근 10분 5xx 로그 조회도 0건이다. 문서용 18장 무결성은 다시 확인했으며 byte-identical 이미지에 캡처 시각/검증 앱 SHA만 갱신했다.
 
 사용자 승인에 따라 QA·README·기록 보완도 main에 병합·재배포한다. 이후 실제 배포 READY/SHA/별칭과 운영 메뉴 결과는 최종 인계에서 재조회하며, 위 `4ad47c4`의 전체 검증을 다른 배포의 실행으로 바꾸어 적지 않는다. 실제 업무 CRUD·메일 E2E, 실기기 카메라/HEIC·PWA·파일 앱, 개발/운영 DB 분리와 공식 React 수정 포함 안정판 전환은 별도 후속 범위다.
+
+## 2026-10-07 후속 운영 대조·공개 전용 서비스 워커 수정
+
+main `cc2d9df4ed7f07939f974dd140c52476ff0e409e`의 Vercel `dpl_AqMR7aXKk9v2H75P8UYznwuLvg6Z` READY·main SHA·운영 별칭을 확인한 뒤 추가 조회 검증을 실행했다. WebKit `mobile-guide-production-1791351843159`는 20개 뒤 기억된 캘린더의 정상 query 리다이렉트를 navigation load 대기가 거절해 FAIL, Chrome `1791351855876`은 42개 뒤 quiet timeout, Chrome `1791352323810`은 40개 뒤 networkidle timeout으로 FAIL이다. 업무 쓰기/DOM 예외 0·6개 업무 테이블 동일이며 이동 timeout을 제품 권한 결함으로 단정하지 않는다. 별도 WebKit `1791352338777`은 42개 뒤 기존 사진 decode 실패와 `FetchEvent.respondWith received an error: Returned response is null.`을 관찰했다. 모든 원본은 ignored artifacts에 보존한다.
+
+| ID | 원인·변경 | 회귀·재검증·상태 |
+| --- | --- | --- |
+| `QA-20261007-canonical-navigation` | 기억된 보기로 bare `/classes`에 정상 query가 추가되는 것을 정확한 문자열/load 대기가 거절했다. origin/path 및 명시적으로 요청한 query는 엄격하게 검사하고 기본 주소의 canonical query만 허용한다. quiet timeout에 UUID/query/token 없는 대기 요청 종류·RSC/Worker 여부를 추가했다. | `d2536cf`의 주소 회귀 1건 및 timeout 진단 개인정보 회귀 1건 PASS. 실제 화면 재검증 결과는 아래 후속 기록으로 분리한다. 과거 timeout/네트워크 실패를 숨기지 않는다. |
+| `BUG-20261007-service-worker-private-fetch` | 이전 Worker는 navigation 외 모든 GET을 가로채고 fetch 실패 시 없는 cache 응답 `undefined`를 반환했다. 실제 Supabase 사진 요청의 null 응답 오류와 원본 Worker의 VM 회귀 5개 실패를 교차 확인했다. 공개 아이콘/manifest allowlist, same-origin·query 없음·RSC 없음으로 한정하고 공개 cache miss만 실제 503 Response를 반환한다. 개인 HTML은 precache하지 않으며 앱 자체 shell 캐시만 갱신한다. 등록은 `updateViaCache: none`을 사용한다. | Worker 7건·등록 3건 PASS, 전체 50파일 243/243·lint·TypeScript 포함 production build PASS. FIXED_PENDING_RETEST: 실제 활성 Worker/공개 cache/직접 사진 로딩을 포함한 두 엔진 전체 재검증 중이다. 앞선 native access-control 메시지 3건 전체의 원인으로 소급하지 않는다. |
+
+기능 기준 R01/R09·기존 `1-d-A`의 캐시 경계와 coverage v9를 갱신했다(142개 ID 유지). QA에 실제 Worker 확인 두 항목을 선택적으로 추가하며 Worker 차단이나 request interception은 사용하지 않는다. 새 QA 항목의 첫 실행은 Cache API의 Request.url 속성을 Playwright 메서드처럼 호출한 하네스 오류로 실패했고, 웹 표준 속성으로 고친 후 재실행한다. 새 업무 CRUD·계정 변경·메일·내보내기 생성·DB 변경은 없다.
+
+사용자의 Chrome 확장 요청에 연결 inventory `cua.getState()`와 확장 Chrome의 `localhost:3000` 탭 생성까지 재시도했지만 `trusted Node process exited unexpectedly; kernel reset`으로 초기화 단계에서 종료됐다. 로그인/앱 오류 또는 확장 미설치를 단정하지 않는다. 공식 확장 연결 안내를 확인하고 재연결·@Chrome 탭 지정을 요청했다. 별도 설치 Chrome/WebKit 자동화는 연결된 로그인 Chrome·Aside·실기기 검증으로 집계하지 않는다.
+
+### 수정 후 로컬 production 빌드의 실제 대조 (전체 FAIL 유지)
+
+두 역할의 활성 `flag-edu-shell-v3`, `updateViaCache=none`, 공개 두 파일만 캐시된 상태는 Chrome·WebKit에서 실제 확인했다. 두 엔진 모두 Supabase 기존 사진 응답 200·`fromServiceWorker=false`다. WebKit `mobile-guide-development-1791353484765`는 45개 화면/동작을 마치고 사진 decode도 PASS지만 정확한 실패 요청에 대응하지 못한 `/classes` RSC native access-control 1건으로 최종 FAIL이다. Chrome `1791353482798`는 44개 뒤 사진 화면의 GET quiet timeout으로 최종 FAIL이다. timeout 진단은 Workspace API/RSC 요청이 남았음을 보여주지만 Worker 요청이 아니며 실제 앱 조회 실패인지 관찰 lifecycle 문제인지는 아직 확정하지 않았다. 임계시간을 늘리거나 미분류 오류를 무시하지 않았다.
+
+두 실행은 `base=http://localhost:3001`의 로컬 production 빌드 대조다. 파일명 development는 서버 모드를 뜻하지 않는다. DOM error/rejection·업무 쓰기 0건, 6개 업무 테이블 동일이다. 수정 Worker의 특정 캐시/사진 계약 확인과 전체 통합 성공을 분리한다. 전체 자동 50파일 243/243 및 lint는 후속 README 변경 전 다시 통과했다. 이 브랜치의 main 병합·배포는 전체 통합 검증 미완료로 보류하고, 연결 확장 재연결 후 화면 테스트와 남은 네트워크 관찰 원인 검증을 이어간다. 개발 서버 `localhost:3000`은 유지한다.
