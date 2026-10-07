@@ -348,7 +348,7 @@ Aside 서비스가 실행되지 않았고 연결 브라우저 런타임도 초�
 
 최종 문서·허용 원점 보완 후 전체 **219/219**·lint·두 QA 스크립트 문법·diff 검사를 다시 통과했다. 기존 WebKit 전체 탐색의 `OBS-20261007-webkit-navigation-fetch`는 이번 보고서 전용 깨끗한 결과로 해결 처리하지 않는다. main 병합·원격 DB 적용·운영 배포는 이 작업의 별도 승인 전 미실행이다.
 
-## 2026-10-07 개발 계측 결함 수정·통합 재검증 (진행)
+## 2026-10-07 개발 계측 결함 수정·통합 재검증
 
 사용자가 개발 오류 해결, 통합 재검증·발견 결함 수정, localhost 브라우저·README 갱신과 최종 main 병합·배포를 승인했다. `fix/react-development-integration`은 앞선 보고서 조회 구현 브랜치에서 분기했다. 실사용 데이터·계정·권한·메일은 변경하지 않는다.
 
@@ -362,5 +362,25 @@ Aside 서비스가 실행되지 않았고 연결 브라우저 런타임도 초�
 추가 발견 `BUG-20261007-dev-indicator-mobile-home`: WebKit native 메뉴 실행 `native-menu-webkit-1791349558795`에서 세 메뉴 이후 하단 홈 tap이 개발 `nextjs-portal`에 가로막혀 timeout, pageerror/DOM 예외는 0건이었다. 빌드 native 메뉴는 33/33 성공해 개발 badge 겹침으로 확정했다. 설치 Next의 `devIndicators.md`에 따라 `devIndicators: false`를 설정해 배지만 제거하고 compile/runtime 오류 표시는 유지한다. 설정 회귀·`1-b-C` 기준과 R01 매핑을 추가했으며 실제 재실행 전 FIXED_PENDING_RETEST다. 실패 원본은 보존한다.
 
 QA 전제 보완 `QA-20261007-native-report-scope`: 첫 native Chrome 실행 `native-menu-chromium-1791349411470`은 관리자 자신의 `/reports`에서 코치 보고서 링크를 찾다가 실패했다. R06에 맞춰 관리자 전체 보고서 메뉴로 이동하도록 하네스만 고쳤다. 빌드 native 실행 `native-menu-chromium-1791349495667`은 33/33 PASS·업무 원본 동일·업무 쓰기/DOM/pageerror 0건, 해당 실행 시각의 서버 오류 0건이었다. 앱의 목록/권한은 변경하지 않았다.
+
+### 수정 커밋 후 로컬 최종 결과
+
+위 FIXED_PENDING_RETEST는 아래 실제 재실행으로 갱신한다. 근본 수정은 `51f4e9480758ee2c8a42d931f313fb60f8cbdd4a`, 배지 겹침 수정·첫 문서 갱신은 `6254d71af6bc2b1092336ad0739a10f058e0639f`다.
+
+| 발견 ID | 커밋 후 실제 증거 | 현재 상태 |
+| --- | --- | --- |
+| `OBS-20261007-react-dev-performance` | 최신 개발 앱 `6254d71`의 Chrome `mobile-guide-development-1791349941724`, WebKit `mobile-guide-development-1791349958079` 각각 43/43 PASS. 같은 코치 관리자 경로 6곳을 포함하고 음수 시간 예외·DOM/rejection·미분류 오류·업무 쓰기·오버레이 진단 POST 모두 0건, 업무 6개 테이블 동일. 패치 6개 회귀·깨끗한 npm ci 자동 적용·정상 측정/실제 예외 보존을 확인했다. | VERIFIED_LOCAL_SOURCE_FIX. 공식 upstream 자체의 해결 완료는 아니다. Next 변경 시 SHA/버전 검사로 재검토를 강제하며 공식 수정 포함 버전에서 제거할 한시적 보완이다. |
+| `BUG-20261007-dev-indicator-mobile-home` | `6254d71`의 WebKit `native-menu-webkit-1791349712104`에서 실제 하단 touch·관리자 메뉴·보고서·사진 확대/닫기 33/33 PASS, DOM/pageerror/업무 쓰기 0건·원본 동일. Chrome의 독립 `dev-error-reporting-1791350075361`은 익명 로그인 페이지에서 의도적 예외 정확히 1개, 오류 배지와 상세 오버레이 실제 표시, 개발 도구 배지 부재를 확인했다. | VERIFIED_LOCAL. 오류 검증은 별도 의도적 probe이며 정상 QA의 오류 수와 합치지 않는다. `next.config.test.ts` 회귀 1건 추가. |
+| `DOCS-20261007-report-reader-refresh` | `6254d71` 기준 localhost WebKit 위 43개 실행에서 문서용 18개 402×874·DPR3 JPEG를 모두 재캡처. 화면이 같은 16개는 바이트도 동일하고 조회/사진 2개가 새 Reader 화면으로 바뀌었다. 전체 이미지를 육안 확인했으며 정확한 크기·EXIF 부재·SHA-256·참조/alt 회귀 PASS. 최신 manifest의 browserGatePassed=true이며 취소 경고 4건은 아래처럼 별도 보존한다. | VERIFIED_DOCUMENTATION. 실제 iPhone/Safari나 연결 @브라우저 캡처로 표현하지 않는다. |
+
+앞선 패치 후 보고서 전용 Chrome `report-reader-chromium-1791349099374`, WebKit `report-reader-webkit-1791348956800` 각각 16/16 PASS를 추가 대조했다. 기본 읽기 순서·0/날짜/선택값·긴 값, 관리자/코치·모바일/PC, 사진 디코딩·확대·포커스/스크롤 복원과 취소 잠금이 포함된다. 배지 수정은 Reader 앱 소스를 변경하지 않았다.
+
+`OBS-20261007-local-build-stream-close`는 최신 비교에서 요청 취소 원인을 좁혔다. 로컬 빌드 Chrome `mobile-guide-development-1791349284466`(실제 base=3001)은 43/43·DOM/pageerror/업무 쓰기 0·업무 보존이며 취소 요청 364건이 있다. 서버 추적 `local-server-1791349268578`의 stream 진단 발생 시점에 100ms 안으로 종료된 `completed=false` 요청은 RSC prefetch였고, 설치 React의 `createCancelHandler`가 destination close에서 해당 오류로 abort함을 코드로 확인했다. 여러 요청이 동시에 취소돼 모든 메시지에 유일한 요청 ID를 단정하지 않는다. 동일 서버에서 실제 링크/touch로만 이동한 `native-menu-chromium-1791349495667`은 33/33, 해당 실행 구간의 서버 stderr/stream 메시지 0건이다. 따라서 현재 증거는 EXPLAINED_LOCAL_PREFETCH_CANCELLATION이며 서버 오류를 무조건 필터링하거나 모든 네트워크 실패를 정상으로 판정하지 않는다. QA 추적은 보조 서버에서만 사용하고 Vercel/app에 적용하지 않는다. 보조 3001 서버는 종료했다.
+
+`OBS-20261007-webkit-navigation-fetch`: 최신 개발 문서 실행의 native access-control 관찰 4건은 같은 역할·정확한 URL·1초 내 `Load request cancelled`와 대응해 경고로 기록했고 DOM 예외는 0건이다. 별도 native 메뉴 실행은 경고·예외 0건. 과거 운영 실행의 미대응 3건 원본은 그대로 보존하며 과거 FAIL을 소급 PASS로 바꾸지 않는다. 운영 최신 상태는 배포 후 별도로 검증한다.
+
+최종 자동 회귀 **47파일 227/227**, lint(경고 0), TypeScript 포함 production build, 운영 의존성 감사 0건, 142개 QA 케이스 매핑·문서 무결성·문법·diff 검사를 통과했다. registry ECONNRESET 감사 실패와 개발 전체 `mobile-guide-development-1791349725907`의 이동 timeout은 실패 이력을 보존했으며, 감사·서버 재시작 뒤 같은 최종 43개를 두 엔진에서 다시 실행했다. 이 실패 실행에 개발 서버의 네트워크 조회 실패 진단도 있었으므로 제품 해결로 강제 분류하지 않는다. 기존 업무 error boundary의 재시도 안내는 유지했다. 의도적 오류 probe의 초기 hidden 상세 대기는 오류 배지 클릭 단계로 보완했고 위 독립 최신 probe로 확인했다.
+
+이번 실제 브라우저 통합은 조회·미저장 입력·권한 차단·기존 사진·네이티브 메뉴 검증이다. 신규 등록/저장/제출/삭제·계정 변경·메일/내보내기 생성은 재실행하지 않았고 해당 기능의 기존 PGlite/API/컴포넌트 회귀는 전체 자동 테스트에 포함했다. 원래 worktree의 미커밋 파일은 보존했다. main 병합·운영 배포·현재 운영 증거는 아래 후속 기록으로 분리한다.
 
 `OBS-20261007-local-build-stream-close`는 NEEDS_EVIDENCE로 별도 보존한다. 보조 서버 종료 때 회수한 누적 출력에 `The destination stream closed early` 7건이 있었으며 요청/시각 매핑은 저장되지 않았다. 같은 로컬 빌드 브라우저 원본에는 `net::ERR_ABORTED` 356건이 기록돼 있지만 이 취소들과 서버 메시지를 일대일로 연결하거나 전부 정상이라고 단정하지 않는다. 브라우저 43개 화면/동작·pageerror/DOM 예외 게이트 통과는 서버·네트워크 전체 무오류를 뜻하지 않는다. 이번에는 요청 취소·서버 진단을 숨기는 패치를 하지 않고 범위를 명시했으며 추가 네트워크/서버 상관 계측은 별도 후속 검토 사항이다. 보조 서버의 3001 포트 종료, 원래 작업 폴더의 미커밋 파일 보존과 main SHA 불변을 최종 확인했다.

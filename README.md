@@ -285,6 +285,8 @@ npm run bootstrap:admin -- <AUTH_USER_UUID>
 
 모바일 하단 홈 메뉴를 가리는 개발 배지는 `devIndicators: false`로 비활성화했습니다. 컴파일·런타임 오류 표시는 그대로 유지됩니다. 실제 메뉴/touch 비교 검증은 `scripts/qa-native-menu.mjs`를 사용하고, 로컬 빌드의 요청 취소 분석은 `node scripts/qa-local-server.mjs 3001`로 실행합니다. 이 서버 보조 도구의 요청 추적은 개발 앱·Vercel 운영에는 적용하지 않습니다.
 
+오류 표시 보존은 `scripts/qa-dev-error-reporting.mjs http://localhost:3000 <Playwright 모듈 경로>`로 별도 검증합니다. 익명 로그인 페이지의 테스트 브라우저에 의도적인 예외 1개를 발생시켜 오류 배지와 상세 오버레이가 표시되는지 확인하므로, 다른 통합 테스트와 동시에 실행하지 마세요. 정상 통합 테스트의 오류 수에는 이 의도적 검증을 합치지 않습니다.
+
 개발(`http://localhost:3000`)과 운영 앱은 현재 같은 Supabase를 사용합니다. 테스트 업무 데이터는 별도 QA 워크스페이스에 격리하고 실사용자의 계정·권한·업무 데이터는 변경하지 않습니다. 환경별 Supabase 분리는 별도 운영 과제입니다.
 
 ```bash
