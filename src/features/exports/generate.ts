@@ -58,7 +58,11 @@ export function exportRows(
         : formatClassDate(report.class_sessions.end_at),
       report.profiles.name,
       reportStatus(report),
-      report.class_sessions.status === "cancelled" ? "취소" : "예정",
+      report.class_sessions.status === "cancelled"
+        ? "취소"
+        : report.class_sessions.status === "completed"
+          ? "완료"
+          : "예정",
       formatClassDate(report.created_at),
     ];
     return template.template_fields.map((field) => {

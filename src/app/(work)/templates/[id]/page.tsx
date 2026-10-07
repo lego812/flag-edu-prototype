@@ -17,9 +17,8 @@ export default async function EditTemplatePage({
     <>
       <h1 className="text-2xl font-bold">
         {template.name}
-        {template.status !== "draft" ? " · 새 버전으로 복사" : " · 초안 편집"}
+        {template.status !== "draft" ? " · 수정" : " · 수정 중"}
       </h1>
-      <p className="text-sm text-neutral-500">버전 {template.version}</p>
       <TemplateEditor template={template} />
     </>
   );

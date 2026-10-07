@@ -13,8 +13,15 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const removed = await cleanupExpiredExports(createAdminClient());
-    return Response.json({ removed });
+    const client = createAdminClient();
+    const [removed, completed] = await Promise.all([
+      cleanupExpiredExports(client),
+      client.rpc("sync_completed_class_sessions", {
+        p_organization_id: null,
+      }),
+    ]);
+    if (completed.error) throw completed.error;
+    return Response.json({ removed, completed: completed.data ?? 0 });
   } catch (error) {
     console.error(
       "Failed to clean up expired exports.",

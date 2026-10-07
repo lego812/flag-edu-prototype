@@ -64,8 +64,11 @@ describe("report read/edit mode", () => {
     );
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.getByText("사진 편집")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "조회로 돌아가기" }),
+    ).not.toBeInTheDocument();
   });
-  it("does not let another user edit by changing the URL", async () => {
+  it("lets an administrator edit another member's report", async () => {
     mocks.auth.mockResolvedValue({
       profile: { id: "someone-else", role: "admin" },
       supabase: {},
@@ -76,10 +79,21 @@ describe("report read/edit mode", () => {
         searchParams: Promise.resolve({ edit: "1" }),
       }),
     );
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByText("사진 편집")).toBeInTheDocument();
+  });
+  it("does not let another coach edit by changing the URL", async () => {
+    mocks.auth.mockResolvedValue({
+      profile: { id: "someone-else", role: "coach" },
+      supabase: {},
+    });
+    render(
+      await ReportPage({
+        params: Promise.resolve({ id }),
+        searchParams: Promise.resolve({ edit: "1" }),
+      }),
+    );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "수정" }),
-    ).not.toBeInTheDocument();
   });
   it("keeps a cancelled report read-only even for its author", async () => {
     mocks.report.mockResolvedValue({

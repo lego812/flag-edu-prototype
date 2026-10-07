@@ -5,21 +5,30 @@ vi.mock("./actions", () => ({
   createScheduleAction: vi.fn(),
   updateClassAction: vi.fn(),
 }));
+const courses = [
+  {
+    id: "10000000-0000-4000-8000-000000000001",
+    organization_id: "org",
+    title: "체육 수업",
+    location: "센터",
+    teaching_method: "팀 활동",
+    memo: null,
+    active: true,
+    created_by: "coach",
+    updated_by: "coach",
+    created_at: "2026-10-01T00:00:00Z",
+    updated_at: "2026-10-01T00:00:00Z",
+  },
+];
 function start() {
-  render(<ClassWizard />);
-  fireEvent.change(screen.getByLabelText("수업명"), {
-    target: { value: "체육 수업" },
-  });
-  fireEvent.change(screen.getByLabelText("장소 또는 기관명"), {
-    target: { value: "센터" },
-  });
+  render(<ClassWizard courses={courses} />);
   fireEvent.click(screen.getByRole("button", { name: "다음 →" }));
 }
 describe("class registration wizard", () => {
   it("does not advance without required class information", () => {
-    render(<ClassWizard />);
+    render(<ClassWizard courses={[]} />);
     fireEvent.click(screen.getByRole("button", { name: "다음 →" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("수업명");
+    expect(screen.getByRole("alert")).toHaveTextContent("수업을 선택");
   });
   it("shows weekdays only for weekly recurrence and leaves time optional", () => {
     start();
@@ -68,7 +77,7 @@ describe("class registration wizard", () => {
     expect(screen.getByText(/총 31개 수업/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "이전" }));
     fireEvent.click(screen.getByRole("button", { name: "이전" }));
-    expect(screen.getByLabelText("수업명")).toHaveValue("체육 수업");
+    expect(screen.getByLabelText("수업")).toHaveValue(courses[0].id);
   });
   it("shows the end date for an overnight class before registration", () => {
     start();

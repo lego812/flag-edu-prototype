@@ -9,6 +9,9 @@ export const metadata = { title: "홈" };
 export default async function DashboardPage() {
   const { profile, supabase } = await requireCurrentProfile();
   const isAdmin = profile.role === "admin";
+  await supabase.rpc("sync_completed_class_sessions", {
+    p_organization_id: profile.organization_id,
+  });
   const [sessions, drafts, recent] = await Promise.all([
     supabase
       .from("class_sessions")

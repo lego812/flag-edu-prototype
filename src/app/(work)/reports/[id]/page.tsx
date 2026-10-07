@@ -21,7 +21,9 @@ export default async function ReportPage({
   if (!report) notFound();
   const template = await getTemplate(supabase, report.template_version_id);
   const mine = report.author_id === profile.id;
-  const mutable = mine && report.class_sessions.status !== "cancelled";
+  const mutable =
+    (mine || profile.role === "admin") &&
+    report.class_sessions.status !== "cancelled";
   const editing = mutable && (await searchParams).edit === "1";
   const attachments = await Promise.all(
     report.report_attachments.map(async (a) => {
@@ -34,7 +36,7 @@ export default async function ReportPage({
   return (
     <>
       <Link
-        href={mine ? "/reports" : "/admin-reports"}
+        href={profile.role === "admin" ? "/admin-reports" : "/reports"}
         className="text-sm underline"
       >
         보고서 목록
@@ -53,12 +55,12 @@ export default async function ReportPage({
           </p>
         )}
       </header>
-      {mutable && (
+      {mutable && !editing && (
         <Link
           className="btn-secondary w-fit"
-          href={editing ? `/reports/${id}` : `/reports/${id}?edit=1`}
+          href={`/reports/${id}?edit=1`}
         >
-          {editing ? "조회로 돌아가기" : "수정"}
+          수정
         </Link>
       )}
       {editing ? (

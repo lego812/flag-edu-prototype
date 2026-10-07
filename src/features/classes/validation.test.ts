@@ -34,13 +34,21 @@ describe("Korean class dates and validation", () => {
     expect(parseClassForm(form)).toMatchObject({ state: { fieldErrors: { title: expect.any(String), location: expect.any(String) } } });
   });
   it("rejects invalid filter dates, status and page", () => {
-    for (const params of [{ from: "2026-02-30" }, { from: "2026-10-01", to: "2026-09-01" }, { status: "unknown" }, { page: "0" }, { from: ["2026-01-01"] }]) {
+    for (const params of [{ from: "2026-02-30" }, { from: "2026-10-01", to: "2026-09-01" }, { status: "unknown" }, { sort: "random" }, { page: "0" }, { from: ["2026-01-01"] }]) {
       expect(parseClassFilters(params).error).toBeDefined();
     }
   });
+  it("defaults to an unbounded newest-first list and accepts completed", () => {
+    expect(parseClassFilters({})).toEqual({
+      filters: { from: "", to: "", status: "all", sort: "newest", page: 1 },
+    });
+    expect(parseClassFilters({ status: "completed", sort: "oldest" })).toMatchObject({
+      filters: { status: "completed", sort: "oldest" },
+    });
+  });
   it("validates calendar months and handles month boundaries", () => {
     expect(parseClassCalendarFilters({ month: "2028-02", status: "cancelled" })).toEqual({
-      filters: { month: "2028-02", status: "cancelled" },
+      filters: { month: "2028-02", status: "cancelled", date: "2028-02-01" },
     });
     expect(parseClassCalendarFilters({ month: "2026-13" }).error).toBeDefined();
     expect(parseClassCalendarFilters({ month: ["2026-10"] }).error).toBeDefined();

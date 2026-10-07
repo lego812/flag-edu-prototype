@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { ClassCalendar } from "@/features/classes/calendar";
-import { addMonths, formatClassDate } from "@/features/classes/dates";
+import { addMonths } from "@/features/classes/dates";
 import {
   CLASS_PAGE_SIZE,
   classRepository,
@@ -11,6 +12,8 @@ import {
   parseClassCalendarFilters,
   parseClassFilters,
 } from "@/features/classes/validation";
+import { ClassSessionCard } from "@/features/classes/session-card";
+import { ClassViewSwitcher } from "@/features/classes/view-switcher";
 
 export const metadata = { title: "수업 목록" };
 export default async function ClassesPage({
@@ -20,7 +23,9 @@ export default async function ClassesPage({
 }) {
   const { supabase, profile } = await requireCurrentProfile();
   const params = await searchParams;
-  const requestedView = params.view ?? "list";
+  const storedView = (await cookies()).get("flag-edu-class-view")?.value;
+  const requestedView = params.view ??
+    (storedView === "calendar" ? "calendar" : "list");
   const view = requestedView === "calendar" ? "calendar" : "list";
   const viewError =
     requestedView === "list" || requestedView === "calendar"
@@ -44,18 +49,26 @@ export default async function ClassesPage({
       from: filters!.from,
       to: filters!.to,
       status: filters!.status,
+      sort: filters!.sort,
+      view: "list",
       page: String(page),
     });
-  const calendarLink = (month: string, status = calendarFilters?.status ?? "all") =>
+  const calendarLink = (
+    month: string,
+    status = calendarFilters?.status ?? "all",
+    date = month === calendarFilters?.month
+      ? (calendarFilters?.date ?? `${month}-01`)
+      : `${month}-01`,
+  ) =>
     "/classes?" +
-    new URLSearchParams({ view: "calendar", month, status }).toString();
+    new URLSearchParams({ view: "calendar", month, status, date }).toString();
   const calendarMonth =
     calendarFilters?.month ??
     (filters ? filters.from.slice(0, 7) : "");
   const listHref =
     calendarFilters?.status && calendarFilters.status !== "all"
-      ? `/classes?status=${calendarFilters.status}`
-      : "/classes";
+      ? `/classes?view=list&status=${calendarFilters.status}&sort=newest`
+      : "/classes?view=list&sort=newest";
   const calendarHref = calendarMonth
     ? calendarLink(calendarMonth, filters?.status ?? calendarFilters?.status)
     : "/classes?view=calendar";
@@ -68,43 +81,31 @@ export default async function ClassesPage({
             기관의 수업을 확인하고 일정을 등록하세요.
           </p>
         </div>
-        <Link
-          href="/classes/new"
-          className="rounded-lg bg-black px-5 py-3 font-semibold text-white"
-        >
-          수업 등록
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/courses" className="btn-secondary">
+            수업 관리
+          </Link>
+          <Link href="/classes/new" className="btn">
+            수업 일정 등록
+          </Link>
+        </div>
       </div>
-      <nav
-        aria-label="수업 보기 방식"
-        className="grid grid-cols-2 rounded-2xl bg-neutral-200 p-1"
-      >
-        <Link
-          href={listHref}
-          aria-current={view === "list" ? "page" : undefined}
-          className={`flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold transition-colors ${view === "list" ? "bg-white text-black shadow-sm" : "text-neutral-600 hover:text-black"}`}
-        >
-          목록
-        </Link>
-        <Link
-          href={calendarHref}
-          aria-current={view === "calendar" ? "page" : undefined}
-          className={`flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold transition-colors ${view === "calendar" ? "bg-white text-black shadow-sm" : "text-neutral-600 hover:text-black"}`}
-        >
-          캘린더
-        </Link>
-      </nav>
+      <ClassViewSwitcher
+        view={view}
+        listHref={listHref}
+        calendarHref={calendarHref}
+      />
 
       {view === "list" && (
         <ListFilters from={filters?.from} to={filters?.to}>
           <form action="/classes" className="grid grid-cols-1 gap-4">
+            <input type="hidden" name="view" value="list" />
             <label className="min-w-0 text-sm font-medium">
               시작일
               <input
                 aria-label="조회 시작일"
                 type="date"
                 name="from"
-                required
                 defaultValue={filters?.from}
                 className="mt-2 block w-full min-w-0 rounded-lg border border-neutral-300 p-3"
               />
@@ -115,7 +116,6 @@ export default async function ClassesPage({
                 aria-label="조회 종료일"
                 type="date"
                 name="to"
-                required
                 defaultValue={filters?.to}
                 className="mt-2 block w-full min-w-0 rounded-lg border border-neutral-300 p-3"
               />
@@ -130,16 +130,28 @@ export default async function ClassesPage({
                 <option value="all">전체</option>
                 <option value="scheduled">예정</option>
                 <option value="cancelled">취소</option>
+                <option value="completed">완료</option>
               </select>
             </label>
-            <button className="self-end rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white">
-              조회
-            </button>
-            <p className="text-xs text-neutral-500">
-              한국 시간의 수업 시작일 기준으로 조회합니다. 종료일도 포함됩니다.{" "}
-              <Link href="/classes" className="underline">
-                기간 초기화
+            <label className="text-sm font-medium">
+              정렬
+              <select
+                name="sort"
+                defaultValue={filters?.sort ?? "newest"}
+                className="mt-2 block w-full rounded-lg border border-neutral-300 bg-white p-3"
+              >
+                <option value="newest">최신순</option>
+                <option value="oldest">오래된순</option>
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button className="btn">조회</button>
+              <Link href="/classes?view=list&sort=newest" className="btn-secondary">
+                필터 초기화
               </Link>
+            </div>
+            <p className="text-xs text-neutral-500">
+              날짜를 비우면 전체 기간을 조회합니다. 날짜는 한국 시간 기준이며 종료일도 포함됩니다.
             </p>
           </form>
         </ListFilters>
@@ -167,14 +179,14 @@ export default async function ClassesPage({
             </Link>
           </div>
           <nav aria-label="수업 상태" className="flex justify-center gap-2">
-            {(["all", "scheduled", "cancelled"] as const).map((status) => (
+            {(["all", "scheduled", "cancelled", "completed"] as const).map((status) => (
               <Link
                 key={status}
                 href={calendarLink(calendarFilters.month, status)}
                 aria-current={calendarFilters.status === status ? "page" : undefined}
                 className={`rounded-full px-4 py-2 text-xs font-semibold ${calendarFilters.status === status ? "bg-black text-white" : "bg-neutral-100 text-neutral-600"}`}
               >
-                {{ all: "전체", scheduled: "예정", cancelled: "취소" }[status]}
+                {{ all: "전체", scheduled: "예정", cancelled: "취소", completed: "완료" }[status]}
               </Link>
             ))}
           </nav>
@@ -194,15 +206,20 @@ export default async function ClassesPage({
               : "총 "}
             {result?.count ?? 0}개 수업
           </p>
-          {!result?.data?.length ? (
+          {view === "list" && !result?.data?.length ? (
             <div className="rounded-lg border border-dashed border-neutral-300 p-10 text-center text-neutral-600">
               조회 조건에 맞는 수업이 없습니다. 날짜를 바꾸거나 새 수업을
               등록하세요.
             </div>
           ) : view === "calendar" && calendarFilters ? (
             <>
-              <ClassCalendar month={calendarFilters.month} sessions={result.data} />
-              {(result.count ?? 0) > result.data.length && (
+              <ClassCalendar
+                month={calendarFilters.month}
+                selectedDate={calendarFilters.date}
+                status={calendarFilters.status}
+                sessions={result?.data ?? []}
+              />
+              {(result?.count ?? 0) > (result?.data?.length ?? 0) && (
                 <p role="status" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
                   수업이 많아 앞의 1,000개만 표시했습니다. 상태로 나누어 확인해 주세요.
                 </p>
@@ -210,42 +227,12 @@ export default async function ClassesPage({
             </>
           ) : (
             <ul className="grid grid-cols-1 gap-3">
-              {result.data.map((session) => (
+              {result!.data!.map((session) => (
                 <li key={session.id}>
-                  <Link
-                    href={"/classes/" + session.id}
-                    className="block rounded-3xl border border-neutral-200 bg-white p-5 transition hover:border-neutral-400 focus-visible:outline-2 focus-visible:outline-black"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <h2 className="min-w-0 break-words text-lg font-bold text-neutral-950">
-                        {session.title}
-                      </h2>
-                      <span
-                        className={
-                          "shrink-0 rounded px-2 py-1 text-xs font-semibold " +
-                          (session.status === "cancelled"
-                            ? "bg-neutral-100 text-neutral-600"
-                            : "bg-accent text-black")
-                        }
-                      >
-                        {session.status === "cancelled" ? "취소" : "예정"}
-                      </span>
-                    </div>
-                    <p className="mt-2 break-words text-sm text-neutral-600">
-                      {session.location}
-                    </p>
-                    <p className="mt-3 text-sm text-neutral-800">
-                      {formatClassDate(session.start_at, session.has_time)}
-                      {session.has_time !== false && (
-                        <> ~ {formatClassDate(session.end_at)}</>
-                      )}
-                    </p>
-                    {session.created_by === profile.id && (
-                      <p className="mt-2 text-xs text-black">
-                        내가 등록한 수업
-                      </p>
-                    )}
-                  </Link>
+                  <ClassSessionCard
+                    session={session}
+                    mine={session.created_by === profile.id}
+                  />
                 </li>
               ))}
             </ul>

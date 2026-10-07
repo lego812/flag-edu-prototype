@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useId, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { createScheduleAction, updateClassAction } from "./actions";
 import { addDays, seoulToday, toSeoulInput } from "./dates";
 import { buildSchedule, type RepeatUnit } from "./recurrence";
 import { parseClassForm, type ClassFormState } from "./validation";
-import type { ClassSession } from "./model";
+import type { ClassSession, Course } from "./model";
 import { CountPicker } from "@/components/count-picker";
 
 const WEEKDAYS = [
@@ -17,12 +17,28 @@ const WEEKDAYS = [
   { value: 6, label: "토" },
   { value: 0, label: "일" },
 ];
-export function ClassWizard({ session }: { session?: ClassSession }) {
+export function ClassWizard({
+  session,
+  courses,
+  initialCourseId,
+}: {
+  session?: ClassSession;
+  courses: Course[];
+  initialCourseId?: string;
+}) {
   const [step, setStep] = useState(0);
-  const [title, setTitle] = useState(session?.title ?? "");
-  const [location, setLocation] = useState(session?.location ?? "");
-  const [memo, setMemo] = useState(session?.memo ?? "");
-  const [method, setMethod] = useState(session?.teaching_method ?? "");
+  const [courseId, setCourseId] = useState(
+    session?.course_id ??
+      courses.find((course) => course.id === initialCourseId)?.id ??
+      courses[0]?.id ??
+      "",
+  );
+  const selectedCourse = courses.find((course) => course.id === courseId);
+  const title = selectedCourse?.title ?? session?.title ?? "";
+  const location = selectedCourse?.location ?? session?.location ?? "";
+  const memo = selectedCourse?.memo ?? session?.memo ?? "";
+  const method =
+    selectedCourse?.teaching_method ?? session?.teaching_method ?? "";
   const [day, setDay] = useState(
     session ? toSeoulInput(session.start_at).slice(0, 10) : seoulToday(),
   );
@@ -48,13 +64,12 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
   const [error, setError] = useState("");
   const [registration, setRegistration] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
-  const fieldId = useId();
   const [state, submit, pending] = useActionState<ClassFormState, FormData>(
     session ? updateClassAction.bind(null, session.id) : createScheduleAction,
     {},
   );
   const titles = [
-    "어떤 수업인가요?",
+    "수업을 선택해 주세요.",
     "얼마나 자주 진행하나요?",
     "등록 내용을 확인해 주세요.",
   ];
@@ -92,12 +107,9 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
     if (next > step) {
       if (
         step === 0 &&
-        (!title.trim() ||
-          [...title.trim()].length > 150 ||
-          !location.trim() ||
-          [...location.trim()].length > 200)
+        !selectedCourse
       ) {
-        setError("수업명(150자 이하)과 장소(200자 이하)를 입력해 주세요.");
+        setError("먼저 등록된 수업을 선택해 주세요.");
         return;
       }
       if (
@@ -139,6 +151,7 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
       className="space-y-8"
     >
       <input type="hidden" name="title" value={title} />
+      <input type="hidden" name="course_id" value={courseId} />
       <input type="hidden" name="location" value={location} />
       <input type="hidden" name="memo" value={memo} />
       <input type="hidden" name="teaching_method" value={method} />
@@ -189,30 +202,37 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
       <fieldset disabled={pending} className="space-y-6">
         {step === 0 && (
           <>
-            <label
-              className="block text-sm font-semibold"
-              htmlFor={fieldId + "title"}
-            >
-              수업명
-              <input
-                id={fieldId + "title"}
-                className="input mt-2"
-                maxLength={150}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="예: 돌봄센터 체육 수업"
-              />
-            </label>
             <label className="block text-sm font-semibold">
-              장소 또는 기관명
-              <input
+              수업
+              <select
                 className="input mt-2"
-                maxLength={200}
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="예: 바비두 돌봄센터"
-              />
+                value={courseId}
+                onChange={(event) => setCourseId(event.target.value)}
+              >
+                <option value="">수업을 선택하세요</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))}
+              </select>
             </label>
+            {selectedCourse && (
+              <div className="surface space-y-2 border border-neutral-200 p-5">
+                <p className="font-bold">{selectedCourse.title}</p>
+                <p className="text-sm text-neutral-600">
+                  {selectedCourse.location}
+                </p>
+                {selectedCourse.teaching_method && (
+                  <p className="whitespace-pre-wrap text-sm">
+                    {selectedCourse.teaching_method}
+                  </p>
+                )}
+              </div>
+            )}
+            <Link href="/courses/new" className="btn-secondary w-fit">
+              새 수업 등록
+            </Link>
           </>
         )}
         {step === 1 && (
@@ -394,28 +414,9 @@ export function ClassWizard({ session }: { session?: ClassSession }) {
                 시간을 정하지 않아도 등록할 수 있습니다.
               </p>
             )}
-            <label className="block text-sm font-semibold">
-              수업 진행방식 (선택)
-              <textarea
-                className="input mt-2"
-                rows={3}
-                maxLength={2000}
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                placeholder="예: 준비 운동 → 팀 활동 → 마무리"
-              />
-            </label>
-            <label className="block text-sm font-semibold">
-              메모 (선택)
-              <textarea
-                className="input mt-2"
-                rows={3}
-                maxLength={5000}
-                placeholder="준비물이나 수업 중 참고할 내용을 남겨 주세요."
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-              />
-            </label>
+            <p className="text-sm text-neutral-500">
+              장소·진행방식·메모는 선택한 수업의 기본정보를 사용합니다.
+            </p>
           </>
         )}
         {step === 2 && (

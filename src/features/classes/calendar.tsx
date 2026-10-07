@@ -1,19 +1,19 @@
 import Link from "next/link";
-import {
-  addDays,
-  formatClassTime,
-  monthRange,
-  seoulDateKey,
-} from "./dates";
+import { addDays, monthRange, seoulDateKey } from "./dates";
 import type { ClassCalendarSession } from "./model";
+import { CLASS_STATUS, ClassSessionCard } from "./session-card";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function ClassCalendar({
   month,
+  selectedDate,
+  status,
   sessions,
 }: {
   month: string;
+  selectedDate: string;
+  status: "all" | ClassCalendarSession["status"];
   sessions: ClassCalendarSession[];
 }) {
   const { from, to } = monthRange(month);
@@ -28,9 +28,9 @@ export function ClassCalendar({
     const key = seoulDateKey(session.start_at);
     byDate.set(key, [...(byDate.get(key) ?? []), session]);
   }
-  const activeDates = dates.filter(
-    (date): date is string => Boolean(date && byDate.get(date)?.length),
-  );
+  const selectedSessions = byDate.get(selectedDate) ?? [];
+  const dateHref = (date: string) =>
+    `/classes?${new URLSearchParams({ view: "calendar", month, status, date })}`;
 
   return (
     <div className="space-y-6">
@@ -49,36 +49,33 @@ export function ClassCalendar({
             return (
               <div
                 key={date ?? `empty-${index}`}
-                className="min-h-16 border-r border-t border-neutral-200 p-1 text-left md:min-h-28 md:p-2"
+                className={`min-h-16 border-r border-t border-neutral-200 p-1 text-left md:min-h-24 md:p-2 ${date === selectedDate ? "bg-neutral-100" : ""}`}
               >
                 {date && (
-                  <>
+                  <Link
+                    href={dateHref(date)}
+                    aria-current={date === selectedDate ? "date" : undefined}
+                    aria-label={`${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일, 수업 ${daySessions.length}개`}
+                    className="block min-h-14 rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-black md:min-h-20"
+                  >
                     <div className={`text-xs font-semibold ${index % 7 === 0 ? "text-red-600" : "text-neutral-700"}`}>
                       {Number(date.slice(-2))}
                     </div>
                     {daySessions.length > 0 && (
-                      <div className="mt-1 md:hidden">
-                        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-bold text-black">
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        {daySessions.slice(0, 4).map((session) => (
+                          <span
+                            key={session.id}
+                            aria-hidden="true"
+                            className={`size-2 rounded-full ${CLASS_STATUS[session.status].marker}`}
+                          />
+                        ))}
+                        <span className="ml-1 text-[11px] font-bold text-neutral-600">
                           {daySessions.length}
                         </span>
                       </div>
                     )}
-                    <div className="mt-1 hidden space-y-1 md:block">
-                      {daySessions.map((session) => (
-                        <Link
-                          key={session.id}
-                          href={`/classes/${session.id}`}
-                          title={`${session.title} · ${session.location}`}
-                          className={`block truncate rounded-md px-1.5 py-1 text-[11px] font-medium leading-tight hover:brightness-95 ${session.status === "cancelled" ? "bg-neutral-100 text-neutral-500 line-through" : "bg-amber-100 text-neutral-900"}`}
-                        >
-                          <span className="font-bold">
-                            {session.status === "cancelled" ? "취소" : "예정"} ·{" "}
-                          </span>
-                          {session.has_time === false ? "미정" : formatClassTime(session.start_at)} {session.title}
-                        </Link>
-                      ))}
-                    </div>
-                  </>
+                  </Link>
                 )}
               </div>
             );
@@ -86,30 +83,23 @@ export function ClassCalendar({
         </div>
       </section>
 
-      <section className="space-y-3 md:hidden" aria-label="날짜별 수업 목록">
-        {activeDates.map((date) => (
-          <div key={date} className="surface p-4">
-            <h2 className="text-sm font-bold">
-              {Number(date.slice(5, 7))}월 {Number(date.slice(8, 10))}일
-            </h2>
-            <ul className="mt-2 divide-y divide-neutral-100">
-              {byDate.get(date)!.map((session) => (
-                <li key={session.id}>
-                  <Link href={`/classes/${session.id}`} className="flex min-h-12 items-center justify-between gap-3 py-2">
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold">{session.title}</span>
-                      <span className="block truncate text-xs text-neutral-500">{session.location}</span>
-                    </span>
-                    <span className="shrink-0 text-xs font-medium text-neutral-700">
-                      {session.status === "cancelled" ? "취소" : "예정"} ·{" "}
-                      {session.has_time === false ? "시간 미정" : formatClassTime(session.start_at)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      <section className="space-y-3" aria-label="선택한 날짜의 수업 목록">
+        <h2 className="text-lg font-bold">
+          {Number(selectedDate.slice(5, 7))}월 {Number(selectedDate.slice(8, 10))}일 수업
+        </h2>
+        {selectedSessions.length ? (
+          <ul className="grid grid-cols-1 gap-3">
+            {selectedSessions.map((session) => (
+              <li key={session.id}>
+                <ClassSessionCard session={session} compact />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-600">
+            선택한 날짜에 수업이 없습니다.
+          </p>
+        )}
       </section>
     </div>
   );

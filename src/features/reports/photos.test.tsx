@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Photos } from "./photos";
 import type { Attachment, Field } from "./model";
 
@@ -27,6 +27,7 @@ const attachments: Attachment[] = Array.from({ length: 4 }, (_, index) => ({
 }));
 
 describe("photo thumbnails", () => {
+  afterEach(() => vi.restoreAllMocks());
   it("renders compact thumbnails in one horizontally scrollable row", () => {
     render(
       <Photos
@@ -67,5 +68,34 @@ describe("photo thumbnails", () => {
     expect(
       screen.queryByRole("button", { name: /사진 \d 삭제/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it("uses an in-app confirmation dialog and removes the thumbnail without a page refresh", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    render(
+      <Photos
+        reportId="30000000-0000-4000-8000-000000000001"
+        fields={[field]}
+        attachments={attachments}
+        editable
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "활동 사진 1 삭제" }));
+    expect(screen.getByRole("dialog", { name: "사진을 삭제할까요?" })).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "삭제" }));
+
+    await waitFor(() => expect(screen.getByText("3/5장")).toBeInTheDocument());
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/reports/30000000-0000-4000-8000-000000000001/photos",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

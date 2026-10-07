@@ -15,7 +15,7 @@ type Editable = {
   field_type: FieldType;
   required: boolean;
   max_files: number;
-  options: string;
+  options: string[];
 };
 const blank = (): Editable => ({
   key: crypto.randomUUID(),
@@ -24,7 +24,7 @@ const blank = (): Editable => ({
   field_type: "short_text",
   required: false,
   max_files: 3,
-  options: "",
+  options: [],
 });
 export function TemplateEditor({ template }: { template?: Template }) {
   const [fields, setFields] = useState<Editable[]>(
@@ -36,7 +36,7 @@ export function TemplateEditor({ template }: { template?: Template }) {
         field_type: f.field_type,
         required: f.required,
         max_files: f.settings.max_files ?? 3,
-        options: f.field_options.map((o) => o.label).join("\n"),
+        options: f.field_options.map((o) => o.label),
       })) ?? [],
   );
   const [preview, setPreview] = useState(false);
@@ -49,28 +49,31 @@ export function TemplateEditor({ template }: { template?: Template }) {
     [next[i], next[i + by]] = [next[i + by], next[i]];
     setFields(next);
   };
+  const updateOption = (fieldIndex: number, optionIndex: number, value: string) =>
+    update(fieldIndex, {
+      options: fields[fieldIndex].options.map((option, index) =>
+        index === optionIndex ? value : option,
+      ),
+    });
   const payload = fields.map((f) => ({
     ...f,
-    options: f.options
-      .split("\n")
-      .map((v) => v.trim())
-      .filter(Boolean),
+    options: f.options.map((v) => v.trim()).filter(Boolean),
   }));
   return (
     <form action={action} className="max-w-2xl space-y-6">
       <input
         type="hidden"
         name="id"
-        value={template?.status === "draft" ? template.id : ""}
+        value={template?.id ?? ""}
       />
       <input
         type="hidden"
         name="version"
-        value={template?.status === "draft" ? template.updated_at : ""}
+        value={template?.updated_at ?? ""}
       />
       <input type="hidden" name="fields" value={JSON.stringify(payload)} />
       <p className="text-sm text-neutral-600">
-        게시된 내용은 변경하지 않고 새 버전으로 저장합니다.
+        사용 중인 양식을 수정해도 기존 보고서 내용은 그대로 유지됩니다.
       </p>
       <fieldset disabled={pending} className="space-y-6">
         <label className="block text-sm font-semibold">
@@ -180,14 +183,57 @@ export function TemplateEditor({ template }: { template?: Template }) {
                   필수 항목
                 </label>
                 {["single_select", "multi_select"].includes(f.field_type) && (
-                  <label className="block text-sm">
-                    선택지 (한 줄에 하나)
-                    <textarea
-                      className="input mt-1"
-                      value={f.options}
-                      onChange={(e) => update(i, { options: e.target.value })}
-                    />
-                  </label>
+                  <fieldset className="space-y-2 rounded-2xl bg-neutral-100 p-4">
+                    <legend className="px-1 text-sm font-semibold">
+                      {f.field_type === "single_select"
+                        ? "단일 선택 선택지"
+                        : "복수 선택 선택지"}
+                    </legend>
+                    <p className="text-xs text-neutral-500">
+                      보고서 작성자가 고를 항목을 하나씩 추가해 주세요.
+                    </p>
+                    {f.options.map((option, optionIndex) => (
+                      <div key={optionIndex} className="flex items-center gap-2">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold">
+                          {optionIndex + 1}
+                        </span>
+                        <input
+                          className="input"
+                          aria-label={`항목 ${i + 1} 선택지 ${optionIndex + 1}`}
+                          maxLength={100}
+                          value={option}
+                          onChange={(event) =>
+                            updateOption(i, optionIndex, event.target.value)
+                          }
+                          placeholder={`선택지 ${optionIndex + 1}`}
+                        />
+                        <button
+                          type="button"
+                          className="min-h-11 shrink-0 rounded-full border border-neutral-300 px-3 text-sm"
+                          aria-label={`선택지 ${optionIndex + 1} 삭제`}
+                          onClick={() =>
+                            update(i, {
+                              options: f.options.filter(
+                                (_, index) => index !== optionIndex,
+                              ),
+                            })
+                          }
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      disabled={f.options.length >= 50}
+                      onClick={() =>
+                        update(i, { options: [...f.options, ""] })
+                      }
+                    >
+                      + 선택지 추가
+                    </button>
+                  </fieldset>
                 )}
                 {f.field_type === "photo" && (
                   <div className="block text-sm">
@@ -223,10 +269,10 @@ export function TemplateEditor({ template }: { template?: Template }) {
         </label>
         <div className="flex gap-3">
           <button className="btn-secondary" name="intent" value="save">
-            초안 저장
+            임시 저장
           </button>
           <button className="btn" name="intent" value="publish">
-            저장 후 게시
+            수정 완료
           </button>
         </div>
       </fieldset>

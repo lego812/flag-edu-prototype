@@ -21,6 +21,8 @@ export type Field = {
 export type Template = {
   name: string;
   id: string;
+  group_id?: string;
+  hidden_at?: string | null;
   version: number;
   status: "draft" | "active" | "archived";
   updated_at: string;

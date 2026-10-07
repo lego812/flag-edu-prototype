@@ -33,13 +33,13 @@ export async function POST(
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255)
     return fail("JPG 형식을 확인해 주세요.");
-  const { data: report } = await supabase
+  let reportQuery = supabase
     .from("reports")
     .select("id,template_version_id,class_sessions!inner(status)")
-    .eq("id", id)
-    .eq("author_id", profile.id)
-    .single();
-  if (!report) return fail("본인 보고서만 변경할 수 있습니다.", 403);
+    .eq("id", id);
+  if (profile.role !== "admin") reportQuery = reportQuery.eq("author_id", profile.id);
+  const { data: report } = await reportQuery.single();
+  if (!report) return fail("보고서를 변경할 권한이 없습니다.", 403);
   if (sessionStatus(report.class_sessions) === "cancelled")
     return fail("취소된 수업의 보고서는 변경할 수 없습니다.", 409);
   const { data: target } = await supabase
@@ -56,7 +56,7 @@ export async function POST(
     .upload(path, bytes, { contentType: "image/jpeg", upsert: false });
   if (uploadError)
     return fail("사진 업로드에 실패했습니다. 다시 시도해 주세요.");
-  const { error } = await supabase
+  const { data: attachment, error } = await supabase
     .from("report_attachments")
     .insert({
       organization_id: profile.organization_id,
@@ -66,7 +66,9 @@ export async function POST(
       original_filename: "photo.jpg",
       mime_type: "image/jpeg",
       file_size: file.size,
-    });
+    })
+    .select("id,field_id,storage_path,original_filename,file_size,created_at")
+    .single();
   if (error) {
     const cleanup = await supabase.storage.from("report-images").remove([path]);
     return fail(
@@ -75,8 +77,13 @@ export async function POST(
         : "사진을 등록하지 못했습니다. 최대 첨부 수를 확인해 주세요.",
     );
   }
+  const { data: signed } = await supabase.storage
+    .from("report-images")
+    .createSignedUrl(path, 600);
   revalidatePath("/reports/" + id);
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    attachment: { ...attachment, url: signed?.signedUrl },
+  });
 }
 export async function DELETE(
   request: Request,
@@ -94,13 +101,13 @@ export async function DELETE(
   }
   if (!isUuid(id) || typeof attachmentId !== "string" || !isUuid(attachmentId))
     return fail("잘못된 사진입니다.");
-  const { data: report } = await supabase
+  let reportQuery = supabase
     .from("reports")
     .select("id,class_sessions!inner(status)")
-    .eq("id", id)
-    .eq("author_id", profile.id)
-    .single();
-  if (!report) return fail("본인 보고서만 변경할 수 있습니다.", 403);
+    .eq("id", id);
+  if (profile.role !== "admin") reportQuery = reportQuery.eq("author_id", profile.id);
+  const { data: report } = await reportQuery.single();
+  if (!report) return fail("보고서를 변경할 권한이 없습니다.", 403);
   if (sessionStatus(report.class_sessions) === "cancelled")
     return fail("취소된 수업의 보고서는 변경할 수 없습니다.", 409);
   const { data: a } = await supabase

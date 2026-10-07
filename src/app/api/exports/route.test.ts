@@ -93,7 +93,7 @@ describe("export API", () => {
     expect(mocks.upload).not.toHaveBeenCalled();
   });
   it.each(["xlsx", "pdf"])(
-    "downloads and records a completed %s export",
+    "downloads a %s export without retaining a server copy",
     async (format) => {
       const response = await POST(request(format));
       expect(response.status).toBe(200);
@@ -104,22 +104,17 @@ describe("export API", () => {
       expect(new Uint8Array(await response.arrayBuffer())).toEqual(
         new Uint8Array([1, 2, 3]),
       );
-      expect(mocks.update).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "completed" }),
-      );
-      expect(mocks.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          expires_at: expect.any(String),
-        }),
-      );
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(mocks.update).not.toHaveBeenCalled();
+      expect(mocks.upload).not.toHaveBeenCalled();
     },
   );
-  it("rejects PDFs whose stored photos exceed 15MiB", async () => {
+  it("rejects PDFs whose stored photos exceed 100MiB", async () => {
     mocks.list.mockResolvedValue({
       data: [
         {
           template_version_id: "template",
-          report_attachments: Array.from({ length: 16 }, () => ({
+          report_attachments: Array.from({ length: 101 }, () => ({
             file_size: 1024 * 1024,
           })),
         },
@@ -130,7 +125,7 @@ describe("export API", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
       error:
-        "PDF에 포함할 사진이 15MiB를 초과합니다. 기간이나 사진 수를 줄여 주세요.",
+        "PDF에 포함할 사진이 100MiB를 초과합니다. 기간이나 사진 수를 줄여 주세요.",
     });
     expect(mocks.insert).not.toHaveBeenCalled();
     expect(mocks.generatePdf).not.toHaveBeenCalled();
@@ -145,12 +140,11 @@ describe("export API", () => {
     expect((await POST(request("pdf"))).status).toBe(200);
     expect(mocks.download).toHaveBeenCalledWith("org/report/photo.jpg");
   });
-  it("cleans up a failed upload and records failure", async () => {
-    mocks.upload.mockResolvedValue({ error: { message: "failed" } });
+  it("returns a clear error without creating an artifact when generation fails", async () => {
+    mocks.generate.mockRejectedValue(new Error("failed"));
     expect((await POST(request())).status).toBe(500);
-    expect(mocks.remove).toHaveBeenCalledWith(["org/admin/job.xlsx"]);
-    expect(mocks.update).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "failed" }),
-    );
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 });
