@@ -437,3 +437,18 @@ main `cc2d9df4ed7f07939f974dd140c52476ff0e409e`의 Vercel `dpl_AqMR7aXKk9v2H75P8
 추가 `@브라우저` 재시도와 kernel reset 뒤에도 브라우저 도구는 `windows sandbox failed: helper_unknown_error: apply deny-read ACLs`로 탭 생성 전에 종료됐다. 이를 앱/로그인 오류로 단정하거나 화면 테스트 PASS로 기록하지 않는다. 개발 서버를 다시 열고 `/login` HTTP 200과 로그인 입력 폼 존재만 확인했다.
 
 사용자는 위 통합 검증 미완료 상태를 안내받은 뒤 `일단 main에 넣고 배포`를 명시적으로 승인했다. 병합 전 현재 브랜치 `7018e0d`에서 전체 **50파일 243/243**, lint 경고 0, TypeScript 포함 production build, `git diff --check`를 다시 통과했다. 브라우저 전체 FAIL 및 `BUG-20261007-service-worker-private-fetch`의 FIXED_PENDING_RETEST 상태는 유지한다. 새 DB 마이그레이션·계정/업무 데이터/메일 변경 없이 승인된 브랜치만 main에 병합·푸시하고, Vercel Git production 배포의 실제 main SHA·READY·운영 별칭과 공개 HTTP 응답을 별도 재조회한다. 운영 배포 확인은 로그인 브라우저 통합 성공을 뜻하지 않는다.
+
+
+## 관리형 환경의 실제 UI 테스트 후 워크스페이스 복구 수정
+
+사용자는 브라우저 테스트에서 발견한 결함 수정과 main 병합·배포를 명시적으로 승인했다. 구현 커밋은 `3461a5cac6b1b7ece45805f9d22c56308fb07ca3`이며 별도 `fix/browser-qa-workspace-recovery` 브랜치에서 작업했다.
+
+| ID | 원인·변경 | 회귀·재검증·상태 |
+| --- | --- | --- |
+| `BUG-20261007-workspace-request-stall` | 현재 워크스페이스 GET 또는 JSON 본문이 완료되지 않으면 `checking=true`가 해제되지 않아 이후 알림·foreground·30초 poll이 모두 큐에만 쌓였다. 요청과 본문 모두 10초 deadline/AbortController/Promise.race로 제한하고 늦은 응답을 버린다. 네트워크 오류·500/502/503/504에는 1초 후 한 번만 재시도하며 이후 기존 poll로 복귀한다. cleanup은 deadline·retry timer도 취소한다. 실패 자체는 화면 전환 근거가 아니며 새 서버 인증·멤버십 확인을 유지한다. | 원본 구현에 회귀를 먼저 추가해 20건 중 5 FAIL/15 PASS를 재현했다. 수정 후 sync/API 22/22, 전체 50파일 249/249·lint 경고 0·TypeScript 포함 production build PASS. 로컬 production 실제 Chromium `workspace-recovery-1791389188969` 두 역할·390/1280px 32/32, pageerror 0·일반 HTTP 오류 0·업무 변경 요청 0. 상태 GET에만 503/무응답을 주입한 두 역할의 재확인이 각각 2.0~2.5초/12.0~12.6초에 실제 HTTP 200으로 복구됐다. VERIFIED_LOCAL. 운영 결과는 아래 후속 기록에 별도로 남긴다. |
+| `OBS-20261007-workspace-single-503` | 앞선 운영 실제 UI 실행 `live-ui-1791387889118`에서 현재 선택 GET 503을 1건 관찰했다. 두 역할의 후속 인증 GET 6회는 모두 200이었다. 그 응답의 서버/플랫폼 원인은 입증되지 않았고 재현한 무응답 동기화 결함과 동일 원인으로 단정하지 않는다. | OBSERVED_NOT_REPRODUCED. 실패 응답을 원본에 보존했다. 이번 수정은 클라이언트의 bounded recovery이며 운영 503 근본 원인 해결로 표현하지 않는다. |
+| `QA-20261007-cloud-ui-false-positives` | 초기 임시 runner가 Next의 제목 announcer를 오류로 셌고 SPA 완료 전 DOM을 검사했다. 래핑 label의 select 옵션까지 이름에 포함되는데 exact label로 검색한 필터 선택자도 오탐이었다. 실제 URL·관련 화면 DOM 대기와 정확한 select 선택자로 재확인했다. native dialog의 Tab은 문서가 포커스를 잃고 browser chrome로 이동하지만 앱 배경 요소에는 도달하지 않았다. 기본 dialog 대조와 두 역할·두 크기 재검증으로 이 차이를 구분했다. | VERIFIED_HARNESS / 별도 관찰. 원시 FAIL을 수정하지 않았고 독립 필터 4/4 PASS와 사진 focus trace를 별도 보존했다. 앱에 오류 필터나 강제 focus trap을 추가하지 않았다. |
+
+최초 UI 주 실행은 75 PASS/8 FAIL, 독립 필터 4 PASS 및 Chromium focus 4개 조합의 별도 관찰을 검토해 79개 정상 UI 확인과 native browser 관찰을 구분했다. 이 숫자를 단일 전체 요구사항 PASS로 바꾸지 않는다. 과거 WebKit full 실패도 이번 Chromium 부분 실행으로 소급 통과시키지 않는다. 새 QA 기준은 기존 `10-b-I`에 장애 시 복구를 추가했고 coverage v10은 기존 케이스 ID를 유지한다. 문서/coverage 변경 뒤 QA 매핑 회귀 2파일 24/24 PASS다.
+
+로컬 장애 재현은 QA 브라우저의 상태 GET에만 주입했다. 정상 테스트와 구분해 원본 HTTP 503·취소를 남겼으며 앱 코드나 Worker의 관찰을 무시하지 않았다. 업무 데이터·권한·계정·메일·DB 마이그레이션을 변경하지 않았다. 상태 확인 서버의 자동 작업 등 전체 DB 불변을 스냅샷 없이 주장하지 않는다. 인증정보·실행 로그·화면 증거는 커밋하지 않는다.
