@@ -335,3 +335,15 @@ Aside 서비스가 실행되지 않았고 연결 브라우저 런타임도 초�
 각 엔진 16개 확인은 같은 기능을 역할/크기에 반복한 관찰 수치이지 전체 CRUD 32건이 아니다. 업무 POST/DELETE 0건, 브라우저 pageerror 0건, 6개 업무 테이블 전후 동일이다. 실제 등록·편집 저장·삭제·초대·메일·내보내기 생성·DB 마이그레이션·운영 배포는 미실행이다. 편집 권한과 취소 잠금은 페이지/컴포넌트/PGlite 전체 자동 회귀로 유지 여부를 확인했다.
 
 자동 회귀 46파일 **219/219**, ESLint, TypeScript, production build, 운영 의존성 감사 0건, 스크립트 문법·`git diff --check` 통과. jsdom 외부 문서 navigation 경고 2건은 기존 테스트 환경 제한이며 브라우저 실패로 합치지 않는다. 구현 커밋 및 커밋 후 최종 실행은 아래 후속 기록에 추가한다. 원래 사용자 worktree의 미커밋 파일·계정·업무 데이터는 건드리지 않았다.
+
+### 커밋 후 최종 대조
+
+구현 커밋 **`dc3bb2445ed4f086e4e7d5928c46bba8beb31da6`**의 보고서 전용 최종 실행은 Chrome `report-reader-chromium-1791347749560`·WebKit `report-reader-webkit-1791347747465` 각각 **16/16 PASS**다. 오류·업무 쓰기 0건, 업무 원본 동일이며 모바일/PC 관리자·코치, 실제 확대·Escape/닫기/배경·포커스·스크롤 복원이 포함된다. 커밋 후 제품 소스는 추가 변경하지 않았다.
+
+추가 전체 조회 대조에서 아래 개발 프레임워크 관찰이 발생해 개발 실행을 전체 PASS로 바꾸지 않았다. 운영 배포 없이 동일 UI 소스의 `next build` 결과를 `next start --port 3001`로 별도 실행했다. Chrome `mobile-guide-development-1791347938260`의 실제 `base=http://localhost:3001`에서 **43/43 PASS**, pageerror·DOM 예외·업무 쓰기 0건·6개 업무 테이블 동일을 확인했다. 기존 실행기는 localhost를 `development`로 이름 붙이므로 실행명만으로 `next dev`라고 해석하지 않는다. 이 결과는 **로컬 production 빌드 대조**이며 Vercel 운영 검증이 아니다. QA 실행기는 이 원점만 추가 허용했고 문서 캡처는 금지했다. 사용한 보조 서버는 검증 후 종료한다.
+
+| 발견 ID | 관찰·원인 검토 | 상태·후속 범위 |
+| --- | --- | --- |
+| `OBS-20261007-react-dev-performance` | 개발 Chrome 전체 실행 `mobile-guide-development-1791347747366`은 화면 확인 43개를 마쳤지만 코치의 관리자 경로 redirect에서 `Performance.measure` 음수 시간 예외 5건으로 최종 FAIL이다. `/__nextjs_original-stack-frames` POST 5건은 개발 오류 오버레이의 진단 요청이며 업무 저장이 아니지만 원본 하네스의 writes 배열도 그대로 보존했다. DOM 예외와 실패를 무시하지 않았고 업무 원본은 동일했다. 설치된 Next 16.3.8의 `react-server-dom-turbopack-client.browser.development.js`는 `childrenEndTime=-Infinity` 이후 aborted/errored 계측의 end 검증 없이 measure를 호출한다. [React 공식 이슈 #37561](https://github.com/react/react/issues/37561)·[Next 공식 이슈 #86060](https://github.com/vercel/next.js/issues/86060)의 개발 redirect/not-found 증상과 일치한다. 해당 관리자 페이지·Auth/워크스페이스 guard·React/Next 의존성은 main과 차이가 없다. 로컬 production 빌드에서는 동일 차단 시나리오를 포함한 43개와 오류 게이트가 모두 통과했다. | OBSERVED_DEPENDENCY / 개발 번들의 계측 경로와 일치하는 관찰이며 새 보고서·권한 결함이나 운영 해결 완료로 분류하지 않는다. 의존성 수정/다운그레이드·전역 measure 무시·node_modules 임시 패치는 하지 않았다. 안정 패치가 제공되면 별도 승인 작업으로 개발 모드 재검증한다. |
+
+최종 문서·허용 원점 보완 후 전체 **219/219**·lint·두 QA 스크립트 문법·diff 검사를 다시 통과했다. 기존 WebKit 전체 탐색의 `OBS-20261007-webkit-navigation-fetch`는 이번 보고서 전용 깨끗한 결과로 해결 처리하지 않는다. main 병합·원격 DB 적용·운영 배포는 이 작업의 별도 승인 전 미실행이다.

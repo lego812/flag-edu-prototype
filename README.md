@@ -309,6 +309,8 @@ node --env-file=.env.local scripts/qa-mobile-guide.mjs https://flag-edu-prototyp
 
 기본 엔진은 WebKit이며 `QA_BROWSER=chromium`으로 설치된 Chrome 대조 실행도 가능합니다. WebKit의 native 요청 취소와 실제 예외는 별도로 기록하며, 같은 요청의 취소 증거가 없는 오류는 실패로 유지합니다. 문서 사진의 완성 여부와 브라우저 오류 게이트 통과 여부도 매니페스트에서 구분합니다. 최신 실행 범위·관찰 사항은 [QA 검증 기록](qa/aside/findings.md)을 확인하세요.
 
+개발 모드와 빌드 모드의 차이를 확인할 때는 `npm run build` 후 `npm run start -- --port 3001`로 별도의 로컬 서버를 열고 위 실행기에 `http://localhost:3001`을 전달할 수 있습니다. 이는 운영 배포 검증이 아니며 문서용 사진을 교체하지 않습니다.
+
 문서 캡처는 명시적으로 `QA_CAPTURE_DOCS=1`을 설정한 경우에만 `docs/images/`의 문서용 JPEG와 매니페스트를 갱신합니다. `QA_FIXTURE_RUN`은 승인된 픽스처 실행명, `QA_SOURCE_COMMIT`은 검증하는 앱 커밋입니다. 원본 로그·다운로드·세션은 Git 제외 `artifacts/aside/`에만 둡니다. 새 문서 사진의 존재·정확한 크기·해시·대체 텍스트는 자동 회귀로 검사합니다.
 
 ## 데모 데이터 교체

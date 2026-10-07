@@ -9,7 +9,7 @@ import { findNativeCancellation } from "./qa-browser-observations.mjs";
 // Read-only integration and curated README captures. Never submits business
 // forms, changes permissions, sends mail, or generates exports.
 const [base, modulePath] = process.argv.slice(2);
-assert.ok(["http://localhost:3000", "https://flag-edu-prototype.vercel.app"].includes(base));
+assert.ok(["http://localhost:3000", "http://localhost:3001", "https://flag-edu-prototype.vercel.app"].includes(base));
 assert.ok(modulePath, "Pass the installed Playwright module path.");
 const sourceRun = process.env.QA_FIXTURE_RUN ?? "iphone18-webkit-20261007";
 assert.match(sourceRun, /^[a-z0-9-]+$/);
@@ -40,6 +40,7 @@ const browser = await (engine === "webkit" ? webkit.launch({ headless: true }) :
 const output = path.resolve("artifacts/aside", `mobile-guide-${base.includes("localhost") ? "development" : "production"}-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const captureDocs = process.env.QA_CAPTURE_DOCS === "1";
+assert.ok(!captureDocs || base !== "http://localhost:3001", "Local production-build comparisons do not replace published guide images.");
 assert.ok(!captureDocs || engine === "webkit", "Published guide images use the recorded WebKit capture profile.");
 if (captureDocs) assert.match(process.env.QA_SOURCE_COMMIT ?? "", /^[a-f0-9]{40}$/, "Record the verified app commit when publishing screenshots.");
 const images = [];
