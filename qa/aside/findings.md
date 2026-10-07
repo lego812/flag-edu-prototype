@@ -431,3 +431,9 @@ main `cc2d9df4ed7f07939f974dd140c52476ff0e409e`의 Vercel `dpl_AqMR7aXKk9v2H75P8
 두 실행은 `base=http://localhost:3001`의 로컬 production 빌드 대조다. 파일명 development는 서버 모드를 뜻하지 않는다. DOM error/rejection·업무 쓰기 0건, 6개 업무 테이블 동일이다. 수정 Worker의 특정 캐시/사진 계약 확인과 전체 통합 성공을 분리한다. 전체 자동 50파일 243/243 및 lint는 후속 README 변경 전 다시 통과했다. 이 브랜치의 main 병합·배포는 전체 통합 검증 미완료로 보류하고, 연결 확장 재연결 후 화면 테스트와 남은 네트워크 관찰 원인 검증을 이어간다. 개발 서버 `localhost:3000`은 유지한다.
 
 수정·QA·README 구현은 `fix/pwa-public-cache-and-qa-routes`의 **`127a5e86fdd168ad199828a9314f2cb79bf4afb1`**로 commit/push했다. 커밋 후 15:15 KST 관련 6파일 35개(Worker/등록/주소·quiet/QA 매핑/문서 이미지) 자동 재실행은 PASS다. 브라우저 전체 FAIL을 자동 회귀 통과로 VERIFIED 처리하지 않으며 해당 BUG의 전체 통합 상태는 FIXED_PENDING_RETEST로 유지한다. 원래 작업 폴더의 `AGENTS.md` 수정·미추적 사진도 그대로 보존했다. 로컬 production 보조 3001은 종료했고 사용자가 연결할 개발 3000만 유지한다.
+
+### 사용자 승인에 따른 main 반영·배포
+
+추가 `@브라우저` 재시도와 kernel reset 뒤에도 브라우저 도구는 `windows sandbox failed: helper_unknown_error: apply deny-read ACLs`로 탭 생성 전에 종료됐다. 이를 앱/로그인 오류로 단정하거나 화면 테스트 PASS로 기록하지 않는다. 개발 서버를 다시 열고 `/login` HTTP 200과 로그인 입력 폼 존재만 확인했다.
+
+사용자는 위 통합 검증 미완료 상태를 안내받은 뒤 `일단 main에 넣고 배포`를 명시적으로 승인했다. 병합 전 현재 브랜치 `7018e0d`에서 전체 **50파일 243/243**, lint 경고 0, TypeScript 포함 production build, `git diff --check`를 다시 통과했다. 브라우저 전체 FAIL 및 `BUG-20261007-service-worker-private-fetch`의 FIXED_PENDING_RETEST 상태는 유지한다. 새 DB 마이그레이션·계정/업무 데이터/메일 변경 없이 승인된 브랜치만 main에 병합·푸시하고, Vercel Git production 배포의 실제 main SHA·READY·운영 별칭과 공개 HTTP 응답을 별도 재조회한다. 운영 배포 확인은 로그인 브라우저 통합 성공을 뜻하지 않는다.
