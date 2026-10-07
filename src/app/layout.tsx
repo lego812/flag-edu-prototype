@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Geist } from "next/font/google";
 import { PwaRegistration } from "@/components/pwa-registration";
 import "./globals.css";
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">

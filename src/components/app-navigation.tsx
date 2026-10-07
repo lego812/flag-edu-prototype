@@ -11,7 +11,8 @@ export function AppNavigation({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname() ?? "";
   const items = [
     { href: "/dashboard", label: "홈", icon: "home" },
-    { href: "/classes", label: "수업", icon: "calendar" },
+    { href: "/courses", label: "수업", icon: "book" },
+    { href: "/classes", label: "일정", icon: "calendar" },
     { href: "/reports", label: "내 보고서", icon: "book" },
     ...(isAdmin ? [{ href: "/manage", label: "관리", icon: "settings" }] : []),
   ];

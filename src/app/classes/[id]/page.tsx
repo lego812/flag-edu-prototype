@@ -7,6 +7,7 @@ import { formatClassDate } from "@/features/classes/dates";
 import { CancelClassForm } from "@/features/classes/cancel-form";
 import { ActionButton } from "@/components/action-button";
 import { startReportAction } from "@/features/reports/actions";
+import { ClassStatusBadge } from "@/features/classes/session-card";
 export const metadata = { title: "수업 상세" };
 export default async function ClassDetailPage({
   params,
@@ -34,8 +35,8 @@ export default async function ClassDetailPage({
         ← 수업 목록
       </Link>
       <section className="border-y border-neutral-200 py-6">
-        <p className="text-sm font-semibold text-black">
-          {session.status === "cancelled" ? "취소된 수업" : "예정"}
+        <p className="flex items-center gap-2 text-sm font-semibold text-black">
+          <ClassStatusBadge status={session.status} />
           {session.created_by === profile.id ? " · 내가 등록" : ""}
         </p>
         <h1 className="mt-3 break-words text-3xl font-bold">{session.title}</h1>

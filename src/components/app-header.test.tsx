@@ -47,6 +47,10 @@ describe("AppHeader", () => {
     );
     expect(navigation.getByRole("link", { name: "수업" })).toHaveAttribute(
       "href",
+      "/courses",
+    );
+    expect(navigation.getByRole("link", { name: "일정" })).toHaveAttribute(
+      "href",
       "/classes",
     );
     expect(navigation.getByRole("link", { name: "관리" })).toHaveAttribute(

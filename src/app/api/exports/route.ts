@@ -11,13 +11,26 @@ import {
   generateReportPdf,
 } from "@/features/exports/generate";
 import {
-  exportExpiresAt,
   MAX_PDF_PHOTO_BYTES,
   totalPhotoBytes,
 } from "@/features/exports/policy";
-import { revalidatePath } from "next/cache";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
+
+function streamBytes(bytes: Uint8Array) {
+  let offset = 0;
+  return new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (offset >= bytes.length) {
+        controller.close();
+        return;
+      }
+      const next = bytes.subarray(offset, Math.min(offset + 64 * 1024, bytes.length));
+      offset += next.length;
+      controller.enqueue(next);
+    },
+  });
+}
 export async function POST(request: Request) {
   const { supabase, profile } = await requireCurrentProfile();
   if (
@@ -72,30 +85,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "PDF에 포함할 사진이 15MiB를 초과합니다. 기간이나 사진 수를 줄여 주세요.",
+          "PDF에 포함할 사진이 100MiB를 초과합니다. 기간이나 사진 수를 줄여 주세요.",
       },
       { status: 400 },
     );
-  const { data: job, error: jobError } = await supabase
-    .from("export_jobs")
-    .insert({
-      organization_id: profile.organization_id,
-      requested_by: profile.id,
-      format,
-      filters,
-      status: "processing",
-      expires_at: exportExpiresAt(),
-    })
-    .select("id")
-    .single();
-  if (jobError || !job)
-    return NextResponse.json(
-      {
-        error: "내보내기 이력을 생성하지 못했습니다. DB 설정을 확인해 주세요.",
-      },
-      { status: 500 },
-    );
-  const storagePath = `${profile.organization_id}/${profile.id}/${job.id}.${format}`;
   try {
     const templates = new Map(
       await Promise.all(
@@ -118,38 +111,15 @@ export async function POST(request: Request) {
       format === "pdf"
         ? "application/pdf"
         : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    const upload = await supabase.storage
-      .from("report-exports")
-      .upload(storagePath, bytes, { contentType: mime });
-    if (upload.error) throw new Error("파일 저장에 실패했습니다.");
-    const done = await supabase
-      .from("export_jobs")
-      .update({
-        status: "completed",
-        storage_path: storagePath,
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", job.id);
-    if (done.error) throw new Error("완료 기록을 저장하지 못했습니다.");
-    revalidatePath("/exports");
-    return new Response(Buffer.from(bytes), {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    return new Response(streamBytes(bytes), {
       headers: {
         "Content-Type": mime,
-        "Content-Disposition": `attachment; filename="flag-edu-${job.id}.${format}"`,
+        "Content-Disposition": `attachment; filename="flag-edu-${timestamp}.${format}"`,
         "Cache-Control": "no-store",
       },
     });
   } catch {
-    await supabase.storage.from("report-exports").remove([storagePath]);
-    await supabase
-      .from("export_jobs")
-      .update({
-        status: "failed",
-        error_message: "생성 실패. 기간을 줄여 다시 시도해 주세요.",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", job.id);
-    revalidatePath("/exports");
     return NextResponse.json(
       { error: "파일 생성에 실패했습니다. 기간을 줄여 다시 시도해 주세요." },
       { status: 500 },

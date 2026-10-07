@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private short-lived URLs are loaded directly, without a shared image cache. */
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { compressPhoto } from "./photo";
 import type { Attachment, Field } from "./model";
 export function Photos({
@@ -17,7 +16,8 @@ export function Photos({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const [items, setItems] = useState(attachments);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   async function upload(field: string, file: File) {
     setBusy(true);
     setError("");
@@ -32,7 +32,7 @@ export function Photos({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      router.refresh();
+      setItems((current) => [...current, result.attachment]);
     } catch (e) {
       setError(
         e instanceof Error
@@ -44,7 +44,6 @@ export function Photos({
     }
   }
   async function remove(id: string) {
-    if (!window.confirm("사진을 삭제할까요? 복구할 수 없습니다.")) return;
     setBusy(true);
     setError("");
     try {
@@ -55,7 +54,8 @@ export function Photos({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      router.refresh();
+      setItems((current) => current.filter((item) => item.id !== id));
+      setDeleteTarget(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "삭제 실패");
     } finally {
@@ -67,7 +67,7 @@ export function Photos({
       {fields
         .filter((f) => f.field_type === "photo")
         .map((f) => {
-          const photos = attachments.filter((a) => a.field_id === f.id);
+          const photos = items.filter((a) => a.field_id === f.id);
           const maxFiles = f.settings.max_files ?? 3;
           return (
             <div key={f.id} className="space-y-4">
@@ -116,7 +116,7 @@ export function Photos({
                           aria-label={`${f.label} ${index + 1} 삭제`}
                           className="absolute right-0 top-0 flex size-11 items-start justify-end rounded-xl p-1 focus-visible:outline-2 focus-visible:outline-black"
                           disabled={busy}
-                          onClick={() => remove(a.id)}
+                          onClick={() => setDeleteTarget(a.id)}
                         >
                           <span
                             aria-hidden="true"
@@ -158,6 +158,48 @@ export function Photos({
         <p role="alert" className="text-red-700">
           {error}
         </p>
+      )}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !busy)
+              setDeleteTarget(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="photo-delete-title"
+            className="surface w-full max-w-sm p-6 shadow-2xl"
+          >
+            <h2 id="photo-delete-title" className="text-xl font-bold">
+              사진을 삭제할까요?
+            </h2>
+            <p className="mt-2 text-sm text-neutral-600">
+              삭제한 사진은 복구할 수 없습니다.
+            </p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => setDeleteTarget(null)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="btn bg-red-700 hover:bg-red-600"
+                disabled={busy}
+                onClick={() => void remove(deleteTarget)}
+              >
+                {busy ? "삭제 중…" : "삭제"}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </section>
   );

@@ -1,29 +1,45 @@
 export async function compressPhoto(file: File): Promise<Blob> {
   if (!file.type.startsWith("image/") || file.size > 25 * 1024 * 1024)
     throw new Error("25MB 이하의 사진을 선택해 주세요.");
-  const url = URL.createObjectURL(file);
+  let url = "";
+  let bitmap: ImageBitmap | null = null;
   try {
-    const image = new Image();
-    image.src = url;
-    await image.decode();
+    let source: CanvasImageSource;
+    let width: number;
+    let height: number;
+    if (typeof createImageBitmap === "function") {
+      bitmap = await createImageBitmap(file);
+      source = bitmap;
+      width = bitmap.width;
+      height = bitmap.height;
+    } else {
+      url = URL.createObjectURL(file);
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      source = image;
+      width = image.naturalWidth;
+      height = image.naturalHeight;
+    }
     const scale = Math.min(
       1,
-      1600 / Math.max(image.naturalWidth, image.naturalHeight),
+      1280 / Math.max(width, height),
     );
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("사진을 처리할 수 없습니다.");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    let blob: Blob | null = null;
-    for (const quality of [0.85, 0.7, 0.55, 0.4]) {
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    let blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.78),
+    );
+    if (blob && blob.size > 1048576) {
       blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", quality),
+        canvas.toBlob(resolve, "image/jpeg", 0.55),
       );
-      if (blob && blob.size <= 400 * 1024) break;
     }
     if (!blob || blob.size > 1048576)
       throw new Error(
@@ -37,6 +53,7 @@ export async function compressPhoto(file: File): Promise<Blob> {
         : "사진을 읽지 못했습니다. JPG 또는 PNG로 다시 선택해 주세요.",
     );
   } finally {
-    URL.revokeObjectURL(url);
+    bitmap?.close();
+    if (url) URL.revokeObjectURL(url);
   }
 }

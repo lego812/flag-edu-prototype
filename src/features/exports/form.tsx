@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 export function ExportForm({
   members,
   sessions,
@@ -10,7 +9,6 @@ export function ExportForm({
 }) {
   const [pending, setPending] = useState(false),
     [error, setError] = useState("");
-  const router = useRouter();
   async function submit(form: FormData) {
     setPending(true);
     setError("");
@@ -30,10 +28,8 @@ export function ExportForm({
       a.download = `flag-edu.${form.get("format")}`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
-      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "내보내기에 실패했습니다.");
-      router.refresh();
     } finally {
       setPending(false);
     }

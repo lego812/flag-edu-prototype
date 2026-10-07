@@ -1,5 +1,31 @@
 import { addDays, isDate, parseSeoulDateTime, seoulToday } from "./dates";
-import type { ClassInput } from "./model";
+import type { ClassInput, CourseInput } from "./model";
+
+export type CourseFormState = {
+  error?: string;
+  values?: Partial<CourseInput>;
+};
+
+export function parseCourseForm(
+  form: FormData,
+): { input: CourseInput } | { state: CourseFormState } {
+  const value = (key: string) => String(form.get(key) ?? "").trim();
+  const input: CourseInput = {
+    title: value("title"),
+    location: value("location"),
+    teaching_method: value("teaching_method") || null,
+    memo: value("memo") || null,
+  };
+  if (!input.title || [...input.title].length > 150)
+    return { state: { error: "수업명은 1~150자로 입력해 주세요.", values: input } };
+  if (!input.location || [...input.location].length > 200)
+    return { state: { error: "장소는 1~200자로 입력해 주세요.", values: input } };
+  if ((input.teaching_method?.length ?? 0) > 2000)
+    return { state: { error: "진행방식은 2,000자 이하로 입력해 주세요.", values: input } };
+  if ((input.memo?.length ?? 0) > 5000)
+    return { state: { error: "메모는 5,000자 이하로 입력해 주세요.", values: input } };
+  return { input };
+}
 
 export type ClassValues = {
   title: string;
@@ -74,12 +100,14 @@ export function parseClassForm(
 export type ClassFilters = {
   from: string;
   to: string;
-  status: "all" | "scheduled" | "cancelled";
+  status: "all" | "scheduled" | "cancelled" | "completed";
+  sort: "newest" | "oldest";
   page: number;
 };
 export type ClassCalendarFilters = {
   month: string;
   status: ClassFilters["status"];
+  date: string;
 };
 
 export function parseClassCalendarFilters(
@@ -89,6 +117,7 @@ export function parseClassCalendarFilters(
   | { error: string; filters?: undefined } {
   const month = params.month ?? seoulToday().slice(0, 7);
   const status = params.status ?? "all";
+  const requestedDate = params.date;
   if (
     typeof month !== "string" ||
     !/^\d{4}-\d{2}$/.test(month) ||
@@ -96,9 +125,28 @@ export function parseClassCalendarFilters(
     month >= "9999-12"
   )
     return { error: "올바른 조회 월을 선택해 주세요." };
-  if (status !== "all" && status !== "scheduled" && status !== "cancelled")
+  if (
+    status !== "all" &&
+    status !== "scheduled" &&
+    status !== "cancelled" &&
+    status !== "completed"
+  )
     return { error: "올바른 수업 상태를 선택해 주세요." };
-  return { filters: { month, status } };
+  if (
+    requestedDate !== undefined &&
+    (typeof requestedDate !== "string" ||
+      !isDate(requestedDate) ||
+      !requestedDate.startsWith(`${month}-`))
+  )
+    return { error: "선택 날짜를 확인해 주세요." };
+  const today = seoulToday();
+  const date =
+    typeof requestedDate === "string"
+      ? requestedDate
+      : today.startsWith(`${month}-`)
+        ? today
+        : `${month}-01`;
+  return { filters: { month, status, date } };
 }
 
 export function parseClassFilters(
@@ -106,24 +154,30 @@ export function parseClassFilters(
 ):
   | { filters: ClassFilters; error?: undefined }
   | { error: string; filters?: undefined } {
-  const today = seoulToday();
-  const from = params.from ?? today;
-  const to = params.to ?? addDays(today, 30);
+  const from = params.from ?? "";
+  const to = params.to ?? "";
   const status = params.status ?? "all";
+  const sort = params.sort ?? "newest";
   const page = params.page ?? "1";
   if (
     typeof from !== "string" ||
     typeof to !== "string" ||
-    !isDate(from) ||
-    !isDate(to) ||
-    from > to ||
-    to >= "9999-12-31"
+    (from !== "" && !isDate(from)) ||
+    (to !== "" && (!isDate(to) || to >= "9999-12-31")) ||
+    (from !== "" && to !== "" && from > to)
   ) {
     return { error: "조회 시작일과 종료일을 올바르게 선택해 주세요." };
   }
-  if (status !== "all" && status !== "scheduled" && status !== "cancelled")
+  if (
+    status !== "all" &&
+    status !== "scheduled" &&
+    status !== "cancelled" &&
+    status !== "completed"
+  )
     return { error: "올바른 수업 상태를 선택해 주세요." };
+  if (sort !== "newest" && sort !== "oldest")
+    return { error: "올바른 정렬 방식을 선택해 주세요." };
   if (typeof page !== "string" || !/^[1-9]\d{0,5}$/.test(page))
     return { error: "올바른 페이지 번호가 아닙니다." };
-  return { filters: { from, to, status, page: Number(page) } };
+  return { filters: { from, to, status, sort, page: Number(page) } };
 }

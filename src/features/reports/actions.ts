@@ -33,8 +33,8 @@ export async function saveReportAction(
   const { supabase, profile } = await requireCurrentProfile();
   if (!isUuid(id)) return { error: "잘못된 보고서입니다." };
   const { data: report } = await getReport(supabase, id);
-  if (!report || report.author_id !== profile.id)
-    return { error: "본인의 보고서만 수정할 수 있습니다." };
+  if (!report || (report.author_id !== profile.id && profile.role !== "admin"))
+    return { error: "보고서를 수정할 권한이 없습니다." };
   if (report.class_sessions.status === "cancelled")
     return { error: "취소된 수업의 보고서는 변경할 수 없습니다." };
   let answers;

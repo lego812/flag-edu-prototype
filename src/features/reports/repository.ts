@@ -74,6 +74,9 @@ export async function listReports(
   author?: string,
   limit = 20,
 ) {
+  await client.rpc("sync_completed_class_sessions", {
+    p_organization_id: org,
+  });
   let q = client
     .from("reports")
     .select(REPORT_SELECT, { count: "exact" })

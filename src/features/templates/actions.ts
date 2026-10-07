@@ -4,6 +4,7 @@ import { validateFields } from "@/features/reports/validation";
 import type { ActionState } from "@/features/reports/model";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isUuid } from "@/features/classes/model";
 
 export async function saveTemplateAction(
   _state: ActionState,
@@ -38,6 +39,24 @@ export async function saveTemplateAction(
           ? "다른 사용자가 변경했습니다. 새로고침해 주세요."
           : "저장하지 못했습니다. 항목과 DB 마이그레이션 적용 여부를 확인해 주세요.",
     };
+  revalidatePath("/templates");
+  redirect("/templates");
+}
+
+export async function deactivateTemplateAction(
+  id: string,
+  _state: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const { supabase, profile } = await requireCurrentProfile();
+  if (profile.role !== "admin" || !isUuid(id))
+    return { error: "양식을 삭제할 권한이 없습니다." };
+  if (form.get("confirm") !== "yes")
+    return { error: "삭제를 확인해 주세요." };
+  const { error } = await supabase.rpc("deactivate_template", {
+    p_template_version_id: id,
+  });
+  if (error) return { error: "양식을 삭제하지 못했습니다." };
   revalidatePath("/templates");
   redirect("/templates");
 }

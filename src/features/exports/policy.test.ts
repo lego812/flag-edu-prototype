@@ -3,12 +3,16 @@ import { describe, expect, it } from "vitest";
 import type { Report } from "@/features/reports/model";
 import {
   EXPORT_RETENTION_DAYS,
+  MAX_PDF_PHOTO_BYTES,
   exportExpiresAt,
   isExportExpired,
   totalPhotoBytes,
 } from "./policy";
 
 describe("export policy", () => {
+  it("allows up to 100MiB of source photos for direct PDF downloads", () => {
+    expect(MAX_PDF_PHOTO_BYTES).toBe(100 * 1024 * 1024);
+  });
   it("expires generated files after seven days", () => {
     const now = Date.parse("2026-10-06T00:00:00Z");
     expect(EXPORT_RETENTION_DAYS).toBe(7);

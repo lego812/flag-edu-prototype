@@ -36,6 +36,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
     await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;
       create table auth.users(id uuid primary key,raw_user_meta_data jsonb not null default '{}'::jsonb);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+      create function auth.role() returns text language sql stable as $$ select current_user::text $$;
       create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
       create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);
       alter table storage.objects enable row level security;
@@ -62,6 +63,8 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202610060003_export_retention.sql",
       "202610060004_export_cleanup_service_role.sql",
       "202610060005_report_mutation_guards.sql",
+      "202610070000_add_completed_status.sql",
+      "202610070001_operational_workflow.sql",
     ]) {
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     }
@@ -90,6 +93,16 @@ describe("reporting PostgreSQL workflows and RLS", () => {
   });
   it("creates date-only schedules atomically and deduplicates retries", async () => {
     await asUser(ids.coach);
+    const courseId = (
+      await db.query<{ course_id: string }>(
+        "select course_id from public.class_sessions where id=$1",
+        [ids.session],
+      )
+    ).rows[0].course_id;
+    await db.query(
+      "update public.courses set title='반복 수업',teaching_method='준비 운동 → 팀 활동',updated_by=$1 where id=$2",
+      [ids.coach, courseId],
+    );
     const token = "50000000-0000-4000-8000-000000000001";
     const item = {
       title: "반복 수업",
@@ -109,12 +122,12 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       },
     ]);
     const first = await db.query<{ id: string }>(
-      "select public.create_class_schedule($1,$2) as id",
-      [token, items],
+      "select public.create_class_schedule($1,$2,$3) as id",
+      [token, courseId, items],
     );
     const retry = await db.query<{ id: string }>(
-      "select public.create_class_schedule($1,$2) as id",
-      [token, items],
+      "select public.create_class_schedule($1,$2,$3) as id",
+      [token, courseId, items],
     );
     expect(retry.rows[0].id).toBe(first.rows[0].id);
     expect(
@@ -135,8 +148,9 @@ describe("reporting PostgreSQL workflows and RLS", () => {
     ).toHaveLength(2);
     const failToken = "50000000-0000-4000-8000-000000000002";
     await expect(
-      db.query("select public.create_class_schedule($1,$2)", [
+      db.query("select public.create_class_schedule($1,$2,$3)", [
         failToken,
+        courseId,
         JSON.stringify([item, { ...item, end_at: item.start_at }]),
       ]),
     ).rejects.toThrow();
@@ -302,6 +316,27 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       JSON.stringify([{ fieldId, value: "수업 완료" }]),
     ]);
   });
+  it("lets an administrator edit and resubmit another member's report", async () => {
+    await asUser(ids.admin);
+    await db.query("select public.save_and_submit_report($1,$2,$3,false)", [
+      reportId,
+      await version(),
+      JSON.stringify([{ fieldId, value: "관리자 수정" }]),
+    ]);
+    expect(
+      (
+        await db.query<{ value: string }>(
+          "select value #>> '{}' value from public.report_answers where report_id=$1 and field_id=$2",
+          [reportId, fieldId],
+        )
+      ).rows[0].value,
+    ).toBe("관리자 수정");
+    await db.query("select public.save_and_submit_report($1,$2,$3,true)", [
+      reportId,
+      await version(),
+      JSON.stringify([{ fieldId, value: "관리자 수정" }]),
+    ]);
+  });
   it("hides reports and sessions from another organization", async () => {
     await asUser(ids.other);
     expect((await db.query("select * from public.reports")).rows).toHaveLength(
@@ -416,32 +451,17 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       ).rows[0].status,
     ).toBe("draft");
   });
-  it("prevents administrators from deleting another author's photos", async () => {
+  it("lets administrators manage another author's photos", async () => {
     await asUser(ids.admin);
-    expect(
-      (
-        await db.query(
-          "delete from public.report_attachments where id=$1 returning id",
-          [photoId],
-        )
-      ).rows,
-    ).toHaveLength(0);
-    expect(
-      (
-        await db.query(
-          "delete from storage.objects where bucket_id='report-images' and name=$1 returning name",
-          [photoPath],
-        )
-      ).rows,
-    ).toHaveLength(0);
-    expect(
-      (
-        await db.query(
-          "select id from public.report_attachments where id=$1",
-          [photoId],
-        )
-      ).rows,
-    ).toHaveLength(1);
+    expect((await db.query("delete from public.report_attachments where id=$1 returning id", [photoId])).rows).toHaveLength(1);
+    expect((await db.query("delete from storage.objects where bucket_id='report-images' and name=$1 returning name", [photoPath])).rows).toHaveLength(1);
+
+    await db.query("insert into storage.objects(bucket_id,name) values('report-images',$1)", [photoPath]);
+    const restored = await db.query<{ id: string }>(
+      "insert into public.report_attachments(organization_id,report_id,field_id,storage_path,original_filename,file_size) values($1,$2,$3,$4,'photo.jpg',123) returning id",
+      [ids.org, reportId, photoId ? (await db.query<{ field_id: string }>("select id field_id from public.template_fields where template_version_id=$1 and field_type='photo'", [templateId])).rows[0].field_id : fieldId, photoPath],
+    );
+    photoId = restored.rows[0].id;
   });
   it("rejects submission for a cancelled class", async () => {
     await asUser(ids.coach);
@@ -666,5 +686,67 @@ describe("reporting PostgreSQL workflows and RLS", () => {
 
     await db.exec("reset role");
     await db.query("delete from public.export_jobs where id=$1", [inserted.rows[0].id]);
+  });
+  it("automatically persists completed sessions and lets admins edit course masters", async () => {
+    await asUser(ids.admin);
+    const courseId = (
+      await db.query<{ course_id: string }>(
+        "select course_id from public.class_sessions where id=$1",
+        [ids.session],
+      )
+    ).rows[0].course_id;
+    await db.query(
+      "update public.courses set location='관리자 수정 장소',updated_by=$1 where id=$2",
+      [ids.admin, courseId],
+    );
+    expect(
+      (await db.query<{ location: string }>("select location from public.courses where id=$1", [courseId])).rows[0].location,
+    ).toBe("관리자 수정 장소");
+
+    const past = (
+      await db.query<{ id: string }>(
+        "insert into public.class_sessions(organization_id,course_id,title,location,start_at,end_at,created_by,updated_by) values($1,$2,'지난 수업','센터',now()-interval '2 hours',now()-interval '1 hour',$3,$3) returning id",
+        [ids.org, courseId, ids.admin],
+      )
+    ).rows[0].id;
+    await db.query("select public.sync_completed_class_sessions($1)", [ids.org]);
+    expect(
+      (await db.query<{ status: string }>("select status from public.class_sessions where id=$1", [past])).rows[0].status,
+    ).toBe("completed");
+    await db.query(
+      "update public.class_sessions set start_at=now()+interval '1 hour',end_at=now()+interval '2 hours',updated_by=$1 where id=$2",
+      [ids.admin, past],
+    );
+    expect(
+      (await db.query<{ status: string }>("select status from public.class_sessions where id=$1", [past])).rows[0].status,
+    ).toBe("scheduled");
+  });
+  it("soft-deletes a logical template while retaining historical report versions", async () => {
+    await asUser(ids.admin);
+    const active = (
+      await db.query<{ id: string }>(
+        "select id from public.template_versions where organization_id=$1 and status='active' and hidden_at is null",
+        [ids.org],
+      )
+    ).rows[0].id;
+    await db.query("select public.deactivate_template($1)", [active]);
+    expect(
+      (
+        await db.query<{ status: string; hidden: boolean }>(
+          "select status,hidden_at is not null hidden from public.template_versions where id=$1",
+          [active],
+        )
+      ).rows[0],
+    ).toEqual({ status: "archived", hidden: true });
+    expect(
+      (await db.query("select id from public.reports where id=$1", [reportId])).rows,
+    ).toHaveLength(1);
+    await asUser(ids.coach);
+    expect(
+      (await db.query("select id from public.template_versions where id=$1", [active])).rows,
+    ).toHaveLength(0);
+    expect(
+      (await db.query("select id from public.template_versions where id=$1", [templateId])).rows,
+    ).toHaveLength(1);
   });
 });

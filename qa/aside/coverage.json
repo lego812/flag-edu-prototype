@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "requirements": [
     {
       "id": "R01",
@@ -50,6 +50,9 @@
         "3-a-E",
         "3-a-F",
         "3-a-G",
+        "3-a-H",
+        "3-a-I",
+        "3-a-J",
         "3-b-A",
         "3-b-B",
         "3-b-C",
@@ -65,14 +68,20 @@
         "3-c-H",
         "3-d-A",
         "3-d-B",
-        "3-d-C"
+        "3-d-C",
+        "3-e-A",
+        "3-e-B",
+        "3-e-C"
       ],
       "automated": [
         "src/features/classes/recurrence.test.ts",
         "src/features/classes/actions.test.ts",
         "src/features/classes/class-wizard.test.tsx",
         "src/features/classes/calendar.test.tsx",
-        "src/features/classes/validation.test.ts"
+        "src/features/classes/validation.test.ts",
+        "src/features/classes/session-card.test.tsx",
+        "src/features/classes/view-switcher.test.tsx",
+        "src/features/reports/workflows.test.ts"
       ],
       "gaps": []
     },
@@ -154,8 +163,11 @@
     {
       "id": "R07",
       "name": "양식",
-      "cases": ["7-a-A", "7-a-B", "7-b-A", "7-b-B", "7-b-C", "7-b-D"],
-      "automated": ["src/features/reports/workflows.test.ts"],
+      "cases": ["7-a-A", "7-a-B", "7-a-C", "7-b-A", "7-b-B", "7-b-C", "7-b-D", "7-b-E", "7-b-F"],
+      "automated": [
+        "src/features/templates/editor.test.tsx",
+        "src/features/reports/workflows.test.ts"
+      ],
       "gaps": []
     },
     {
@@ -171,12 +183,12 @@
         "src/app/api/cron/exports/route.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["실제 모바일 다운로드·이력 재다운로드"]
+      "gaps": ["실제 모바일 직접 다운로드"]
     },
     {
       "id": "R09",
       "name": "권한·데이터 보호",
-      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-b-A", "9-b-B", "9-b-C", "9-b-D"],
+      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-a-F", "9-b-A", "9-b-B", "9-b-C", "9-b-D", "9-b-E"],
       "automated": [
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/workflows.test.ts",

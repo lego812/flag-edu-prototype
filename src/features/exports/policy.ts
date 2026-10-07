@@ -1,7 +1,7 @@
 import type { Report } from "@/features/reports/model";
 
 export const EXPORT_RETENTION_DAYS = 7;
-export const MAX_PDF_PHOTO_BYTES = 15 * 1024 * 1024;
+export const MAX_PDF_PHOTO_BYTES = 100 * 1024 * 1024;
 
 export function exportExpiresAt(now = Date.now()) {
   return new Date(

@@ -1,20 +1,25 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ context: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), cancel: vi.fn(), redirect: vi.fn() }));
+const mocks = vi.hoisted(() => ({ context: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), cancel: vi.fn(), courseGet: vi.fn(), redirect: vi.fn() }));
 vi.mock("@/features/auth/current-user", () => ({ requireCurrentProfile: mocks.context }));
-vi.mock("./repository", () => ({ classRepository: () => mocks }));
+vi.mock("./repository", () => ({
+  classRepository: () => mocks,
+  courseRepository: () => ({ get: mocks.courseGet }),
+}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 import { createClassAction, updateClassAction, cancelClassAction } from "./actions";
 const id = "f8601730-c133-41b8-8d69-316edc982195";
+const courseId = "f8601730-c133-41b8-8d69-316edc982196";
 function form() {
   const value = new FormData();
-  Object.entries({ title: "수업", location: "센터", start: "2026-09-22T14:00", end: "2026-09-22T15:00", memo: "", version: "version-1", confirm: "yes", organization_id: "attacker", status: "scheduled" }).forEach(([key, text]) => value.set(key, text));
+  Object.entries({ title: "수업", location: "센터", start: "2026-09-22T14:00", end: "2026-09-22T15:00", memo: "", version: "version-1", confirm: "yes", course_id: courseId, organization_id: "attacker", status: "scheduled" }).forEach(([key, text]) => value.set(key, text));
   return value;
 }
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.context.mockResolvedValue({ supabase: {}, profile: { id: "owner", organization_id: "org", role: "coach", status: "active" } });
   mocks.get.mockResolvedValue({ data: { id, created_by: "owner", organization_id: "org", status: "scheduled", updated_at: "version-1" } });
+  mocks.courseGet.mockResolvedValue({ data: { id: courseId, title: "수업", location: "센터", teaching_method: null, memo: null, active: true }, error: null });
   mocks.create.mockResolvedValue({ data: { id } });
   mocks.update.mockResolvedValue({ data: { id } });
   mocks.cancel.mockResolvedValue({ error: null });
@@ -24,6 +29,7 @@ it("creates from whitelisted fields and redirects to the new class", async () =>
   await expect(createClassAction({}, form())).rejects.toThrow("REDIRECT:/classes/" + id);
   expect(mocks.create.mock.calls[0][0]).not.toHaveProperty("organization_id");
   expect(mocks.create.mock.calls[0][0]).not.toHaveProperty("status");
+  expect(mocks.create.mock.calls[0][0]).toMatchObject({ course_id: courseId });
 });
 it("rejects non-owner modifications before writes", async () => {
   mocks.context.mockResolvedValue({ supabase: {}, profile: { id: "other", organization_id: "org", role: "coach", status: "active" } });
