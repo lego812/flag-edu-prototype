@@ -357,3 +357,5 @@ npm run seed:demo -- --admin-email=<관리자 이메일> --coach-email=<코치 �
 4. 설치형 PWA와 모바일 카메라 선택은 HTTPS 실기기에서 최종 확인합니다.
 
 일일 운영 작업은 [vercel.json](vercel.json)의 UTC cron 식으로 실행됩니다. 종료된 일정을 완료 처리하고 과거 방식으로 남은 내보내기 파일을 정리합니다. 실행 시간을 바꾸려면 `crons[].schedule`을 수정하고 재배포합니다. 현재 `15 18 * * *`는 매일 UTC 18:15, 한국 시간 다음 날 03:15입니다.
+
+Android 설치형 앱 소스와 빌드/서명/기기 검증 안내는 [android/README.md](android/README.md)에 있습니다.
