@@ -107,7 +107,7 @@ describe("hierarchical cases and strict QA report handling", () => {
       all.push(
         ...caseIdsFromMarkdown(await readFile(`qa/aside/${name}.md`, "utf8")),
       );
-    expect(all.length).toBe(144);
+    expect(all.length).toBe(145);
     expect(new Set(all).size).toBe(all.length);
     const mapped = coverage.requirements.flatMap((r) => r.cases);
     expect(mapped.sort()).toEqual([...all].sort());

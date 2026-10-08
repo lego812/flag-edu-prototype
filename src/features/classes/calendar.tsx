@@ -62,6 +62,7 @@ export function ClassCalendar({
                 {date && (
                   <Link
                     href={dateHref(date)}
+                    scroll={false}
                     aria-current={date === selectedDate ? "date" : undefined}
                     aria-label={`${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일${isToday ? ", 오늘" : ""}, 수업 ${daySessions.length}개`}
                     className="block min-h-14 rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-black md:min-h-20"

@@ -1,7 +1,14 @@
+import type { ComponentProps } from "react";
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ClassCalendar } from "./calendar";
 import type { ClassCalendarSession } from "./model";
+
+vi.mock("next/link", () => ({
+  default: ({ scroll, ...props }: ComponentProps<"a"> & { scroll?: boolean }) => (
+    <a data-scroll={String(scroll)} {...props} />
+  ),
+}));
 
 const session = (
   id: string,
@@ -118,5 +125,22 @@ describe("ClassCalendar", () => {
     });
     expect(todayLink.parentElement).toHaveClass("bg-amber-100");
     expect(todayLink.firstElementChild).toHaveClass("bg-black", "text-white");
+  });
+
+  it("keeps the current scroll position when selecting a date", () => {
+    render(
+      <ClassCalendar
+        month="2026-10"
+        selectedDate="2026-10-01"
+        status="all"
+        sessions={[]}
+        today="2026-10-08"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "10월 8일, 오늘, 수업 0개" })).toHaveAttribute(
+      "data-scroll",
+      "false",
+    );
   });
 });
