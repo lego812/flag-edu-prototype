@@ -1,0 +1,31 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'kr.flagedu.app'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'kr.flagedu.app'
+        minSdk 23
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('FLAG_ANDROID_KEYSTORE'))
+            storePassword System.getenv('FLAG_ANDROID_STORE_PASSWORD')
+            keyAlias 'flag-edu'
+            keyPassword System.getenv('FLAG_ANDROID_STORE_PASSWORD')
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+}
+dependencies {
+    implementation 'androidx.browser:browser:1.9.0'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+}

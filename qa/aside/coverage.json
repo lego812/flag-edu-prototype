@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "requirements": [
     {
       "id": "R01",
@@ -248,6 +248,19 @@
         "src/features/reports/workflows.test.ts"
       ],
       "gaps": []
+    },
+    {
+      "id": "R11",
+      "name": "Android APK",
+      "cases": [
+        "11-a-A",
+        "11-a-B",
+        "11-a-C"
+      ],
+      "automated": [],
+      "gaps": [
+        "실제 Android 기기 설치·로그인·사진 선택·다운로드와 TWA 브라우저 도메인 검증 실행 필요"
+      ]
     }
   ],
   "scenarios": {

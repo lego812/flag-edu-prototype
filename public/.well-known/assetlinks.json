@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kr.flagedu.app",
+      "sha256_cert_fingerprints": [
+        "59:BD:51:FC:48:97:25:C4:70:05:95:FF:DE:F7:69:55:0E:14:BF:72:26:F6:90:A6:B8:BD:04:64:AC:4E:7F:2F"
+      ]
+    }
+  }
+]

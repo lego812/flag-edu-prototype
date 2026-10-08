@@ -45,3 +45,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android build outputs and signing credentials
+/android/.gradle/
+/android/**/build/
+/android/local.properties
+*.jks
+*.keystore
+
+/artifacts/android/
