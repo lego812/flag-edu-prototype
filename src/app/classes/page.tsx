@@ -12,7 +12,7 @@ import {
   parseClassCalendarFilters,
   parseClassFilters,
 } from "@/features/classes/validation";
-import { ClassSessionCard } from "@/features/classes/session-card";
+import { ClassSessionList } from "@/features/classes/session-list";
 import { ClassViewSwitcher } from "@/features/classes/view-switcher";
 
 export const metadata = { title: "수업 목록" };
@@ -230,16 +230,7 @@ export default async function ClassesPage({
               )}
             </>
           ) : (
-            <ul className="grid grid-cols-1 gap-3">
-              {result!.data!.map((session) => (
-                <li key={session.id}>
-                  <ClassSessionCard
-                    session={session}
-                    mine={session.created_by === profile.id}
-                  />
-                </li>
-              ))}
-            </ul>
+            <ClassSessionList sessions={result!.data!} />
           )}
           {view === "list" && filters && (
             <nav
