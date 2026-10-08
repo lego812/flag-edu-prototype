@@ -16,6 +16,7 @@ const BUSINESS_TABLES = [
   "template_fields",
   "template_versions",
   "class_sessions",
+  "courses",
 ];
 
 function parseArgs(argv) {
@@ -164,12 +165,87 @@ function buildClasses({ organizationId, adminId, coachId }) {
   const foundationRegistration = randomUUID();
   const outreachRegistration = randomUUID();
   const createdAt = atKst(-35, "10:00");
+  const courseIds = {
+    foundation: randomUUID(),
+    outreach: randomUUID(),
+    family: randomUUID(),
+    advanced: randomUUID(),
+    workshop: randomUUID(),
+  };
+  const courses = [
+    {
+      id: courseIds.foundation,
+      organization_id: organizationId,
+      title: "플래그풋볼 기초반 A",
+      location: "한신대학교 대운동장",
+      teaching_method: "대면 수업 · 실습 중심",
+      memo: "출석 확인 후 준비운동, 패스 기본기, 4대4 미니 게임 순서로 진행합니다.",
+      active: true,
+      created_by: coachId,
+      updated_by: coachId,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: courseIds.outreach,
+      organization_id: organizationId,
+      title: "꿈나무 찾아가는 스포츠교실",
+      location: "화성 꿈나무지역아동센터",
+      teaching_method: "방문형 그룹 수업",
+      memo: "저학년과 고학년을 두 모둠으로 나누고 난이도를 조절합니다.",
+      active: true,
+      created_by: coachId,
+      updated_by: coachId,
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: courseIds.family,
+      organization_id: organizationId,
+      title: "주말 가족 플래그풋볼 체험",
+      location: "수원 종합운동장 보조경기장",
+      teaching_method: "체험형 공개 수업",
+      memo: "보호자와 학생이 함께 참여합니다. 현장 접수 5가족을 추가로 받을 수 있습니다.",
+      active: true,
+      created_by: adminId,
+      updated_by: adminId,
+      created_at: atKst(-10, "09:30"),
+      updated_at: atKst(-10, "09:30"),
+    },
+    {
+      id: courseIds.advanced,
+      organization_id: organizationId,
+      title: "토요 심화반 경기 운영",
+      location: "한신대학교 대운동장",
+      teaching_method: "대면 수업",
+      memo: "경기 규칙과 포지션별 움직임을 익히는 심화 과정입니다.",
+      active: false,
+      created_by: coachId,
+      updated_by: coachId,
+      created_at: atKst(-20, "11:00"),
+      updated_at: atKst(-3, "08:10"),
+    },
+    {
+      id: courseIds.workshop,
+      organization_id: organizationId,
+      title: "코치 역량강화 워크숍",
+      location: "한신대학교 체육관 세미나실",
+      teaching_method: "오프라인 워크숍",
+      memo: "세부 시간은 참석자 일정 취합 후 공지합니다.",
+      active: true,
+      created_by: adminId,
+      updated_by: adminId,
+      created_at: atKst(-6, "14:00"),
+      updated_at: atKst(-6, "14:00"),
+    },
+  ];
   const sessions = [];
 
   for (const [occurrence, offset] of [-28, -21, -14, -7, 0, 7, 14, 21].entries()) {
     sessions.push({
       id: randomUUID(),
       organization_id: organizationId,
+      course_id: courseIds.foundation,
       title: "플래그풋볼 기초반 A",
       location: "한신대학교 대운동장",
       start_at: atKst(offset, "16:00"),
@@ -193,6 +269,7 @@ function buildClasses({ organizationId, adminId, coachId }) {
     sessions.push({
       id: randomUUID(),
       organization_id: organizationId,
+      course_id: courseIds.outreach,
       title: "꿈나무 찾아가는 스포츠교실",
       location: "화성 꿈나무지역아동센터",
       start_at: atKst(offset, "15:30"),
@@ -216,6 +293,7 @@ function buildClasses({ organizationId, adminId, coachId }) {
     {
       id: randomUUID(),
       organization_id: organizationId,
+      course_id: courseIds.family,
       title: "주말 가족 플래그풋볼 체험",
       location: "수원 종합운동장 보조경기장",
       start_at: atKst(4, "10:00"),
@@ -236,6 +314,7 @@ function buildClasses({ organizationId, adminId, coachId }) {
     {
       id: randomUUID(),
       organization_id: organizationId,
+      course_id: courseIds.advanced,
       title: "토요 심화반 경기 운영",
       location: "한신대학교 대운동장",
       start_at: atKst(-3, "10:00"),
@@ -256,6 +335,7 @@ function buildClasses({ organizationId, adminId, coachId }) {
     {
       id: randomUUID(),
       organization_id: organizationId,
+      course_id: courseIds.workshop,
       title: "코치 역량강화 워크숍",
       location: "한신대학교 체육관 세미나실",
       start_at: atKst(10, "00:00"),
@@ -275,7 +355,7 @@ function buildClasses({ organizationId, adminId, coachId }) {
     },
   );
 
-  return sessions;
+  return { courses, sessions };
 }
 
 function buildReportContent(session, index) {
@@ -363,14 +443,16 @@ async function seedScenario(client, users) {
     "보고서 양식 게시",
   );
 
-  const sessions = buildClasses({
+  const { courses, sessions } = buildClasses({
     organizationId,
     adminId: users.admin.id,
     coachId: users.coach.id,
   });
+  await required(await client.from("courses").insert(courses), "수업 기본정보 생성");
   const sessionRows = sessions.map((session) => ({
     id: session.id,
     organization_id: session.organization_id,
+    course_id: session.course_id,
     title: session.title,
     location: session.location,
     start_at: session.start_at,
@@ -523,8 +605,14 @@ async function seedScenario(client, users) {
 
   return {
     templateId,
+    courses: courses.length,
     sessions: sessions.length,
-    scheduledSessions: sessions.filter((session) => session.status === "scheduled").length,
+    scheduledSessions: sessions.filter(
+      (session) => session.status === "scheduled" && new Date(session.end_at) > new Date(),
+    ).length,
+    completedSessions: sessions.filter(
+      (session) => session.status === "scheduled" && new Date(session.end_at) <= new Date(),
+    ).length,
     cancelledSessions: sessions.filter((session) => session.status === "cancelled").length,
     reports: reports.length,
     submittedReports: reports.filter((report) => report.targetStatus === "submitted").length,
