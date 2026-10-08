@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { addDays, monthRange, seoulDateKey } from "./dates";
+import { addDays, monthRange, seoulDateKey, seoulToday } from "./dates";
 import type { ClassCalendarSession } from "./model";
 import { CLASS_STATUS, ClassSessionCard } from "./session-card";
 
@@ -10,11 +10,13 @@ export function ClassCalendar({
   selectedDate,
   status,
   sessions,
+  today = seoulToday(),
 }: {
   month: string;
   selectedDate: string;
   status: "all" | ClassCalendarSession["status"];
   sessions: ClassCalendarSession[];
+  today?: string;
 }) {
   const { from, to } = monthRange(month);
   const firstWeekday = new Date(`${from}T00:00:00Z`).getUTCDay();
@@ -46,19 +48,20 @@ export function ClassCalendar({
           ))}
           {dates.map((date, index) => {
             const daySessions = date ? byDate.get(date) ?? [] : [];
+            const isToday = date === today;
             return (
               <div
                 key={date ?? `empty-${index}`}
-                className={`min-h-16 border-r border-t border-neutral-200 p-1 text-left md:min-h-24 md:p-2 ${date === selectedDate ? "bg-neutral-100" : ""}`}
+                className={`min-h-16 border-r border-t border-neutral-200 p-1 text-left md:min-h-24 md:p-2 ${isToday ? "bg-amber-100" : date === selectedDate ? "bg-neutral-100" : ""}`}
               >
                 {date && (
                   <Link
                     href={dateHref(date)}
                     aria-current={date === selectedDate ? "date" : undefined}
-                    aria-label={`${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일, 수업 ${daySessions.length}개`}
+                    aria-label={`${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일${isToday ? ", 오늘" : ""}, 수업 ${daySessions.length}개`}
                     className="block min-h-14 rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-black md:min-h-20"
                   >
-                    <div className={`text-xs font-semibold ${index % 7 === 0 ? "text-red-600" : "text-neutral-700"}`}>
+                    <div className={`inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold ${isToday ? "bg-black text-white" : index % 7 === 0 ? "text-red-600" : "text-neutral-700"}`}>
                       {Number(date.slice(-2))}
                     </div>
                     {daySessions.length > 0 && (

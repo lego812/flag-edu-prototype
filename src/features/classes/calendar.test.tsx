@@ -68,4 +68,22 @@ describe("ClassCalendar", () => {
     );
     expect(screen.getByText("완료")).toHaveClass("bg-emerald-100");
   });
+
+  it("highlights today with a distinct color", () => {
+    render(
+      <ClassCalendar
+        month="2026-10"
+        selectedDate="2026-10-01"
+        status="all"
+        sessions={[]}
+        today="2026-10-08"
+      />,
+    );
+
+    const todayLink = screen.getByRole("link", {
+      name: "10월 8일, 오늘, 수업 0개",
+    });
+    expect(todayLink.parentElement).toHaveClass("bg-amber-100");
+    expect(todayLink.firstElementChild).toHaveClass("bg-black", "text-white");
+  });
 });

@@ -53,6 +53,7 @@ export type ClassCalendarSession = Pick<
   | "start_at"
   | "end_at"
   | "has_time"
+  | "teaching_method"
   | "status"
   | "created_by"
 >;

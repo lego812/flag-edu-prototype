@@ -44,7 +44,7 @@ export function classRepository(client: SupabaseClient, actor: ClassActor) {
       await syncCompletedSessions(client, actor.organization_id);
       const range = monthRange(filters.month);
       let query = client.from("class_sessions").select(
-        "id,title,location,start_at,end_at,has_time,status,created_by",
+        "id,title,location,start_at,end_at,has_time,teaching_method,status,created_by",
         { count: "exact" },
       )
         .eq("organization_id", actor.organization_id)

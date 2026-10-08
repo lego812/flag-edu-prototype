@@ -65,6 +65,13 @@ export function ClassSessionCard({
           ? formatClassDate(session.start_at, false)
           : `${formatClassDate(session.start_at, false)} · ${formatClassTime(session.start_at)} ~ ${formatClassTime(session.end_at)}`}
       </p>
+      {session.teaching_method?.trim() && (
+        <p className="mt-3 truncate text-sm text-neutral-700">
+          <span className="font-semibold text-neutral-950">수업 진행방식</span>
+          <span aria-hidden="true"> · </span>
+          {session.teaching_method}
+        </p>
+      )}
       {mine && <p className="mt-2 text-xs font-semibold">내가 등록한 일정</p>}
     </Link>
   );

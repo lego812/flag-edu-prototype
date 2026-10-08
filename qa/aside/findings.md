@@ -411,6 +411,12 @@ QA 보완 커밋은 `57a9e872ea1061b40634d3727e23a98732ea04ed`다. 위 FIXED_PEN
 
 사용자 승인에 따라 QA·README·기록 보완도 main에 병합·재배포한다. 이후 실제 배포 READY/SHA/별칭과 운영 메뉴 결과는 최종 인계에서 재조회하며, 위 `4ad47c4`의 전체 검증을 다른 배포의 실행으로 바꾸어 적지 않는다. 실제 업무 CRUD·메일 E2E, 실기기 카메라/HEIC·PWA·파일 앱, 개발/운영 DB 분리와 공식 React 수정 포함 안정판 전환은 별도 후속 범위다.
 
+## 2026-10-08 수업 카드 진행방식·캘린더 오늘 강조
+
+| ID | 종류 | 기준·원인 | 상태 | 변경·회귀 테스트 | 커밋·재검증 |
+| --- | --- | --- | --- | --- | --- |
+| `CLIENT-2026-10-08-class-card-method-today` | APPROVED IMPROVEMENT | R03 / 3-a-K~3-a-L. 수업 카드에 진행방식이 없어 상세 진입 전 확인할 수 없었고, 월간 캘린더의 오늘은 선택 날짜와 별도로 구분되지 않았다. 긴 진행방식으로 카드 높이가 늘어나지 않아야 한다는 후속 요청을 반영한다. | FIXED_PENDING_RETEST | 목록과 캘린더 아래 공용 카드에 진행방식을 한 줄 말줄임으로 표시하고 빈 값은 생략한다. 캘린더 오늘 셀은 노란 배경과 검은 날짜 배지로 표시하고 접근성 이름에 `오늘`을 추가한다. 카드 표시·빈 값·말줄임과 오늘 색상 회귀 테스트를 추가한다. | 커밋 예정; 대상 `9/9`, 전체 `246/246`, 린트·TypeScript 포함 production build 통과. 로그인된 실제 목록·캘린더 화면 재검증은 미실행 |
+
 ## 2026-10-07 후속 운영 대조·공개 전용 서비스 워커 수정
 
 main `cc2d9df4ed7f07939f974dd140c52476ff0e409e`의 Vercel `dpl_AqMR7aXKk9v2H75P8UYznwuLvg6Z` READY·main SHA·운영 별칭을 확인한 뒤 추가 조회 검증을 실행했다. WebKit `mobile-guide-production-1791351843159`는 20개 뒤 기억된 캘린더의 정상 query 리다이렉트를 navigation load 대기가 거절해 FAIL, Chrome `1791351855876`은 42개 뒤 quiet timeout, Chrome `1791352323810`은 40개 뒤 networkidle timeout으로 FAIL이다. 업무 쓰기/DOM 예외 0·6개 업무 테이블 동일이며 이동 timeout을 제품 권한 결함으로 단정하지 않는다. 별도 WebKit `1791352338777`은 42개 뒤 기존 사진 decode 실패와 `FetchEvent.respondWith received an error: Returned response is null.`을 관찰했다. 모든 원본은 ignored artifacts에 보존한다.
