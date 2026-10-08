@@ -479,3 +479,10 @@ R03·조회 시나리오 `3-a-G`·coverage v11·README 설명을 같은 기준�
 `CLIENT-20261008-date-grouped-list` (R03/3-a-D): 기존 목록은 일정마다 날짜·종료 시간·상태 배지를 포함한 카드 하나를 표시했다. 첨부 화면 기준으로 구현 `6909d0da41ddc018d521370b41e9d9e0ec6e154e`에서 목록 전용 날짜 그룹 컴포넌트를 추가했다. 서울 날짜별 흰색 둥근 카드의 날짜 제목 아래 각 수업의 이름·장소를 왼쪽, 상태·시작 시간 또는 시간 미정을 오른쪽에 표시하며 같은 날의 행은 옅은 구분선으로 나눈다. 각 행의 상세 링크와 현재 조회 정렬·필터·페이지 범위, 캘린더의 기존 카드와 기본 보기·선택 기억은 유지한다. 페이지 경계에 걸친 날짜는 각 페이지의 조회 결과 안에서 묶는다.
 
 회귀 테스트는 UTC 자정 경계의 서울 날짜 묶음, 조회 순서 유지, 동일 월일의 다른 연도 분리, 상태 세 종류와 시간 미정·상세 링크를 검증한다. 전체 51파일 257/257·lint·TypeScript 포함 production build PASS. 실제 로그인 로컬 production Chromium 실행 `date-group-list-1791419089463`에서 390/1280px의 날짜별 카드, 최신/오래된 정렬, 상태·시작 시간 표시, 상세 이동·복귀, 가로 넘침 없음·페이지 오류 0건을 확인하고 390px 캡처를 첨부 요청과 시각 비교했다. VERIFIED_LOCAL. 업무 데이터 쓰기는 수행하지 않았다. R03/3-a-D/coverage v13/README를 갱신했다. 로그·캡처·인증정보는 커밋하지 않으며 운영 배포 확인은 별도 artifact에 기록한다.
+
+
+## 사용자 요청: 웹앱의 Android APK
+
+`CLIENT-20261008-android-apk` (R11): 구현 `dc941d7680aed705ca4e1b5a8c807c48a20fb4cb`에서 Google Android Browser Helper 2.6.2와 안정판 AndroidX Browser 1.9.0의 TWA 설치형 앱을 추가했다. 패키지 `kr.flagedu.app`, Flag Edu 이름·기존 아이콘, Android 6/API 23 이상, target/compile API 36이며 운영 HTTPS 웹앱으로 연결한다. 지원 브라우저·도메인 검증 실패 시 Custom Tabs로 fallback한다. 공개 인증서 지문만 assetlinks에 등록하며 앱에 서버 시크릿이나 로그인 계정을 넣지 않는다. 개인키·암호는 저장소 밖에 보관하고 영구 백업 필요를 Android README에 명시했다. APK/캐시/로그는 git 제외다.
+
+Gradle wrapper 배포 SHA256 검증, `assembleRelease`·`lintRelease` PASS(오류/경고 0), APK v1/v2 서명·zipalign·패키지·min/target API·인증서와 assetlinks 지문 일치 PASS. APK 크기 3680191 bytes, SHA256 `bc1b8f8132a78574789ff41ac7f704c1e6a2c37d6425e64fc7e4f5a07f36694d`. Next TypeScript/production build PASS. 로컬 공개 assetlinks HTTP 200 확인. 결과 `artifacts/android/verification.json`. 상태 VERIFIED_BUILD이며 실제 Android 실행은 NOT_RUN이다. 연결 기기/가속 에뮬레이터가 없어 설치·TWA 도메인 신뢰 실행·관리자/코치 로그인·사진 선택·다운로드를 기기에서 확인한 것으로 표시하지 않는다. R11/coverage v14/manual 11-a-A~C에 남은 기기 검증을 기록했다. 업무 데이터 쓰기 없음. 운영 assetlinks 배포 HTTP와 지문 확인은 후속 artifact에 기록한다.
