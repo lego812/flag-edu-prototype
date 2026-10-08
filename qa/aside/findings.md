@@ -492,3 +492,8 @@ R03·조회 시나리오 `3-a-G`·coverage v11·README 설명을 같은 기준�
 `CLIENT-20261008-android-apk` (R11): 구현 `dc941d7680aed705ca4e1b5a8c807c48a20fb4cb`에서 Google Android Browser Helper 2.6.2와 안정판 AndroidX Browser 1.9.0의 TWA 설치형 앱을 추가했다. 패키지 `kr.flagedu.app`, Flag Edu 이름·기존 아이콘, Android 6/API 23 이상, target/compile API 36이며 운영 HTTPS 웹앱으로 연결한다. 지원 브라우저·도메인 검증 실패 시 Custom Tabs로 fallback한다. 공개 인증서 지문만 assetlinks에 등록하며 앱에 서버 시크릿이나 로그인 계정을 넣지 않는다. 개인키·암호는 저장소 밖에 보관하고 영구 백업 필요를 Android README에 명시했다. APK/캐시/로그는 git 제외다.
 
 Gradle wrapper 배포 SHA256 검증, `assembleRelease`·`lintRelease` PASS(오류/경고 0), APK v1/v2 서명·zipalign·패키지·min/target API·인증서와 assetlinks 지문 일치 PASS. APK 크기 3680191 bytes, SHA256 `bc1b8f8132a78574789ff41ac7f704c1e6a2c37d6425e64fc7e4f5a07f36694d`. Next TypeScript/production build PASS. 로컬 공개 assetlinks HTTP 200 확인. 결과 `artifacts/android/verification.json`. 상태 VERIFIED_BUILD이며 실제 Android 실행은 NOT_RUN이다. 연결 기기/가속 에뮬레이터가 없어 설치·TWA 도메인 신뢰 실행·관리자/코치 로그인·사진 선택·다운로드를 기기에서 확인한 것으로 표시하지 않는다. R11/coverage v14/manual 11-a-A~C에 남은 기기 검증을 기록했다. 업무 데이터 쓰기 없음. 운영 assetlinks 배포 HTTP와 지문 확인은 후속 artifact에 기록한다.
+
+
+### Android 운영 연결 배포 및 QA 매핑 후속
+
+main `b9adeda`의 공개 assetlinks는 운영 HTTPS HTTP 200·JSON MIME으로 제공되고 최종 APK의 인증서와 일치한다(`artifacts/android/production-assetlinks.json`). 운영 로그인 HTTP 200, 병합된 최신 main의 Next TypeScript/production build PASS. 병합 과정에서 origin/main의 최신 수업 표시 변경도 보존했다. 새 Android 수동 케이스 3개를 추가하면서 기존 QA 목록 총수 144 고정값이 남아 전체 테스트는 최초 260/261이었다. `9e22ae95ab7467128202acfd919cf1a588e26bf2`에서 기대 총수를 147로 맞추되 유일 ID·전체 매핑·자동 테스트 경로 검증은 유지했으며 QA 보고서 회귀 재실행 12/12 PASS. 이 목록 검사 오류는 APK나 웹앱 실행 결함이 아니다. 최초 실패 로그를 보존하며 실제 Android 기기 실행은 여전히 미실행이다.
