@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ClassCalendar } from "./calendar";
 import type { ClassCalendarSession } from "./model";
@@ -20,6 +20,39 @@ const session = (
 });
 
 describe("ClassCalendar", () => {
+  it("pairs each status dot with its own count on a mixed-status date", () => {
+    render(
+      <ClassCalendar month="2026-10" selectedDate="2026-10-01" status="all" sessions={[
+        session("cancelled", "2026-10-31T01:00:00.000Z", { status: "cancelled" }),
+        session("done-1", "2026-10-31T02:00:00.000Z", { status: "completed" }),
+        session("done-2", "2026-10-31T03:00:00.000Z", { status: "completed" }),
+      ]} />,
+    );
+    const date = screen.getByRole("link", { name: "10월 31일, 수업 3개" });
+    const counts = within(date).getAllByRole("img");
+    expect(counts.map((element) => element.getAttribute("aria-label"))).toEqual(["완료 2개", "취소 1개"]);
+    expect(counts[0]).toHaveTextContent("2");
+    expect(counts[0].firstElementChild).toHaveClass("bg-emerald-500");
+    expect(counts[1]).toHaveTextContent("1");
+    expect(counts[1].firstElementChild).toHaveClass("bg-red-500");
+  });
+
+  it("counts every session without truncating or mixing dates", () => {
+    render(
+      <ClassCalendar month="2026-10" selectedDate="2026-10-01" status="all" sessions={[
+        ...Array.from({ length: 5 }, (_, index) => session(`scheduled-${index}`, "2026-10-31T01:00:00.000Z")),
+        session("done", "2026-10-31T02:00:00.000Z", { status: "completed" }),
+        session("other-day", "2026-10-30T02:00:00.000Z", { status: "cancelled" }),
+      ]} />,
+    );
+    const date = screen.getByRole("link", { name: "10월 31일, 수업 6개" });
+    expect(within(date).getAllByRole("img")).toHaveLength(2);
+    expect(within(date).getByRole("img", { name: "예정 5개" }).firstElementChild).toHaveClass("bg-amber-400");
+    expect(within(date).getByRole("img", { name: "완료 1개" })).toHaveTextContent("1");
+    expect(within(date).queryByRole("img", { name: /취소/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("link", { name: "10월 29일, 수업 0개" })).queryByRole("img")).not.toBeInTheDocument();
+  });
+
   it("groups sessions by their Seoul date and links to details", () => {
     render(
       <ClassCalendar

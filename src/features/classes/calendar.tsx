@@ -4,6 +4,7 @@ import type { ClassCalendarSession } from "./model";
 import { CLASS_STATUS, ClassSessionCard } from "./session-card";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const STATUS_ORDER = ["scheduled", "completed", "cancelled"] as const;
 
 export function ClassCalendar({
   month,
@@ -49,6 +50,10 @@ export function ClassCalendar({
           {dates.map((date, index) => {
             const daySessions = date ? byDate.get(date) ?? [] : [];
             const isToday = date === today;
+            const statusCounts = STATUS_ORDER.map((status) => ({
+              status,
+              count: daySessions.filter((session) => session.status === status).length,
+            })).filter(({ count }) => count > 0);
             return (
               <div
                 key={date ?? `empty-${index}`}
@@ -65,17 +70,23 @@ export function ClassCalendar({
                       {Number(date.slice(-2))}
                     </div>
                     {daySessions.length > 0 && (
-                      <div className="mt-2 flex flex-wrap items-center gap-1">
-                        {daySessions.slice(0, 4).map((session) => (
+                      <div className="mt-2 flex flex-col items-start gap-1">
+                        {statusCounts.map(({ status, count }) => (
                           <span
-                            key={session.id}
-                            aria-hidden="true"
-                            className={`size-2 rounded-full ${CLASS_STATUS[session.status].marker}`}
-                          />
+                            key={status}
+                            role="img"
+                            aria-label={`${CLASS_STATUS[status].label} ${count}개`}
+                            className="inline-flex items-center gap-1 whitespace-nowrap"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className={`size-2 shrink-0 rounded-full ${CLASS_STATUS[status].marker}`}
+                            />
+                            <span className="text-[11px] font-bold text-neutral-600">
+                              {count}
+                            </span>
+                          </span>
                         ))}
-                        <span className="ml-1 text-[11px] font-bold text-neutral-600">
-                          {daySessions.length}
-                        </span>
                       </div>
                     )}
                   </Link>

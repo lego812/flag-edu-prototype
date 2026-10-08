@@ -11,6 +11,7 @@ describe("class view preference", () => {
         calendarHref="/classes?view=calendar"
       />,
     );
+    expect(screen.getAllByRole("link").map((link) => link.textContent?.trim())).toEqual(["캘린더", "목록"]);
     fireEvent.click(screen.getByRole("link", { name: "캘린더" }));
     expect(document.cookie).toContain("flag-edu-class-view=calendar");
     fireEvent.click(screen.getByRole("link", { name: "목록" }));
