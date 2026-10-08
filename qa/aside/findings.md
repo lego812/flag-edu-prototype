@@ -415,7 +415,7 @@ QA 보완 커밋은 `57a9e872ea1061b40634d3727e23a98732ea04ed`다. 위 FIXED_PEN
 
 | ID | 종류 | 기준·원인 | 상태 | 변경·회귀 테스트 | 커밋·재검증 |
 | --- | --- | --- | --- | --- | --- |
-| `BUG-2026-10-08-calendar-date-scroll` | BUG | R03 / 3-a-M. 캘린더 날짜 링크가 Next.js의 기본 스크롤 동작을 사용해 날짜 선택 후 페이지 최상단으로 이동했다. | FIXED_PENDING_RETEST | 날짜 링크에 `scroll={false}`를 지정해 현재 위치를 유지한다. 링크 옵션 회귀 테스트를 추가했다. | 대상 7/7, 전체 262/262, ESLint, TypeScript 포함 production build 통과. 실제 브라우저 재검증 전에는 VERIFIED로 처리하지 않는다. |
+| `BUG-2026-10-08-calendar-date-scroll` | BUG | R03 / 3-a-M. 캘린더 날짜 링크가 Next.js의 기본 스크롤 동작을 사용해 날짜 선택 후 페이지 최상단으로 이동했다. | FIXED_PENDING_RETEST | 날짜 링크에 `scroll={false}`를 지정해 현재 위치를 유지한다. 링크 옵션 회귀 테스트를 추가했다. | `4b4a809`; 대상 7/7, 전체 262/262, ESLint, TypeScript 포함 production build 통과. 실제 브라우저 재검증 전에는 VERIFIED로 처리하지 않는다. |
 
 ## 2026-10-08 수업 카드 진행방식·캘린더 오늘 강조
 
