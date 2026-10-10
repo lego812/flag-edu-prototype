@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/submit-button";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
 import { switchWorkspaceAction } from "./actions";
 
@@ -37,9 +38,9 @@ export function WorkspaceSwitcher({
           </option>
         ))}
       </select>
-      <button className="min-h-10 rounded-full border border-neutral-300 bg-white px-3 text-xs font-semibold">
+      <SubmitButton pendingLabel="전환 중…" className="min-h-10 rounded-full border border-neutral-300 bg-white px-3 text-xs font-semibold">
         전환
-      </button>
+      </SubmitButton>
     </form>
   );
 }

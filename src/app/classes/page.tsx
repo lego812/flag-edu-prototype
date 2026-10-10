@@ -1,4 +1,6 @@
-import Link from "next/link";
+import { SubmitButton } from "@/components/submit-button";
+import { FilterForm } from "@/components/filter-form";
+import Link from "@/components/feedback-link";
 import { cookies } from "next/headers";
 import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
@@ -98,7 +100,7 @@ export default async function ClassesPage({
 
       {view === "list" && (
         <ListFilters from={filters?.from} to={filters?.to}>
-          <form
+          <FilterForm
             key={[filters?.from, filters?.to, filters?.status, filters?.sort].join(":")}
             action="/classes"
             className="grid grid-cols-1 gap-4"
@@ -149,7 +151,7 @@ export default async function ClassesPage({
               </select>
             </label>
             <div className="flex flex-wrap gap-2">
-              <button className="btn">조회</button>
+              <SubmitButton pendingLabel="조회 중…" className="btn">조회</SubmitButton>
               <Link href="/classes?view=list&sort=newest" className="btn-secondary">
                 필터 초기화
               </Link>
@@ -157,7 +159,7 @@ export default async function ClassesPage({
             <p className="text-xs text-neutral-500">
               날짜를 비우면 전체 기간을 조회합니다. 날짜는 한국 시간 기준이며 종료일도 포함됩니다.
             </p>
-          </form>
+          </FilterForm>
         </ListFilters>
       )}
 

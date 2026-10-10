@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { notFound } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { canManageCourse, isUuid } from "@/features/classes/model";

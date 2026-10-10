@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FieldInput } from "./field-input";
@@ -86,17 +87,17 @@ export function ReportEditor({
             />
           ))}
         <div className="flex flex-wrap gap-3">
-          <button className="btn-secondary" name="intent" value="save">
+          <SubmitButton pendingLabel="저장 중…" className="btn-secondary" name="intent" value="save">
             임시저장
-          </button>
-          <button
+          </SubmitButton>
+          <SubmitButton pendingLabel="제출 중…"
             className="btn"
             name="intent"
             value="submit"
             disabled={immutable}
           >
             제출
-          </button>
+          </SubmitButton>
         </div>
       </fieldset>
       {state.error && (

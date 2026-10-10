@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/features/auth/login-form";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 
 export const metadata = { title: "로그인" };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { usePathname } from "next/navigation";
 import { BackButton } from "./back-button";
 

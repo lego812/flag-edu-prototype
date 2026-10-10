@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { LoadingSpinner } from "@/components/loading-indicator";
 import { searchClasses } from "./search";
 import { formatClassDate } from "./dates";
 type Choice = {
@@ -73,11 +74,7 @@ export function ClassSearchPicker({ selected }: { selected?: Choice | null }) {
         </div>
       )}
       {busy && (
-        <div
-          role="status"
-          aria-label="수업 검색 중"
-          className="size-5 animate-spin rounded-full border-2 border-neutral-200 border-t-black"
-        />
+        <p role="status" aria-label="수업 검색 중" className="flex items-center gap-2 text-sm text-neutral-600"><LoadingSpinner />수업 검색 중…</p>
       )}
       {error && (
         <p role="alert" className="text-sm text-red-700">

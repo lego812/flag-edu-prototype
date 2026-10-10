@@ -84,3 +84,80 @@ body {
     padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 }
+
+/* Immediate press feedback also covers local controls and dialog buttons. */
+button:not(:disabled):active,
+a[href]:active {
+  opacity: 0.72;
+}
+
+.feedback-link { position: relative; }
+.feedback-link:has([data-link-pending]) {
+  box-shadow: inset 0 0 0 2px #a3a3a3;
+  pointer-events: none;
+}
+.link-pending {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  display: flex;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  background: white;
+  color: #191919;
+  box-shadow: 0 1px 4px #0002;
+}
+.loading-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: loading-spin 0.8s linear infinite;
+}
+.navigation-feedback { pointer-events: none; }
+.navigation-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 80;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #191919, transparent);
+  background-size: 45% 100%;
+  background-repeat: no-repeat;
+  animation: navigation-slide 1.2s ease-in-out infinite;
+}
+.navigation-message {
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: 1rem;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 9999px;
+  background: white;
+  color: #525252;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 10px #0001;
+}
+.page-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f3f2;
+}
+.loading-skeleton { animation: loading-pulse 1.5s ease-in-out infinite; }
+@keyframes loading-spin { to { transform: rotate(360deg); } }
+@keyframes navigation-slide { from { background-position: -80% 0; } to { background-position: 180% 0; } }
+@keyframes loading-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner, .navigation-progress, .loading-skeleton { animation: none; }
+  .navigation-progress { background: #191919; }
+}

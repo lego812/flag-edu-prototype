@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 import { useActionState } from "react";
 import { manageMemberAction } from "./manage-action";
 export function ManageMemberForm({
@@ -41,7 +42,7 @@ export function ManageMemberForm({
           <input type="checkbox" name="confirm" value="yes" required />
           변경 확인
         </label>
-        <button className="btn-secondary">적용</button>
+        <SubmitButton pendingLabel="적용 중…" className="btn-secondary">적용</SubmitButton>
       </fieldset>
       {state.error && (
         <p role="alert" className="text-sm text-red-700">

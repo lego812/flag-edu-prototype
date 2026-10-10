@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { courseRepository } from "@/features/classes/repository";
 

@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState, useState } from "react";
 import { deactivateTemplateAction } from "./actions";
@@ -21,7 +22,7 @@ export function TemplateDeleteButton({ id, name }: { id: string; name: string })
               <input type="hidden" name="confirm" value="yes" />
               <div className="flex justify-end gap-2">
                 <button type="button" className="btn-secondary" disabled={pending} onClick={() => setOpen(false)}>취소</button>
-                <button className="btn bg-red-700 hover:bg-red-600" disabled={pending}>{pending ? "삭제 중…" : "삭제"}</button>
+                <SubmitButton pending={pending} pendingLabel="삭제 중…" className="btn bg-red-700 hover:bg-red-600" disabled={pending}>삭제</SubmitButton>
               </div>
               {state.error && <p role="alert" className="text-sm text-red-700">{state.error}</p>}
             </form>

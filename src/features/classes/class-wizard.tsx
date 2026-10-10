@@ -1,5 +1,6 @@
 "use client";
-import Link from "next/link";
+import { SubmitButton } from "@/components/submit-button";
+import Link from "@/components/feedback-link";
 import { useActionState, useRef, useState } from "react";
 import { createScheduleAction, updateClassAction } from "./actions";
 import { addDays, seoulToday, toSeoulInput } from "./dates";
@@ -480,18 +481,14 @@ export function ClassWizard({
             다음 →
           </button>
         ) : (
-          <button
+          <SubmitButton pendingLabel="저장 중…" pending={pending}
             key="submit-schedule"
             type="submit"
             className="btn"
             disabled={pending || !!previewError || !preview.length}
           >
-            {pending
-              ? "저장 중…"
-              : session
-                ? "수정 저장"
-                : `${preview.length}개 수업 등록`}
-          </button>
+            {session ? "수정 저장" : `${preview.length}개 수업 등록`}
+          </SubmitButton>
         )}
       </div>
     </form>

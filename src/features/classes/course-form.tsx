@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState } from "react";
 import { createCourseAction, updateCourseAction } from "./actions";
@@ -65,9 +66,9 @@ export function CourseForm({ course }: { course?: Course }) {
             placeholder="준비물이나 운영 참고사항을 남겨 주세요."
           />
         </label>
-        <button className="btn" disabled={pending}>
-          {pending ? "저장 중…" : course ? "수업 수정" : "수업 등록"}
-        </button>
+        <SubmitButton pendingLabel="저장 중…" className="btn" pending={pending}>
+          {course ? "수업 수정" : "수업 등록"}
+        </SubmitButton>
       </fieldset>
       {state.error && <p role="alert" className="text-red-700">{state.error}</p>}
     </form>

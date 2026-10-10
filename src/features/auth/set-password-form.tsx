@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState } from "react";
 import { setPasswordAction, type AuthActionState } from "./actions";
@@ -58,13 +59,13 @@ export function SetPasswordForm({ email }: SetPasswordFormProps) {
           {state.error}
         </p>
       )}
-      <button
+      <SubmitButton pendingLabel="가입 처리 중…"
         type="submit"
-        disabled={pending}
+        pending={pending}
         className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white disabled:opacity-60"
       >
-        {pending ? "가입 처리 중…" : "가입 완료하고 시작하기"}
-      </button>
+        가입 완료하고 시작하기
+      </SubmitButton>
     </form>
   );
 }

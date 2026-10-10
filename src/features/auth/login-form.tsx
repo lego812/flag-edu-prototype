@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState } from "react";
 import { loginAction, type AuthActionState } from "./actions";
@@ -39,13 +40,13 @@ export function LoginForm() {
         </p>
       )}
 
-      <button
+      <SubmitButton pendingLabel="로그인 중…"
         type="submit"
-        disabled={pending}
+        pending={pending}
         className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "로그인 중…" : "로그인"}
-      </button>
+        로그인
+      </SubmitButton>
     </form>
   );
 }

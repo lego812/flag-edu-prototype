@@ -19,6 +19,18 @@ afterAll(() => {
 });
 
 describe("private photo preview", () => {
+  it("shows progress until the image loads and clears it on failure", () => {
+    const ui = render(<PhotoPreview url="https://example.com/private.jpg" label="활동 사진" onClose={vi.fn()} />);
+    expect(screen.getByRole("status")).toHaveTextContent("사진을 불러오는 중");
+    fireEvent.load(screen.getByRole("img"));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    ui.unmount();
+    render(<PhotoPreview url="https://example.com/expired.jpg" label="활동 사진" onClose={vi.fn()} />);
+    fireEvent.error(screen.getByRole("img"));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
   it("opens a labelled native modal and closes without navigation or writes", () => {
     const onClose = vi.fn();
     render(<PhotoPreview url="https://example.com/private.jpg" label="활동 사진 1" onClose={onClose} />);

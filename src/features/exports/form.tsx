@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 import { useState } from "react";
 export function ExportForm({
   members,
@@ -74,9 +75,9 @@ export function ExportForm({
             <option value="pdf">PDF</option>
           </select>
         </label>
-        <button className="btn">
-          {pending ? "파일 생성 중…" : "생성 및 다운로드"}
-        </button>
+        <SubmitButton pending={pending} pendingLabel="파일 생성 중…" className="btn">
+          생성 및 다운로드
+        </SubmitButton>
       </fieldset>
       {error && (
         <p role="alert" className="text-red-700">

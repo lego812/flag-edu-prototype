@@ -1,4 +1,6 @@
-import Link from "next/link";
+import { SubmitButton } from "@/components/submit-button";
+import { FilterForm } from "@/components/filter-form";
+import Link from "@/components/feedback-link";
 import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { redirect } from "next/navigation";
@@ -62,7 +64,7 @@ export async function ReportList({
         to={filters.to}
         selectedLabel={selectedSession?.title}
       >
-        <form action={base} className="grid grid-cols-1 gap-4">
+        <FilterForm action={base} className="grid grid-cols-1 gap-4">
           <label className="text-sm">
             수업 시작일
             <input
@@ -99,8 +101,8 @@ export async function ReportList({
             </label>
           )}
           <ClassSearchPicker key={filters.session} selected={selectedSession} />
-          <button className="btn self-end">조회</button>
-        </form>
+          <SubmitButton pendingLabel="조회 중…" className="btn self-end">조회</SubmitButton>
+        </FilterForm>
       </ListFilters>
       <p className="text-sm text-neutral-600">총 {count ?? 0}개</p>
       <ul className="grid grid-cols-1 gap-3">

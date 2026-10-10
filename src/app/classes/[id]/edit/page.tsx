@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { canManageClass, isUuid } from "@/features/classes/model";
 import { classRepository, courseRepository } from "@/features/classes/repository";

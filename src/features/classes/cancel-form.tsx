@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState, useState } from "react";
 import { cancelClassAction } from "./actions";
@@ -17,7 +18,7 @@ export function CancelClassForm({ id }: { id: string }) {
       </label>
       {state.error && <p role="alert" className="mt-3 text-sm text-red-700">{state.error}</p>}
       <div className="mt-4 flex gap-3">
-        <button disabled={pending} className="rounded-lg bg-red-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{pending ? "취소 중…" : "취소 확정"}</button>
+        <SubmitButton pending={pending} pendingLabel="취소 중…" disabled={pending} className="rounded-lg bg-red-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">취소 확정</SubmitButton>
         <button type="button" disabled={pending} onClick={() => setOpen(false)} className="rounded-lg border border-red-200 px-4 py-3 text-sm">돌아가기</button>
       </div>
     </form>
