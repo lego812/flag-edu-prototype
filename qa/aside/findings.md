@@ -524,3 +524,5 @@ FeedbackLink의 클릭 위치 스피너·상단 이동 표시, SubmitButton의 �
 브라우저: 격리 production 빌드 Chromium `open-signup-1791625733589`, 390/1280px **30/30 PASS**, pageerror 0. 실제 앱 입력/서버 액션과 실제 마이그레이션을 적용한 PGlite를 연결했으며 Auth/메일 전송은 로컬 대체 서버였다. 잘못된 코드·입력 보존·재발송·가입 후 멤버십 없음·자기 관리자 워크스페이스 생성·새/기존 계정 메일 인증 및 초대 수락·기존 관리자 역할 유지·다른 이메일 초대 비노출·팝업 전환/포커스/Escape·칠판·넘침 없음을 확인했다. 실제 SMTP/메일함·운영 DB/계정/권한은 변경하지 않았다. 최초 검증은 Chromium의 네이티브 BODY 포커스 순환(대화형 배경에는 접근 불가)을 엄격히 실패로 처리했고, 두 번째 실행은 Next의 숨겨진 `role=alert` 라우트 알림을 제품 오류와 중복 선택해 실패했다. 두 로그를 유지하고 제품 오류를 필터링하지 않은 구체적인 선택자로 재실행해 30개를 통과했다. 로그/캡처는 Git 제외다.
 
 운영 공개 Auth 설정 조회는 `disable_signup=false`, `mailer_autoconfirm=false`, `external.email=true`였다. 템플릿 본문·실제 발송 또는 신규 SQL 적용의 증거는 아니다. 현재 VM에는 프로젝트 설정/SQL 적용 관리 자격증명이 없어 운영 마이그레이션·메일 템플릿 적용·main 병합/배포·운영 메일 E2E는 미실행이다. 상태 **VERIFIED_LOCAL / ROLLOUT_PENDING**. 최종 lint·TypeScript 포함 운영 환경 production build PASS. 구현 커밋/PR은 Git 이력과 후속 기록으로 추적한다.
+
+구현 커밋: `6bfd03cac1cfa2226d85844a4e39c9040f1c272b`. 새 로컬 검증 실행 `open-signup-1791625733589` 및 전체 305개 회귀는 이 코드와 동일한 구현을 대상으로 수행했다. 운영 반영은 대기 상태다.
