@@ -1,5 +1,5 @@
 {
-  "version": 16,
+  "version": 17,
   "requirements": [
     {
       "id": "R01",
@@ -37,12 +37,32 @@
         "scripts/qa-network-idle.test.mjs",
         "scripts/qa-browser-observations.test.mjs"
       ],
-      "gaps": ["실기기 PWA 설치와 모션 감소 시각 검사", "실제 iOS 27 Safari·키보드·자동 확대 (WebKit 에뮬레이션과 별도)"]
+      "gaps": [
+        "실기기 PWA 설치와 모션 감소 시각 검사",
+        "실제 iOS 27 Safari·키보드·자동 확대 (WebKit 에뮬레이션과 별도)"
+      ]
     },
     {
       "id": "R02",
-      "name": "초대·로그인",
-      "cases": ["2-a-A", "2-a-B", "2-a-C", "2-a-D", "2-b-A", "2-b-B", "2-b-C", "2-b-D", "2-b-E"],
+      "name": "이메일 가입·로그인·초대",
+      "cases": [
+        "2-a-A",
+        "2-a-B",
+        "2-a-C",
+        "2-a-D",
+        "2-b-A",
+        "2-b-B",
+        "2-b-C",
+        "2-b-D",
+        "2-b-E",
+        "2-c-A",
+        "2-c-B",
+        "2-c-C",
+        "2-c-D",
+        "2-c-E",
+        "2-c-F",
+        "2-c-G"
+      ],
       "automated": [
         "next.config.test.ts",
         "src/app/page.test.tsx",
@@ -50,9 +70,15 @@
         "src/features/auth/validation.test.ts",
         "src/features/auth/actions.test.ts",
         "src/features/members/actions.test.ts",
-        "src/app/auth/callback/page.test.tsx"
+        "src/app/auth/callback/page.test.tsx",
+        "src/features/auth/signup-actions.test.ts",
+        "src/features/workspaces/invitation-actions.test.ts",
+        "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["만료된 초대·복구 링크 거절 E2E", "워크스페이스 적용 후 실제 초대 메일 발송·수신·링크 수락 E2E"]
+      "gaps": [
+        "운영 가입 코드·초대 메일 실제 발송/수신/수락 E2E",
+        "운영 DB 마이그레이션·이메일 템플릿 적용 후 재검증"
+      ]
     },
     {
       "id": "R03",
@@ -163,7 +189,10 @@
         "src/features/reports/field-input.test.tsx",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["실기기 카메라·HEIC", "연결된 @브라우저 확장의 OS 파일 선택기(설치 Chrome/WebKit의 파일 입력·실제 업로드와 별도)"]
+      "gaps": [
+        "실기기 카메라·HEIC",
+        "연결된 @브라우저 확장의 OS 파일 선택기(설치 Chrome/WebKit의 파일 입력·실제 업로드와 별도)"
+      ]
     },
     {
       "id": "R06",
@@ -188,12 +217,24 @@
         "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["검색 30건 초과·기간 경계·페이지 이동 E2E"]
+      "gaps": [
+        "검색 30건 초과·기간 경계·페이지 이동 E2E"
+      ]
     },
     {
       "id": "R07",
       "name": "양식",
-      "cases": ["7-a-A", "7-a-B", "7-a-C", "7-b-A", "7-b-B", "7-b-C", "7-b-D", "7-b-E", "7-b-F"],
+      "cases": [
+        "7-a-A",
+        "7-a-B",
+        "7-a-C",
+        "7-b-A",
+        "7-b-B",
+        "7-b-C",
+        "7-b-D",
+        "7-b-E",
+        "7-b-F"
+      ],
       "automated": [
         "src/features/templates/editor.test.tsx",
         "src/features/reports/workflows.test.ts"
@@ -203,7 +244,18 @@
     {
       "id": "R08",
       "name": "내보내기",
-      "cases": ["8-a-A", "8-a-B", "8-a-C", "8-a-D", "8-a-E", "8-a-F", "8-a-G", "8-b-A", "8-b-B", "8-b-C"],
+      "cases": [
+        "8-a-A",
+        "8-a-B",
+        "8-a-C",
+        "8-a-D",
+        "8-a-E",
+        "8-a-F",
+        "8-a-G",
+        "8-b-A",
+        "8-b-B",
+        "8-b-C"
+      ],
       "automated": [
         "src/features/exports/generate.test.ts",
         "src/features/exports/policy.test.ts",
@@ -213,12 +265,28 @@
         "src/app/api/cron/exports/route.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": ["실제 iOS Safari의 파일 앱 저장·공유 (WebKit 다운로드 이벤트와 별도)"]
+      "gaps": [
+        "실제 iOS Safari의 파일 앱 저장·공유 (WebKit 다운로드 이벤트와 별도)"
+      ]
     },
     {
       "id": "R09",
       "name": "권한·데이터 보호",
-      "cases": ["9-a-A", "9-a-B", "9-a-C", "9-a-D", "9-a-E", "9-a-F", "9-b-A", "9-b-B", "9-b-C", "9-b-D", "9-b-E", "9-b-F", "9-b-G"],
+      "cases": [
+        "9-a-A",
+        "9-a-B",
+        "9-a-C",
+        "9-a-D",
+        "9-a-E",
+        "9-a-F",
+        "9-b-A",
+        "9-b-B",
+        "9-b-C",
+        "9-b-D",
+        "9-b-E",
+        "9-b-F",
+        "9-b-G"
+      ],
       "automated": [
         "scripts/service-worker.test.mjs",
         "src/app/api/reports/[id]/photos/route.test.ts",
@@ -256,7 +324,9 @@
         "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts"
       ],
-      "gaps": []
+      "gaps": [
+        "운영 신규 가입·워크스페이스 생성 및 초대 수락 후 팝업 전환 E2E"
+      ]
     },
     {
       "id": "R11",

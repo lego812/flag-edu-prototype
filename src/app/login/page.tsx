@@ -2,17 +2,23 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/features/auth/login-form";
 import { createClient } from "@/lib/supabase/server";
 import Link from "@/components/feedback-link";
+import { safeAuthNext } from "@/features/auth/continuation";
 
 export const metadata = { title: "로그인" };
 
-export default async function LoginPage() {
+export default async function LoginPage(
+  { searchParams }: { searchParams: Promise<{ next?: string }> } = {
+    searchParams: Promise.resolve({}),
+  },
+) {
+  const next = safeAuthNext((await searchParams).next);
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect("/dashboard");
+    redirect(next);
   }
 
   return (
@@ -22,7 +28,7 @@ export default async function LoginPage() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-950">
           로그인
         </h1>
-        <LoginForm />
+        <LoginForm next={next} />
         <Link
           href="/forgot-password"
           className="mt-5 inline-block text-sm text-neutral-600 underline"
@@ -30,7 +36,12 @@ export default async function LoginPage() {
           비밀번호를 잊으셨나요?
         </Link>
         <p className="mt-4 text-sm leading-6 text-neutral-600">
-          회원가입은 관리자 계정의 이메일 초대로만 가능합니다.
+          <Link
+            href={`/signup?next=${encodeURIComponent(next === "/dashboard" ? "/welcome" : next)}`}
+            className="underline"
+          >
+            이메일로 회원가입
+          </Link>
         </p>
       </section>
     </main>

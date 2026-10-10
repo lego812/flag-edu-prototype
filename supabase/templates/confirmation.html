@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+  <body style="font-family: sans-serif; color: #171717; padding: 24px">
+    {{ if .Data.must_change_password }}
+    <h1>Flag Edu 워크스페이스 초대</h1>
+    <p>워크스페이스 초대가 도착했습니다. 아래 버튼으로 이메일을 인증하고 초대를 수락해 주세요.</p>
+    <p><a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 20px; background: #171717; color: white; border-radius: 8px">초대 수락</a></p>
+    <p>처음 이용하신다면 사용할 비밀번호를 설정한 뒤 워크스페이스로 이동합니다.</p>
+    {{ else }}
+    <h1>Flag Edu 이메일 인증</h1>
+    <p>가입 화면에 아래 6자리 인증코드를 입력해 주세요.</p>
+    <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px">{{ .Token }}</p>
+    <p>메일을 받은 기기에서 바로 인증하려면 아래 버튼을 사용할 수 있습니다.</p>
+    <p><a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 20px; background: #171717; color: white; border-radius: 8px">이메일 인증</a></p>
+    {{ end }}
+    <p>요청하지 않은 메일이라면 무시하셔도 됩니다. 링크가 만료되면 새 메일을 요청해 주세요.</p>
+  </body>
+</html>

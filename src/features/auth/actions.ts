@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { validateEmail, validatePassword } from "./validation";
+import { passwordSetupPath, safeAuthNext, tokenFromNext } from "./continuation";
 
 export type AuthActionState = {
   error?: string;
@@ -15,6 +15,7 @@ export async function loginAction(
 ): Promise<AuthActionState> {
   const email = validateEmail(formData.get("email"));
   const password = validatePassword(formData.get("password"));
+  const next = safeAuthNext(formData.get("next"));
 
   if (!email || !password) {
     return { error: "올바른 이메일과 8자 이상의 비밀번호를 입력해 주세요." };
@@ -31,10 +32,10 @@ export async function loginAction(
   }
 
   if (data.user.user_metadata?.must_change_password === true) {
-    redirect("/set-password");
+    redirect(passwordSetupPath(next));
   }
 
-  redirect("/dashboard");
+  redirect(next);
 }
 
 export async function logoutAction() {
@@ -63,36 +64,23 @@ export async function setPasswordAction(
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!user?.email_confirmed_at) {
     return { error: "비밀번호 설정 링크를 다시 확인해 주세요." };
   }
 
   const { error: passwordError } = await supabase.auth.updateUser({ password });
 
   if (passwordError) {
-    return { error: "비밀번호를 설정하지 못했습니다. 초대 링크를 다시 확인해 주세요." };
+    return {
+      error: "비밀번호를 설정하지 못했습니다. 초대 링크를 다시 확인해 주세요.",
+    };
   }
 
-  const adminClient = createAdminClient();
-  const { data: profile, error: profileError } = await adminClient
-    .from("profiles")
-    .select("status")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile) {
-    return { error: "구성원 상태를 확인하지 못했습니다. 관리자에게 문의해 주세요." };
-  }
-
-  if (profile.status === "pending") {
-    const { error: activationError } = await adminClient.rpc(
-      "activate_invited_user",
-      { p_user_id: user.id },
-    );
-
-    if (activationError) {
-      return { error: "가입을 완료하지 못했습니다. 관리자에게 문의해 주세요." };
-    }
+  const { error: profileError } = await supabase.rpc("ensure_my_profile");
+  if (profileError) {
+    return {
+      error: "구성원 상태를 확인하지 못했습니다. 관리자에게 문의해 주세요.",
+    };
   }
 
   const { error: metadataError } = await supabase.auth.updateUser({
@@ -100,8 +88,19 @@ export async function setPasswordAction(
   });
 
   if (metadataError) {
-    return { error: "비밀번호 설정 상태를 저장하지 못했습니다. 다시 시도해 주세요." };
+    return {
+      error: "비밀번호 설정 상태를 저장하지 못했습니다. 다시 시도해 주세요.",
+    };
   }
 
-  redirect("/dashboard");
+  const next = safeAuthNext(formData.get("next"));
+  const token = tokenFromNext(next);
+  if (token) {
+    const { error } = await supabase.rpc("accept_workspace_invitation", {
+      p_token: token,
+    });
+    if (error) redirect(next); // Show the invitation's retry / wrong-account guidance.
+    redirect("/dashboard");
+  }
+  redirect(next === "/set-password" ? "/dashboard" : next);
 }

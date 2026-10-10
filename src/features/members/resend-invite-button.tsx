@@ -10,10 +10,10 @@ import {
 const initialState: ResendInviteActionState = {};
 
 type ResendInviteButtonProps = {
-  userId: string;
+  invitationId: string;
 };
 
-export function ResendInviteButton({ userId }: ResendInviteButtonProps) {
+export function ResendInviteButton({ invitationId }: ResendInviteButtonProps) {
   const [state, action, pending] = useActionState(
     resendCoachInvitationAction,
     initialState,
@@ -21,8 +21,9 @@ export function ResendInviteButton({ userId }: ResendInviteButtonProps) {
 
   return (
     <form action={action} className="flex flex-col items-end gap-1">
-      <input type="hidden" name="userId" value={userId} />
-      <SubmitButton pendingLabel="발송 중…"
+      <input type="hidden" name="invitationId" value={invitationId} />
+      <SubmitButton
+        pendingLabel="발송 중…"
         type="submit"
         pending={pending}
         className="min-h-11 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold text-black hover:bg-neutral-100 disabled:opacity-60"

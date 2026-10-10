@@ -2,7 +2,7 @@ export const minimumPasswordLength = 8;
 
 export function validateEmail(value: FormDataEntryValue | null) {
   const email = typeof value === "string" ? value.trim().toLowerCase() : "";
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const valid = email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   return valid ? email : null;
 }
