@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 import { useActionState } from "react";
 import { recoveryAction } from "./recovery-action";
 export function RecoveryForm() {
@@ -16,9 +17,9 @@ export function RecoveryForm() {
           disabled={pending}
         />
       </label>
-      <button className="btn" disabled={pending}>
-        {pending ? "발송 중…" : "비밀번호 설정 메일 보내기"}
-      </button>
+      <SubmitButton pendingLabel="발송 중…" className="btn" pending={pending}>
+        비밀번호 설정 메일 보내기
+      </SubmitButton>
       {state.error && (
         <p role="alert" className="text-red-700">
           {state.error}

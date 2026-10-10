@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState } from "react";
 import {
@@ -52,13 +53,13 @@ export function InviteForm() {
         </p>
       )}
 
-      <button
+      <SubmitButton pendingLabel="초대 중…"
         type="submit"
-        disabled={pending}
+        pending={pending}
         className="rounded-lg bg-black px-5 py-3 font-semibold text-white disabled:opacity-60"
       >
-        {pending ? "초대 중…" : "코치 초대"}
-      </button>
+        코치 초대
+      </SubmitButton>
     </form>
   );
 }

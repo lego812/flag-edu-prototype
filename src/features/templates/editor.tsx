@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 import { CountPicker } from "@/components/count-picker";
 import { useActionState, useState } from "react";
 import {
@@ -268,12 +269,12 @@ export function TemplateEditor({ template }: { template?: Template }) {
           게시하면 새 보고서에 이 양식을 사용합니다.
         </label>
         <div className="flex gap-3">
-          <button className="btn-secondary" name="intent" value="save">
+          <SubmitButton pendingLabel="저장 중…" className="btn-secondary" name="intent" value="save">
             임시 저장
-          </button>
-          <button className="btn" name="intent" value="publish">
+          </SubmitButton>
+          <SubmitButton pendingLabel="저장 중…" className="btn" name="intent" value="publish">
             수정 완료
-          </button>
+          </SubmitButton>
         </div>
       </fieldset>
       {state.error && (

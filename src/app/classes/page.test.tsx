@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import ClassesPage from "./page";
 
 const { preference } = vi.hoisted(() => ({ preference: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: preference }) }));
 beforeEach(() => preference.mockReturnValue(undefined));
 vi.mock("@/features/auth/current-user", () => ({

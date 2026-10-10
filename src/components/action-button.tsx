@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 import { useActionState } from "react";
 import type { ActionState } from "@/features/reports/model";
 export function ActionButton({
@@ -25,9 +26,7 @@ export function ActionButton({
           {confirm}
         </label>
       )}
-      <button className="btn" disabled={pending}>
-        {pending ? "처리 중…" : children}
-      </button>
+      <SubmitButton className="btn" pending={pending}>{children}</SubmitButton>
       {state.error && (
         <p role="alert" className="text-sm text-red-700">
           {state.error}

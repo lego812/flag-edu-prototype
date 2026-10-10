@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { usePathname } from "next/navigation";
 const paths = {
   home: "M3 10 12 3l9 7v10H15v-7H9v7H3Z",

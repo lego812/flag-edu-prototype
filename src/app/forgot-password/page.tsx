@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { RecoveryForm } from "@/features/auth/recovery-form";
 export default function ForgotPasswordPage() {
   return (

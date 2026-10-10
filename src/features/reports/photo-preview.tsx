@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Keep private signed images out of a shared optimization cache. */
 import { useEffect, useId, useRef, useState } from "react";
+import { LoadingSpinner } from "@/components/loading-indicator";
 
 export function PhotoPreview({
   url,
@@ -14,6 +15,7 @@ export function PhotoPreview({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -60,12 +62,16 @@ export function PhotoPreview({
             사진을 불러오지 못했습니다. 보고서를 다시 열어 주세요.
           </p>
         ) : (
+          <div className="relative min-h-48">
+          {loading && <p role="status" className="absolute inset-0 flex items-center justify-center gap-2 text-sm text-neutral-600"><LoadingSpinner />사진을 불러오는 중…</p>}
           <img
             src={url}
             alt={label}
             className="max-h-[calc(100dvh_-_10rem)] w-full rounded-xl object-contain"
-            onError={() => setFailed(true)}
+            onLoad={() => setLoading(false)}
+            onError={() => { setLoading(false); setFailed(true); }}
           />
+          </div>
         )}
       </div>
     </dialog>

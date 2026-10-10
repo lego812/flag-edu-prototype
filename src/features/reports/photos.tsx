@@ -1,6 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private short-lived URLs are loaded directly, without a shared image cache. */
 import { useRef, useState } from "react";
+import { LoadingSpinner } from "@/components/loading-indicator";
+import { SubmitButton } from "@/components/submit-button";
 import { compressPhoto } from "./photo";
 import type { Attachment, Field } from "./model";
 import { useReportMutation } from "./mutation-context";
@@ -99,7 +101,7 @@ export function Photos({
                 <ul
                   aria-label={`${f.label} ${photos.length}장`}
                   tabIndex={0}
-                  className="-mx-1 flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto px-1 pb-3 focus-visible:outline-2 focus-visible:outline-black"
+                  className="-mx-1 flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto px-1 pb-3 pt-2 focus-visible:outline-2 focus-visible:outline-black"
                 >
                   {photos.map((a, index) => (
                     <li
@@ -132,7 +134,7 @@ export function Photos({
                         <button
                           type="button"
                           aria-label={`${f.label} ${index + 1} 삭제`}
-                          className="absolute right-0 top-0 flex size-11 items-start justify-end rounded-xl p-1 focus-visible:outline-2 focus-visible:outline-black"
+                          className="absolute -right-2 -top-2 flex size-11 items-start justify-end rounded-xl p-1 focus-visible:outline-2 focus-visible:outline-black"
                           disabled={disabled}
                           onClick={() => setDeleteTarget(a.id)}
                         >
@@ -176,7 +178,7 @@ export function Photos({
             </div>
           );
         })}
-      {busy && <p role="status">사진 처리 중…</p>}
+      {busy && <p role="status" className="flex items-center gap-2 text-sm text-neutral-600"><LoadingSpinner />사진 처리 중…</p>}
       {error && (
         <p role="alert" className="text-red-700">
           {error}
@@ -223,14 +225,14 @@ export function Photos({
               >
                 취소
               </button>
-              <button
+              <SubmitButton pending={busy} pendingLabel="삭제 중…"
                 type="button"
                 className="btn bg-red-700 hover:bg-red-600"
                 disabled={disabled}
                 onClick={() => void remove(deleteTarget)}
               >
-                {busy ? "삭제 중…" : "삭제"}
-              </button>
+                삭제
+              </SubmitButton>
             </div>
           </section>
         </div>

@@ -497,3 +497,12 @@ Gradle wrapper 배포 SHA256 검증, `assembleRelease`·`lintRelease` PASS(오�
 ### Android 운영 연결 배포 및 QA 매핑 후속
 
 main `b9adeda`의 공개 assetlinks는 운영 HTTPS HTTP 200·JSON MIME으로 제공되고 최종 APK의 인증서와 일치한다(`artifacts/android/production-assetlinks.json`). 운영 로그인 HTTP 200, 병합된 최신 main의 Next TypeScript/production build PASS. 병합 과정에서 origin/main의 최신 수업 표시 변경도 보존했다. 새 Android 수동 케이스 3개를 추가하면서 기존 QA 목록 총수 144 고정값이 남아 전체 테스트는 최초 260/261이었다. `9e22ae95ab7467128202acfd919cf1a588e26bf2`에서 기대 총수를 147로 맞추되 유일 ID·전체 매핑·자동 테스트 경로 검증은 유지했으며 QA 보고서 회귀 재실행 12/12 PASS. 이 목록 검사 오류는 APK나 웹앱 실행 결함이 아니다. 최초 실패 로그를 보존하며 실제 Android 기기 실행은 여전히 미실행이다.
+## 2026-10-10: 삭제된 VM의 로딩·클릭 피드백 작업 복원
+
+`RECOVERY-20261010-loading-feedback` (R01/R05/1-f-A~C): 이전 `flag-edu-prototype 편집` 채팅에 남은 구현 명령과 변경 기록을 현재 main 기준 `6eec00c`에 다시 적용했다. 이전 구현 `25d6ba5`와 QA 기록 `c37787f`는 현재 Git 객체나 GitHub 브랜치에 없고 복구 아카이브도 이 VM에 없다. 원본 커밋을 복원했다고 주장하지 않으며 새 브랜치 `feat/recover-loading-click-feedback`에서 재구성했다.
+
+FeedbackLink의 클릭 위치 스피너·상단 이동 표시, SubmitButton의 선택 intent별 대기·중복 제출 방지, FilterForm의 클라이언트 GET 이동·네이티브 fallback, 페이지 스켈레톤, 검색·사진 로딩, 로컬 컨트롤의 눌림 피드백과 모션 감소 설정을 적용했다. 사진 삭제 버튼의 44px 터치 영역은 유지하면서 썸네일 중앙 미리보기를 가리지 않게 배치했다. 페이지 fallback은 기존 R01에 맞춰 시각적인 문구 대신 스피너·스켈레톤과 접근성 이름을 사용한다.
+
+현재 VM의 새 검증: 전체 54파일 **265/265 PASS**, lint 및 TypeScript 포함 production build PASS. 로컬 production Chromium `loading-feedback-1791622257163`에서 관리자·코치 각각 390/1280px의 지연 로그인·메뉴 이동·필터 조회·완료 후 표시 해제·가로 넘침 없음·모션 감소, 관리자 모바일의 사진 지연 로드·중앙 클릭 영역·실패한 저장 요청의 선택 버튼 표시·중복 제출 차단·입력 보존·재시도를 총 **14개 PASS**로 확인했다. 업무 저장 요청은 브라우저에서 503으로 응답하여 서버로 전달하지 않았다. pageerror 0, 업무 쓰기 전달 0. 로그인·로그아웃은 실제 인증 요청이다. 로그·캡처·계정 정보는 커밋하지 않는다.
+
+상태 **VERIFIED_LOCAL**. 과거 265/14 결과를 현재 검증으로 재사용하지 않았다. main 병합·운영 배포 후 검증, 전체 화면 UX·접근성 검토, 실기기 키보드·카메라·다운로드는 아직 미실행이다. 새 구현 커밋과 PR은 Git 이력으로 추적한다.

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { AppHeader } from "@/components/app-header";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { formatClassDate, seoulToday } from "@/features/classes/dates";

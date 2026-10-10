@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 15,
   "requirements": [
     {
       "id": "R01",
@@ -18,10 +18,17 @@
         "1-d-A",
         "1-d-B",
         "1-e-A",
-        "1-e-B"
+        "1-e-B",
+        "1-f-A",
+        "1-f-B",
+        "1-f-C"
       ],
       "automated": [
         "src/components/app-header.test.tsx",
+        "src/components/feedback-link.test.tsx",
+        "src/components/submit-button.test.tsx",
+        "src/components/filter-form.test.tsx",
+        "src/features/reports/photo-preview.test.tsx",
         "src/components/pwa-registration.test.tsx",
         "scripts/service-worker.test.mjs",
         "next.config.test.ts",

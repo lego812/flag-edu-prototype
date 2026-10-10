@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState } from "react";
 import {
@@ -30,9 +31,9 @@ export function CreateWorkspaceForm() {
       <p className="text-xs text-neutral-500">
         만든 사람은 새 워크스페이스의 관리자가 되며 바로 전환됩니다.
       </p>
-      <button className="btn" disabled={pending}>
-        {pending ? "만드는 중…" : "워크스페이스 만들기"}
-      </button>
+      <SubmitButton pendingLabel="만드는 중…" className="btn" pending={pending}>
+        워크스페이스 만들기
+      </SubmitButton>
       {state.error && (
         <p role="alert" className="text-sm text-red-700">
           {state.error}

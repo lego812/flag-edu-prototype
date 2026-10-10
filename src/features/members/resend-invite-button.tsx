@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/submit-button";
 
 import { useActionState } from "react";
 import {
@@ -21,13 +22,13 @@ export function ResendInviteButton({ userId }: ResendInviteButtonProps) {
   return (
     <form action={action} className="flex flex-col items-end gap-1">
       <input type="hidden" name="userId" value={userId} />
-      <button
+      <SubmitButton pendingLabel="발송 중…"
         type="submit"
-        disabled={pending}
+        pending={pending}
         className="min-h-11 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold text-black hover:bg-neutral-100 disabled:opacity-60"
       >
-        {pending ? "발송 중…" : "메일 재발송"}
-      </button>
+        메일 재발송
+      </SubmitButton>
       {state.error && (
         <span className="max-w-52 text-right text-xs text-red-600" role="alert">
           {state.error}

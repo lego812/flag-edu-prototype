@@ -57,3 +57,6 @@
 | 43 | 목록을 날짜별 카드로 묶는 UI | 사용자 첨부 기준으로 `6909d0d`에서 목록 전용 컴포넌트를 추가했다. 서울 날짜 제목, 왼쪽 수업명·장소, 오른쪽 상태·시작 시간/시간 미정과 같은 날 행 구분선을 적용했다. 정렬·필터·페이지 범위 및 캘린더는 유지한다. 전체 257/257·lint·타입·production build, 실제 로그인 Chromium 390/1280px의 양방향 정렬·상세 이동·넘침 없음 검증 통과. 승인된 main 반영·배포로 진행한다. |
 
 | 44 | 웹앱 Android APK | 사용자 요청으로 `dc941d7`에서 TWA 앱·Gradle wrapper·공개 assetlinks를 추가했다. 운영 웹앱 연결, Flag Edu 아이콘/이름, API 23~36, 브라우저 fallback. 서명 APK 생성, Android lint 0건·서명/정렬/패키지/지문 일치·Next production build 통과. 개인키/암호와 APK는 git 제외. 실제 Android 설치 실행은 환경 부재로 미실행이며 R11 수동 검증에 남겼다. 승인된 사이트 연결 설정 배포를 진행한다. |
+## 2026-10-10 로딩·클릭 피드백 작업 재구성
+
+삭제된 이전 VM의 채팅 기록에서 로딩·클릭 UX 코드를 회수해 `feat/recover-loading-click-feedback`에 재구성했다. 현재 VM에서 265개 자동 테스트·lint·production build와 관리자/코치 390/1280px의 로컬 production Chromium 14개 확인을 새로 통과했다. 이전 미푸시 커밋 자체의 복구와 구분하며, 운영 반영·실기기·전체 UX 검토는 별도다. 상세 범위와 검증은 `findings.md`의 `RECOVERY-20261010-loading-feedback`을 따른다.

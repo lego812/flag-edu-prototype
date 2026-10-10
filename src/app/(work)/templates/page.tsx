@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { TemplateDeleteButton } from "@/features/templates/delete-button";

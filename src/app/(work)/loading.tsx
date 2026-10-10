@@ -1,3 +1,4 @@
+import { PageLoading } from "@/components/loading-indicator";
 export default function Loading() {
-  return <p role="status">불러오는 중…</p>;
+  return <PageLoading label="화면을 불러오고 있어요" />;
 }

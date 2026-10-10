@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/feedback-link";
 import { formatClassTime, seoulDateKey } from "./dates";
 import type { ClassCalendarSession } from "./model";
 import { CLASS_STATUS } from "./session-card";

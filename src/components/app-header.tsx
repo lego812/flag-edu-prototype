@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/submit-button";
 import { logoutAction } from "@/features/auth/actions";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
 import { WorkspaceSwitcher } from "@/features/workspaces/switcher";
@@ -29,9 +30,9 @@ export function AppHeader({
             {name}
           </span>
           <form action={logoutAction}>
-            <button className="min-h-11 rounded-full border border-neutral-300 px-4 text-xs font-medium">
+            <SubmitButton pendingLabel="로그아웃 중…" className="min-h-11 rounded-full border border-neutral-300 px-4 text-xs font-medium">
               로그아웃
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </div>
