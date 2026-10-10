@@ -21,6 +21,8 @@ export function Photos({
   reading?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
+  const processing = useRef(false);
+  const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number } | null>(null);
   const [error, setError] = useState("");
   const [items, setItems] = useState(attachments);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -28,37 +30,57 @@ export function Photos({
   const previewTrigger = useRef<HTMLButtonElement | null>(null);
   const mutation = useReportMutation();
   const disabled = busy || mutation?.busy;
-  async function upload(field: string, file: File) {
+  async function upload(field: Field, files: File[]) {
+    if (!files.length || processing.current) return;
+    const maxFiles = field.settings.max_files ?? 3;
+    const remaining = maxFiles - items.filter((item) => item.field_id === field.id).length;
+    if (files.length > remaining) {
+      setError(`사진은 최대 ${maxFiles}장까지 첨부할 수 있습니다. ${remaining}장 이하로 다시 선택해 주세요.`);
+      return;
+    }
     if (mutation && !mutation.start()) return;
+    processing.current = true;
     setBusy(true);
     setError("");
+    setUploadProgress({ completed: 0, total: files.length });
+    let version = mutation?.version;
+    let completed = 0;
     try {
-      const blob = await compressPhoto(file);
-      const form = new FormData();
-      form.set("field", field);
-      form.set("version", mutation?.version ?? "");
-      form.set("file", blob, "photo.jpg");
-      const response = await fetch(`/api/reports/${reportId}/photos`, {
-        method: "POST",
-        body: form,
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error);
-      setItems((current) => [...current, result.attachment]);
-      mutation?.finish(result.version);
+      // Keep the report locked for the batch; each request uses the preceding
+      // successful revision instead of racing concurrent photo mutations.
+      for (const file of files) {
+        const blob = await compressPhoto(file);
+        const form = new FormData();
+        form.set("field", field.id);
+        form.set("version", version ?? "");
+        form.set("file", blob, "photo.jpg");
+        const response = await fetch(`/api/reports/${reportId}/photos`, {
+          method: "POST",
+          body: form,
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+        setItems((current) => [...current, result.attachment]);
+        version = result.version;
+        completed++;
+        setUploadProgress({ completed, total: files.length });
+      }
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "사진 업로드 실패. 다시 선택해 주세요.",
-      );
+      const message = e instanceof Error ? e.message : "사진 업로드에 실패했습니다.";
+      setError(files.length > 1
+        ? `${completed}/${files.length}장 업로드 완료. ${message} 업로드되지 않은 사진은 다시 선택해 주세요.`
+        : message);
     } finally {
-      mutation?.finish();
+      mutation?.finish(version);
+      processing.current = false;
+      setUploadProgress(null);
       setBusy(false);
     }
   }
   async function remove(id: string) {
+    if (processing.current) return;
     if (mutation && !mutation.start()) return;
+    processing.current = true;
     setBusy(true);
     setError("");
     try {
@@ -76,6 +98,7 @@ export function Photos({
       setError(e instanceof Error ? e.message : "삭제 실패");
     } finally {
       mutation?.finish();
+      processing.current = false;
       setBusy(false);
     }
   }
@@ -166,10 +189,11 @@ export function Photos({
                     type="file"
                     aria-label={`${f.label} 선택`}
                     accept="image/*"
+                    multiple
                     disabled={disabled}
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) void upload(f.id, file);
+                      const files = Array.from(e.target.files ?? []);
+                      if (files.length) void upload(f, files);
                       e.target.value = "";
                     }}
                   />
@@ -178,7 +202,7 @@ export function Photos({
             </div>
           );
         })}
-      {busy && <p role="status" className="flex items-center gap-2 text-sm text-neutral-600"><LoadingSpinner />사진 처리 중…</p>}
+      {busy && <p role="status" className="flex items-center gap-2 text-sm text-neutral-600"><LoadingSpinner />사진 처리 중…{uploadProgress && ` ${uploadProgress.completed}/${uploadProgress.total}장`}</p>}
       {error && (
         <p role="alert" className="text-red-700">
           {error}

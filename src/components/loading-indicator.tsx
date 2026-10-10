@@ -6,9 +6,6 @@ export function PageLoading({ label = "화면을 불러오고 있어요", fullSc
   return (
     <section role="status" aria-label={label} aria-live="polite" className={fullScreen ? "page-loading-overlay" : "space-y-5 py-4"}>
       <div className={fullScreen ? "w-full max-w-lg space-y-5 px-6" : "space-y-5"}>
-        <div className="flex items-center gap-3 text-sm font-medium text-neutral-600">
-          <LoadingSpinner className="size-5" />
-        </div>
         <div aria-hidden="true" className="space-y-3">
           {[0, 1, 2].map((index) => (
             <div key={index} className="loading-skeleton space-y-3 rounded-3xl bg-white p-6">
