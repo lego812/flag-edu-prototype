@@ -5,13 +5,14 @@ const paths = {
   home: "M3 10 12 3l9 7v10H15v-7H9v7H3Z",
   calendar: "M3 5h18v16H3ZM7 3v4m10-4v4M3 10h18",
   book: "M12 5C8 3 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-1-10 1Zm0 0v16",
+  chalkboard: "M3 4h18v13H3ZM7 21l2-4m8 4-2-4M7 8h6m-6 4h10",
   settings: "M4 7h16M4 17h16M8 4v6m8 4v6",
 };
 export function AppNavigation({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname() ?? "";
   const items = [
     { href: "/dashboard", label: "홈", icon: "home" },
-    { href: "/courses", label: "수업", icon: "book" },
+    { href: "/courses", label: "수업", icon: "chalkboard" },
     { href: "/classes", label: "일정", icon: "calendar" },
     { href: "/reports", label: "내 보고서", icon: "book" },
     ...(isAdmin ? [{ href: "/manage", label: "관리", icon: "settings" }] : []),

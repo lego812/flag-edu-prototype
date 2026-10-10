@@ -5,6 +5,7 @@ import { AppHeader } from "./app-header";
 vi.mock("@/features/auth/actions", () => ({ logoutAction: vi.fn() }));
 vi.mock("@/features/workspaces/actions", () => ({
   switchWorkspaceAction: vi.fn(),
+  switchWorkspaceInPopupAction: vi.fn(),
 }));
 vi.mock("@/features/workspaces/sync", () => ({ WorkspaceSync: () => null }));
 const route = vi.hoisted(() => ({ pathname: "/templates" }));

@@ -13,7 +13,7 @@ vi.mock("@/features/auth/current-user", () => ({
   requireCurrentProfile: mocks.current,
 }));
 
-import { createWorkspaceAction, switchWorkspaceAction } from "./actions";
+import { createWorkspaceAction, switchWorkspaceAction, switchWorkspaceInPopupAction } from "./actions";
 
 const currentId = "f8601730-c133-41b8-8d69-316edc982195";
 const nextId = "b91c4416-12ea-49e8-b061-82f9f4f9eb11";
@@ -89,6 +89,24 @@ describe("workspace actions", () => {
   it("validates workspace names before writing", async () => {
     const result = await createWorkspaceAction({}, createForm("A"));
     expect(result.error).toContain("2~100자");
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it("keeps the popup available for retry when switching fails", async () => {
+    mocks.rpc.mockResolvedValue({ error: { code: "temporary_failure" } });
+    expect(
+      (await switchWorkspaceInPopupAction({}, switchForm())).error,
+    ).toContain("다시 시도");
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+  it("rejects a foreign workspace in popup submissions before calling the DB", async () => {
+    expect(
+      (
+        await switchWorkspaceInPopupAction(
+          {},
+          switchForm("aa039bfd-16f6-4f5b-b108-6d292ed2454a"),
+        )
+      ).error,
+    ).toBeDefined();
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });

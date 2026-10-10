@@ -9,6 +9,28 @@ export type WorkspaceActionState = {
   error?: string;
 };
 
+export async function switchWorkspaceInPopupAction(
+  _state: WorkspaceActionState,
+  form: FormData,
+): Promise<WorkspaceActionState> {
+  const id = String(form.get("workspaceId") ?? "");
+  const { supabase, workspace, workspaces } = await requireCurrentProfile();
+  if (!isUuid(id) || !workspaces.some((item) => item.id === id)) {
+    return { error: "참여 중인 워크스페이스를 선택해 주세요." };
+  }
+  if (id !== workspace.id) {
+    const { error } = await supabase.rpc("switch_workspace", {
+      p_organization_id: id,
+    });
+    if (error)
+      return {
+        error: "워크스페이스를 변경하지 못했습니다. 다시 시도해 주세요.",
+      };
+  }
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
+}
+
 export async function switchWorkspaceAction(formData: FormData) {
   const organizationId = String(formData.get("workspaceId") ?? "");
   const { supabase, workspace, workspaces } = await requireCurrentProfile();
