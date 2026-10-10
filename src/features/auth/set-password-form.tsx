@@ -8,13 +8,9 @@ const initialState: AuthActionState = {};
 
 type SetPasswordFormProps = {
   email: string;
-  next?: string;
 };
 
-export function SetPasswordForm({
-  email,
-  next = "/dashboard",
-}: SetPasswordFormProps) {
+export function SetPasswordForm({ email }: SetPasswordFormProps) {
   const [state, action, pending] = useActionState(
     setPasswordAction,
     initialState,
@@ -22,11 +18,8 @@ export function SetPasswordForm({
 
   return (
     <form action={action} className="mt-8 space-y-5">
-      <input type="hidden" name="next" value={next} />
       <label className="block">
-        <span className="text-sm font-semibold text-neutral-700">
-          로그인 이메일
-        </span>
+        <span className="text-sm font-semibold text-neutral-700">로그인 이메일</span>
         <input
           type="email"
           value={email}
@@ -51,9 +44,7 @@ export function SetPasswordForm({
         />
       </label>
       <label className="block">
-        <span className="text-sm font-semibold text-neutral-700">
-          비밀번호 확인
-        </span>
+        <span className="text-sm font-semibold text-neutral-700">비밀번호 확인</span>
         <input
           type="password"
           name="passwordConfirm"
@@ -64,15 +55,11 @@ export function SetPasswordForm({
         />
       </label>
       {state.error && (
-        <p
-          className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
-          role="alert"
-        >
+        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
           {state.error}
         </p>
       )}
-      <SubmitButton
-        pendingLabel="가입 처리 중…"
+      <SubmitButton pendingLabel="가입 처리 중…"
         type="submit"
         pending={pending}
         className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white disabled:opacity-60"

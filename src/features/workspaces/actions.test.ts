@@ -11,14 +11,9 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/features/auth/current-user", () => ({
   requireCurrentProfile: mocks.current,
-  requireAccount: mocks.current,
 }));
 
-import {
-  createWorkspaceAction,
-  switchWorkspaceAction,
-  switchWorkspaceInPopupAction,
-} from "./actions";
+import { createWorkspaceAction, switchWorkspaceAction, switchWorkspaceInPopupAction } from "./actions";
 
 const currentId = "f8601730-c133-41b8-8d69-316edc982195";
 const nextId = "b91c4416-12ea-49e8-b061-82f9f4f9eb11";
@@ -65,7 +60,9 @@ describe("workspace actions", () => {
 
   it("rejects a workspace outside the returned memberships", async () => {
     await expect(
-      switchWorkspaceAction(switchForm("aa039bfd-16f6-4f5b-b108-6d292ed2454a")),
+      switchWorkspaceAction(
+        switchForm("aa039bfd-16f6-4f5b-b108-6d292ed2454a"),
+      ),
     ).rejects.toThrow("NEXT_REDIRECT:/access-denied");
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
@@ -79,17 +76,14 @@ describe("workspace actions", () => {
     });
   });
 
-  it("allows verified coaches to create their own independent workspace", async () => {
+  it("prevents coaches from creating workspaces", async () => {
     mocks.current.mockResolvedValue({
       supabase: { rpc: mocks.rpc },
       profile: { role: "coach" },
     });
-    await expect(createWorkspaceAction({}, createForm())).rejects.toThrow(
-      "NEXT_REDIRECT:/dashboard",
-    );
-    expect(mocks.rpc).toHaveBeenCalledWith("create_workspace", {
-      p_name: "두 번째 기관",
-    });
+    const result = await createWorkspaceAction({}, createForm());
+    expect(result.error).toContain("관리자");
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
   it("validates workspace names before writing", async () => {

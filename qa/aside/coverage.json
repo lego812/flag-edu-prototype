@@ -44,7 +44,7 @@
     },
     {
       "id": "R02",
-      "name": "이메일 가입·로그인·초대",
+      "name": "초대·로그인",
       "cases": [
         "2-a-A",
         "2-a-B",
@@ -54,14 +54,7 @@
         "2-b-B",
         "2-b-C",
         "2-b-D",
-        "2-b-E",
-        "2-c-A",
-        "2-c-B",
-        "2-c-C",
-        "2-c-D",
-        "2-c-E",
-        "2-c-F",
-        "2-c-G"
+        "2-b-E"
       ],
       "automated": [
         "next.config.test.ts",
@@ -70,14 +63,11 @@
         "src/features/auth/validation.test.ts",
         "src/features/auth/actions.test.ts",
         "src/features/members/actions.test.ts",
-        "src/app/auth/callback/page.test.tsx",
-        "src/features/auth/signup-actions.test.ts",
-        "src/features/workspaces/invitation-actions.test.ts",
-        "src/features/reports/workflows.test.ts"
+        "src/app/auth/callback/page.test.tsx"
       ],
       "gaps": [
-        "운영 가입 코드·초대 메일 실제 발송/수신/수락 E2E",
-        "운영 DB 마이그레이션·이메일 템플릿 적용 후 재검증"
+        "만료된 초대·복구 링크 거절 E2E",
+        "워크스페이스 적용 후 실제 초대 메일 발송·수신·링크 수락 E2E"
       ]
     },
     {
@@ -325,7 +315,7 @@
         "src/features/reports/workflows.test.ts"
       ],
       "gaps": [
-        "운영 신규 가입·워크스페이스 생성 및 초대 수락 후 팝업 전환 E2E"
+        "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"
       ]
     },
     {

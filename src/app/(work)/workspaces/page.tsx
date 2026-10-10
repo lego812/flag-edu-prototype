@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { CreateWorkspaceForm } from "@/features/workspaces/create-form";
 
 export const metadata = { title: "워크스페이스 관리" };
 
 export default async function WorkspacesPage() {
-  const { workspace, workspaces } = await requireCurrentProfile();
+  const { profile, workspace, workspaces } = await requireCurrentProfile();
+  if (profile.role !== "admin") redirect("/dashboard");
 
   return (
     <div className="space-y-8">
@@ -18,10 +20,7 @@ export default async function WorkspacesPage() {
         <h2 className="font-bold">참여 중인 워크스페이스</h2>
         <ul className="mt-4 divide-y divide-neutral-100">
           {workspaces.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-4 py-4"
-            >
+            <li key={item.id} className="flex items-center justify-between gap-4 py-4">
               <span className="min-w-0">
                 <strong className="block truncate">{item.name}</strong>
                 <span className="text-xs text-neutral-500">

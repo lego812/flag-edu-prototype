@@ -2,10 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import {
-  requireAccount,
-  requireCurrentProfile,
-} from "@/features/auth/current-user";
+import { requireCurrentProfile } from "@/features/auth/current-user";
 import { isUuid } from "@/features/classes/model";
 
 export type WorkspaceActionState = {
@@ -60,7 +57,11 @@ export async function createWorkspaceAction(
   formData: FormData,
 ): Promise<WorkspaceActionState> {
   const name = String(formData.get("name") ?? "").trim();
-  const { supabase } = await requireAccount();
+  const { supabase, profile } = await requireCurrentProfile();
+
+  if (profile.role !== "admin") {
+    return { error: "관리자만 워크스페이스를 만들 수 있습니다." };
+  }
   if (name.length < 2 || name.length > 100) {
     return { error: "워크스페이스 이름을 2~100자로 입력해 주세요." };
   }
@@ -70,19 +71,6 @@ export async function createWorkspaceAction(
     return { error: "워크스페이스를 만들지 못했습니다. 다시 시도해 주세요." };
   }
 
-  revalidatePath("/", "layout");
-  redirect("/dashboard");
-}
-
-export async function selectAvailableWorkspaceAction(formData: FormData) {
-  const { supabase } = await requireAccount();
-  const organizationId = formData.get("workspaceId");
-  if (typeof organizationId !== "string" || !isUuid(organizationId))
-    redirect("/access-denied");
-  const { error } = await supabase.rpc("switch_workspace", {
-    p_organization_id: organizationId,
-  });
-  if (error) redirect("/access-denied");
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }

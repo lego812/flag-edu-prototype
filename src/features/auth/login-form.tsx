@@ -6,12 +6,11 @@ import { loginAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
 
-export function LoginForm({ next = "/dashboard" }: { next?: string }) {
+export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, initialState);
 
   return (
     <form action={action} className="mt-8 space-y-5">
-      <input type="hidden" name="next" value={next} />
       <label className="block">
         <span className="text-sm font-semibold text-neutral-700">이메일</span>
         <input
@@ -36,16 +35,12 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
       </label>
 
       {state.error && (
-        <p
-          className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
-          role="alert"
-        >
+        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
           {state.error}
         </p>
       )}
 
-      <SubmitButton
-        pendingLabel="로그인 중…"
+      <SubmitButton pendingLabel="로그인 중…"
         type="submit"
         pending={pending}
         className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"

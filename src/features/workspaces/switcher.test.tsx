@@ -40,6 +40,13 @@ describe("WorkspaceSwitcher popup", () => {
       within(popup).getByRole("link", { name: "새 워크스페이스 만들기" }),
     ).toHaveAttribute("href", "/workspaces");
   });
+  it("keeps workspace creation restricted to administrators", () => {
+    const coach = { ...current, role: "coach" as const };
+    render(<WorkspaceSwitcher current={coach} workspaces={[coach]} />);
+    fireEvent.click(screen.getByRole("button", { name: "워크스페이스 변경: 기관 A" }));
+    expect(screen.getByText("현재 사용 중 · 코치")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "새 워크스페이스 만들기" })).not.toBeInTheDocument();
+  });
   it("offers active memberships in the popup and sends only the chosen id", () => {
     render(
       <WorkspaceSwitcher current={current} workspaces={[current, other]} />,

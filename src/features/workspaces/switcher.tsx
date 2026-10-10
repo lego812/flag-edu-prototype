@@ -114,13 +114,13 @@ export function WorkspaceSwitcher({
               </p>
             )}
           </form>
-          <Link
+          {current.role === "admin" && <Link
             href="/workspaces"
             onClick={() => dialog.current?.close()}
             className="mt-4 block min-h-11 border-t border-neutral-200 pt-4 text-sm underline"
           >
             새 워크스페이스 만들기
-          </Link>
+          </Link>}
         </div>
       </dialog>
     </>
