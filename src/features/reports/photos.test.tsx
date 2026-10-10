@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Photos } from "./photos";
 import type { Attachment, Field } from "./model";
 import type { Report } from "./model";
@@ -7,6 +7,8 @@ import { ReportMutationProvider } from "./mutation-context";
 import { ReportEditor } from "./editor";
 
 const actions = vi.hoisted(() => ({ save: vi.fn() }));
+const photo = vi.hoisted(() => ({ compress: vi.fn() }));
+vi.mock("./photo", () => ({ compressPhoto: photo.compress }));
 vi.mock("./actions", () => ({ saveReportAction: actions.save }));
 // Native dialog behavior is covered by photo-preview tests and browser QA.
 vi.mock("./photo-preview", () => ({
@@ -193,5 +195,89 @@ describe("photo thumbnails", () => {
     expect(screen.getByText("4/5장")).toBeInTheDocument();
     expect(ui.container.querySelector('input[name="version"]')).toHaveValue("old-version");
     expect(screen.getByRole("button", { name: "제출" })).not.toBeDisabled();
+  });
+});
+
+describe("multiple photo uploads", () => {
+  beforeEach(() => {
+    photo.compress.mockReset().mockResolvedValue(new Blob(["compressed"], { type: "image/jpeg" }));
+    actions.save.mockReset().mockResolvedValue({ success: "저장했습니다.", version: "saved-version" });
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  const files = () => [1, 2, 3].map((i) => new File([`image-${i}`], `photo-${i}.png`, { type: "image/png" }));
+  const response = (index: number, version: string) => new Response(JSON.stringify({ attachment: attachments[index], version }), { status: 200 });
+  function editor(initial: Attachment[] = []) {
+    const report = { id: "report", updated_at: "version-1", status: "draft", report_answers: [], class_sessions: { status: "scheduled" } } as unknown as Report;
+    return render(<ReportMutationProvider version={report.updated_at}>
+      <ReportEditor report={report} fields={[]} />
+      <Photos reportId={report.id} fields={[field]} attachments={initial} editable />
+    </ReportMutationProvider>);
+  }
+
+  it("uploads selected photos in order with chained revisions and locks the report for the whole batch", async () => {
+    let first!: (value: Response) => void;
+    let second!: (value: Response) => void;
+    const fetch = vi.spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(new Promise(resolve => { first = resolve; }))
+      .mockReturnValueOnce(new Promise(resolve => { second = resolve; }));
+    editor();
+    const input = screen.getByLabelText("활동 사진 선택");
+    const selected = files().slice(0, 2);
+    expect(input).toHaveAttribute("multiple");
+    fireEvent.change(input, { target: { files: selected } });
+    fireEvent.change(input, { target: { files: selected } });
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    expect((fetch.mock.calls[0][1]!.body as FormData).get("version")).toBe("version-1");
+    expect(screen.getByRole("button", { name: "임시저장" })).toBeDisabled();
+    expect(input).toBeDisabled();
+    await act(async () => first(response(0, "version-2")));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect((fetch.mock.calls[1][1]!.body as FormData).get("version")).toBe("version-2");
+    expect(screen.getByText("1/5장")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "제출" })).toBeDisabled();
+    expect(input).toBeDisabled();
+    await act(async () => second(response(1, "version-3")));
+    await waitFor(() => expect(input).toBeEnabled());
+    expect(screen.getByText("2/5장")).toBeInTheDocument();
+    expect(photo.compress.mock.calls.map(([file]) => file.name)).toEqual(selected.map(file => file.name));
+    fireEvent.click(screen.getByRole("button", { name: "임시저장" }));
+    await screen.findByText("저장했습니다.");
+    expect(actions.save.mock.calls[0][2].get("version")).toBe("version-3");
+  });
+
+  it("rejects a selection beyond the remaining slots before compressing or uploading", () => {
+    const fetch = vi.spyOn(globalThis, "fetch");
+    editor(attachments);
+    fireEvent.change(screen.getByLabelText("활동 사진 선택"), { target: { files: files().slice(0, 2) } });
+    expect(screen.getByRole("alert")).toHaveTextContent("1장 이하로 다시 선택");
+    expect(screen.getByText("4/5장")).toBeInTheDocument();
+    expect(photo.compress).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "임시저장" })).toBeEnabled();
+  });
+
+  it("keeps successful photos and the last successful revision after a partial failure, then allows retry", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(response(0, "version-2"))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "다른 화면에서 변경됐습니다.", version: "other-writer" }), { status: 409 }))
+      .mockResolvedValueOnce(response(1, "version-3"));
+    editor();
+    const selected = files();
+    const input = screen.getByLabelText("활동 사진 선택");
+    fireEvent.change(input, { target: { files: selected } });
+    expect(await screen.findByRole("alert")).toHaveTextContent("1/3장 업로드 완료");
+    expect(screen.getByText("1/5장")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(photo.compress).toHaveBeenCalledTimes(2);
+    expect(input).toBeEnabled();
+    expect(screen.getByRole("button", { name: "임시저장" })).toBeEnabled();
+    fireEvent.change(input, { target: { files: [selected[1]] } });
+    await waitFor(() => expect(screen.getByText("2/5장")).toBeInTheDocument());
+    expect((fetch.mock.calls[2][1]!.body as FormData).get("version")).toBe("version-2");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "임시저장" }));
+    await screen.findByText("저장했습니다.");
+    expect(actions.save.mock.calls[0][2].get("version")).toBe("version-3");
   });
 });
