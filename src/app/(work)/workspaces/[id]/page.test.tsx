@@ -12,6 +12,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/features/workspaces/participant-actions", () => ({
   removeParticipantAction: vi.fn(),
 }));
+vi.mock("@/features/workspaces/delete-actions", () => ({
+  deleteWorkspaceAction: vi.fn(),
+}));
 vi.mock("@/features/workspaces/rename-actions", () => ({
   renameWorkspaceAction: vi.fn(),
 }));
@@ -60,6 +63,9 @@ it("coach sees target participants and roles without management controls", async
   expect(screen.getByText("참여자")).toBeInTheDocument();
   expect(screen.queryByText("워크스페이스 이름 변경")).not.toBeInTheDocument();
   expect(
+    screen.queryByRole("button", { name: "워크스페이스 삭제" }),
+  ).not.toBeInTheDocument();
+  expect(
     screen.queryByRole("button", { name: "앱으로 초대" }),
   ).not.toBeInTheDocument();
   expect(screen.getByText("관리자 · 참여 중")).toBeInTheDocument();
@@ -107,6 +113,13 @@ it("selected administrator sees invitations inside participants rather than a se
   m.current.mockResolvedValue(current("admin"));
   render(await WorkspaceDetailPage({ params: Promise.resolve({ id }) }));
   expect(screen.getByText("워크스페이스 이름 변경")).toBeInTheDocument();
+  expect(
+    screen
+      .getByRole("button", { name: "워크스페이스 삭제" })
+      .closest("section"),
+  ).toBe(
+    document.querySelector("#participants")?.parentElement?.lastElementChild,
+  );
   const panel = screen
     .getByRole("heading", { name: "참여자·권한" })
     .closest("section")!;

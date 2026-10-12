@@ -5,6 +5,7 @@ import { isUuid } from "@/features/classes/model";
 import { RemoveParticipantForm } from "@/features/workspaces/remove-participant-form";
 import { RenameWorkspaceForm } from "@/features/workspaces/rename-form";
 import { WorkspaceInvitationPanel } from "@/features/workspaces/invitation-panel";
+import { DeleteWorkspaceForm } from "@/features/workspaces/delete-form";
 import { ManageMemberForm } from "@/features/members/manage-form";
 
 export const metadata = { title: "워크스페이스 참여자" };
@@ -127,6 +128,13 @@ export default async function WorkspaceDetailPage({
             </p>
           ))}
       </section>
+      {target.role === "admin" && (
+        <DeleteWorkspaceForm
+          key={target.name}
+          workspaceId={id}
+          name={target.name}
+        />
+      )}
     </div>
   );
 }
