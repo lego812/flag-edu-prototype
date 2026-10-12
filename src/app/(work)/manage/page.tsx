@@ -2,64 +2,63 @@ import Link from "@/components/feedback-link";
 import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 export default async function ManagePage() {
-  const { profile } = await requireCurrentProfile();
+  const { profile, workspace } = await requireCurrentProfile();
   if (profile.role !== "admin") redirect("/dashboard");
-  const items = [
+  const groups = [
     {
-      href: "/admin-reports",
-      title: "전체 보고서",
-      description: "작성된 보고서를 살펴보세요.",
-    },
-    {
-      href: "/templates",
-      title: "보고서 양식",
-      description: "코치가 작성할 질문을 구성합니다.",
-    },
-    {
-      href: "/members",
-      title: "구성원",
-      description: "초대와 권한을 관리합니다.",
-    },
-    {
-      href: "/exports",
-      title: "내보내기",
-      description: "기록을 PDF와 Excel로 모아 보세요.",
-    },
-    {
-      href: "/workspaces",
       title: "워크스페이스",
-      description: "업무 자료와 참여 워크스페이스를 분리해 관리합니다.",
+      items: [
+        {
+          href: "/workspaces",
+          title: "워크스페이스·참여자",
+          description: "워크스페이스별 참여자와 권한, 초대를 확인합니다.",
+        },
+      ],
+    },
+    {
+      title: "보고서 관리",
+      items: [
+        {
+          href: "/admin-reports",
+          title: "전체 보고서",
+          description: "현재 워크스페이스의 보고서를 조회합니다.",
+        },
+        {
+          href: "/templates",
+          title: "보고서 양식",
+          description: "작성 항목과 양식을 관리합니다.",
+        },
+        {
+          href: "/exports",
+          title: "보고서 다운로드",
+          description: "보고서를 PDF·Excel로 내려받습니다.",
+        },
+      ],
     },
   ];
   return (
-    <>
-      <header className="py-5">
-        <p className="eyebrow">WORKSPACE</p>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-          함께하는 수업을
-          <br />
-          한곳에서.
-        </h1>
+    <div className="space-y-8">
+      <header>
+        <h1 className="text-3xl font-bold">관리</h1>
+        <p className="mt-3 break-words text-sm text-neutral-600">
+          현재 워크스페이스: {workspace.name}
+        </p>
       </header>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {items.map((item) => (
-          <Link
-            href={item.href}
-            key={item.href}
-            className="surface flex min-h-40 flex-col justify-between p-7"
-          >
-            <div>
-              <h2 className="text-xl font-bold">{item.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-neutral-600">
-                {item.description}
-              </p>
-            </div>
-            <span aria-hidden="true" className="mt-5 self-end text-xl">
-              ↗
-            </span>
-          </Link>
-        ))}
-      </div>
-    </>
+      {groups.map((g) => (
+        <section key={g.title}>
+          <h2 className="mb-4 text-lg font-bold">{g.title}</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {g.items.map((i) => (
+              <Link href={i.href} key={i.href} className="surface block p-6">
+                <h3 className="font-bold">{i.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">
+                  {i.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }

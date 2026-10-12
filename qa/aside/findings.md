@@ -544,3 +544,10 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 ## 2026-10-12 상단 받은 초대 버튼 제거
 
 `UI-20261012-remove-header-invitations` (R01/R02/R10): 사용자 요청으로 AppHeader의 독립 받은 초대 링크와 미사용 import만 제거했다. 워크스페이스 선택·로그아웃과 팝업/워크스페이스/시작 화면의 초대 수락은 유지한다. 기존 관련 3파일 14/14 PASS, 변경 파일 lint·TypeScript PASS. 기준·수동 확인·smoke·coverage v20을 갱신했다. DB/Auth 변경 없음. 구현 커밋 `4ad216b`. main 병합·운영 배포는 승인 대기다.
+
+
+## 2026-10-12 관리 메뉴·워크스페이스 참여자 관리
+
+`WORKSPACE-20261012-participant-management` (R09/R10, manual/workflow 10-c-A/B): 관리 메뉴에 보고서·구성원·워크스페이스가 같은 수준으로 혼재하고 코치에게 참여자 조회가 없었다. 사용자 요구와 “내보내기=워크스페이스에서 참여자 제외” 응답에 따라 관리 메뉴를 워크스페이스/보고서 관리로 묶고 참여자·권한 조회를 `/workspaces/[id]`에 모았다. `/members`는 현재 워크스페이스의 초대 관리로 유지한다. 좁은 SECURITY DEFINER 디렉터리 RPC는 가입한 워크스페이스의 이름/역할/상태만 반환하고 profiles RLS는 유지한다. 제외 RPC는 대상 워크스페이스의 활성 관리자 권한을 검사하며 동일 워크스페이스 권한 변경과 advisory lock을 공유한다. 본인/마지막 관리자 보호, 확인창/서버 확인, 해당 멤버십만 비활성화, 선택된 워크스페이스의 fallback, 계정·프로필·보고서·다른 멤버십 보존을 구현했다.
+
+검증: 새 SQL 경계 4개 및 action/상세 화면 8개 PASS. 저장소 전체 migration chain의 PGlite 인증/초대/참여자 13개 PASS. 전체 61파일 307/307 PASS, lint·TypeScript·Webpack production build PASS. 초기 테스트는 추가 QA 시나리오 수 갱신 누락과 sandbox의 자식 프로세스 stdout 누락으로 실패했다. 시나리오 기대 수를 152로 갱신하고 실행 권한을 조정하여 출력이 정상인 환경에서 전체를 재검증했다. SQL 거절 테스트는 savepoint로 기대 오류 후 transaction을 복구한다. PGlite Auth는 로컬 fixture이며 운영 계정/DB/멤버십 쓰기나 실제 브라우저 검증과 구분한다. 신규 migration은 운영 미적용. 상태 VERIFIED_LOCAL / PR_READY. 구현 커밋과 PR은 Git 이력으로 추적한다. 운영 반영 절차는 `docs/workspace-participants-rollout.md`.

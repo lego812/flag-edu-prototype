@@ -1,5 +1,5 @@
 {
-  "version": 20,
+  "version": 21,
   "requirements": [
     {
       "id": "R01",
@@ -279,7 +279,8 @@
         "9-b-D",
         "9-b-E",
         "9-b-F",
-        "9-b-G"
+        "9-b-G",
+        "10-c-B"
       ],
       "automated": [
         "scripts/service-worker.test.mjs",
@@ -287,7 +288,9 @@
         "src/features/reports/workflows.test.ts",
         "src/features/classes/actions.test.ts",
         "src/features/workspaces/invitations-db.test.ts",
-        "src/features/workspaces/inbox-actions.test.ts"
+        "src/features/workspaces/inbox-actions.test.ts",
+        "src/features/workspaces/participant-actions.test.ts",
+        "src/app/(work)/workspaces/[id]/page.test.tsx"
       ],
       "gaps": []
     },
@@ -309,7 +312,8 @@
         "10-b-H",
         "10-b-I",
         "10-b-J",
-        "10-b-K"
+        "10-b-K",
+        "10-c-A"
       ],
       "automated": [
         "src/features/workspaces/actions.test.ts",
@@ -322,7 +326,9 @@
         "src/features/workspaces/invitations-db.test.ts",
         "src/features/workspaces/inbox-actions.test.ts",
         "src/features/workspaces/popup-invitations.test.tsx",
-        "src/app/(work)/workspaces/page.test.tsx"
+        "src/app/(work)/workspaces/page.test.tsx",
+        "src/features/workspaces/participant-actions.test.ts",
+        "src/app/(work)/workspaces/[id]/page.test.tsx"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"

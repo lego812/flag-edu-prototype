@@ -31,5 +31,7 @@ export async function manageMemberAction(
       error: "변경하지 못했습니다. 마지막 활성 관리자는 유지되어야 합니다.",
     };
   revalidatePath("/members");
+  revalidatePath("/workspaces");
+  revalidatePath("/","layout");
   return { success: "변경했습니다." };
 }

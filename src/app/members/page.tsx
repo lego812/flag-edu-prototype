@@ -3,24 +3,17 @@ import { AppHeader } from "@/components/app-header";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { InviteForm } from "@/features/members/invite-form";
 import { CancelInviteButton } from "@/features/members/cancel-invite-button";
-import { ManageMemberForm } from "@/features/members/manage-form";
-export const metadata = { title: "구성원 관리" };
+import Link from "@/components/feedback-link";
+export const metadata = { title: "워크스페이스 초대 관리" };
 export default async function MembersPage() {
   const { supabase, profile, workspace, workspaces } =
     await requireCurrentProfile();
   if (profile.role !== "admin") redirect("/dashboard");
-  const [memberResult, inviteResult] = await Promise.all([
-    supabase
-      .from("workspace_memberships")
-      .select("user_id,role,status,profiles!inner(name)")
-      .eq("organization_id", profile.organization_id)
-      .order("created_at"),
-    supabase
-      .from("workspace_invitations")
-      .select("id,email,status,expires_at")
-      .eq("organization_id", profile.organization_id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const inviteResult = await supabase
+    .from("workspace_invitations")
+    .select("id,email,status,expires_at")
+    .eq("organization_id", profile.organization_id)
+    .order("created_at", { ascending: false });
   return (
     <div className="min-h-svh">
       <AppHeader
@@ -31,7 +24,13 @@ export default async function MembersPage() {
         workspaces={workspaces}
       />
       <main className="mx-auto max-w-5xl space-y-8 px-5 py-8">
-        <h1 className="text-3xl font-bold">구성원 관리</h1>
+        <h1 className="text-3xl font-bold">{workspace.name} · 초대 관리</h1>
+        <Link
+          href={`/workspaces/${workspace.id}`}
+          className="text-sm underline"
+        >
+          참여자·권한 보기
+        </Link>
         <section className="border-y border-neutral-200 py-6">
           <h2 className="mb-4 font-bold">워크스페이스 초대</h2>
           <p className="mb-4 text-sm text-neutral-600">
@@ -66,41 +65,6 @@ export default async function MembersPage() {
                             : "수락 대기"}
                   </span>
                   {i.status === "pending" && <CancelInviteButton id={i.id} />}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <section>
-          <h2 className="font-bold">현재 구성원</h2>
-          {memberResult.error ? (
-            <p role="alert">구성원 목록을 불러오지 못했습니다.</p>
-          ) : (
-            <ul>
-              {memberResult.data?.map((m) => (
-                <li key={m.user_id} className="border-b py-4">
-                  <span>
-                    {(m.profiles as unknown as { name: string }).name}
-                  </span>
-                  <span className="ml-3 text-sm">
-                    {m.role === "admin" ? "관리자" : "코치"} ·{" "}
-                    {m.status === "active"
-                      ? "활성"
-                      : m.status === "pending"
-                        ? "초대 대기"
-                        : "비활성"}
-                  </span>
-                  {m.status !== "pending" && (
-                    <details>
-                      <summary className="py-3 text-sm">권한·상태 변경</summary>
-                      <ManageMemberForm
-                        id={m.user_id}
-                        role={m.role}
-                        status={m.status}
-                        self={m.user_id === profile.id}
-                      />
-                    </details>
-                  )}
                 </li>
               ))}
             </ul>
