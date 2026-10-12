@@ -5,6 +5,13 @@ vi.mock("./actions", () => ({
   switchWorkspaceAction: vi.fn(),
   switchWorkspaceInPopupAction: vi.fn(),
 }));
+vi.mock("./popup-invitations", () => ({
+  PopupInvitations: () => (
+    <section>
+      <h2>받은 초대</h2>
+    </section>
+  ),
+}));
 const current = {
   id: "f8601730-c133-41b8-8d69-316edc982195",
   name: "기관 A",
@@ -26,7 +33,7 @@ beforeEach(() => {
   };
 });
 describe("WorkspaceSwitcher popup", () => {
-  it("opens a popup even for a single workspace and offers creation", () => {
+  it("opens a popup even for a single workspace and offers invitations", () => {
     render(<WorkspaceSwitcher current={current} workspaces={[current]} />);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     fireEvent.click(
@@ -37,15 +44,21 @@ describe("WorkspaceSwitcher popup", () => {
       within(popup).getByText("현재 사용 중 · 관리자"),
     ).toBeInTheDocument();
     expect(
-      within(popup).getByRole("link", { name: "새 워크스페이스 만들기" }),
+      within(popup).getByRole("link", { name: "워크스페이스·초대 보기" }),
     ).toHaveAttribute("href", "/workspaces");
   });
-  it("keeps workspace creation restricted to administrators", () => {
+  it("allows invited coaches to reach workspace invitations without an admin role", () => {
     const coach = { ...current, role: "coach" as const };
     render(<WorkspaceSwitcher current={coach} workspaces={[coach]} />);
-    fireEvent.click(screen.getByRole("button", { name: "워크스페이스 변경: 기관 A" }));
-    expect(screen.getByText("현재 사용 중 · 코치")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "새 워크스페이스 만들기" })).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "워크스페이스 변경: 기관 A" }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "받은 초대" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "워크스페이스·초대 보기" }),
+    ).toHaveAttribute("href", "/workspaces");
   });
   it("offers active memberships in the popup and sends only the chosen id", () => {
     render(

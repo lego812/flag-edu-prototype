@@ -3,6 +3,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "@/components/feedback-link";
 import { LoadingSpinner } from "@/components/loading-indicator";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
+import { PopupInvitations } from "./popup-invitations";
 import { switchWorkspaceInPopupAction } from "./actions";
 
 export function WorkspaceSwitcher({
@@ -12,6 +13,7 @@ export function WorkspaceSwitcher({
   current: WorkspaceSummary;
   workspaces: WorkspaceSummary[];
 }) {
+  const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -30,7 +32,10 @@ export function WorkspaceSwitcher({
         type="button"
         aria-label={`워크스페이스 변경: ${current.name}`}
         aria-haspopup="dialog"
-        onClick={() => dialog.current?.showModal()}
+        onClick={() => {
+          dialog.current?.showModal();
+          setOpen(true);
+        }}
         className="inline-flex min-h-11 max-w-40 items-center gap-2 rounded-full border border-neutral-300 bg-white px-3 text-xs font-bold"
       >
         <span className="truncate">{current.name}</span>
@@ -39,11 +44,14 @@ export function WorkspaceSwitcher({
       <dialog
         ref={dialog}
         aria-labelledby={titleId}
-        onClose={() => trigger.current?.focus()}
+        onClose={() => {
+          setOpen(false);
+          trigger.current?.focus();
+        }}
         onClick={(event) => {
           if (event.target === event.currentTarget) event.currentTarget.close();
         }}
-        className="m-auto w-[calc(100%_-_2.5rem)] max-w-md rounded-2xl bg-white p-0 text-neutral-950 shadow-xl backdrop:bg-black/40"
+        className="m-auto w-[calc(100%_-_2.5rem)] max-w-md max-h-[85svh] overflow-y-auto rounded-2xl bg-white p-0 text-neutral-950 shadow-xl backdrop:bg-black/40"
       >
         <div className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
@@ -114,13 +122,14 @@ export function WorkspaceSwitcher({
               </p>
             )}
           </form>
-          {current.role === "admin" && <Link
+          {open && <PopupInvitations />}
+          <Link
             href="/workspaces"
             onClick={() => dialog.current?.close()}
             className="mt-4 block min-h-11 border-t border-neutral-200 pt-4 text-sm underline"
           >
-            새 워크스페이스 만들기
-          </Link>}
+            워크스페이스·초대 보기
+          </Link>
         </div>
       </dialog>
     </>
