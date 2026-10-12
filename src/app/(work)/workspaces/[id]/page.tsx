@@ -84,13 +84,13 @@ export default async function WorkspaceDetailPage({
                         ? "대기"
                         : "참여 해제"}
                   </span>
-                  {target.role === "admin" &&
-                    m.status === "active" &&
-                    m.user_id !== profile.id && (
+                  {m.status === "active" &&
+                    (m.user_id === profile.id || target.role === "admin") && (
                       <RemoveParticipantForm
                         workspaceId={id}
                         userId={m.user_id}
                         name={m.name}
+                        self={m.user_id === profile.id}
                       />
                     )}
                   {target.role === "admin" &&

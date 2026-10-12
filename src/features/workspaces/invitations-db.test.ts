@@ -404,7 +404,7 @@ it("last workspace removal preserves profile without business access", async () 
     ).toEqual([{ id: null }]);
   });
 });
-it("coach, foreign admin, self and anonymous removal are denied without writes", async () => {
+it("coach, foreign admin, last administrator and anonymous removal are denied without writes", async () => {
   await directoryFixture(async () => {
     for (const actor of [member, outsider]) {
       await user(actor);
@@ -424,7 +424,7 @@ it("coach, foreign admin, self and anonymous removal are denied without writes",
           directoryOrg,
           owner,
         ]),
-      "Cannot remove yourself",
+      "Last administrator must remain",
     );
     await db.exec("reset role;set role anon");
     await rejected(() =>
@@ -551,10 +551,10 @@ it("inline invitations require the rendered workspace to remain selected", async
     );
     await db.query("select public.switch_workspace($1)", [directoryOrg]);
     const result = (
-      await db.query<{ id: string }>("select public.invite_workspace_coach($1,$2) id", [
-        directoryOrg,
-        "new@fixture.test",
-      ])
+      await db.query<{ id: string }>(
+        "select public.invite_workspace_coach($1,$2) id",
+        [directoryOrg, "new@fixture.test"],
+      )
     ).rows[0];
     expect(result.id).toBeTruthy();
     await user(member);
@@ -563,6 +563,68 @@ it("inline invitations require the rendered workspace to remain selected", async
         directoryOrg,
         "other@fixture.test",
       ]),
+    );
+  });
+});
+
+it("coach self-leave preserves other membership and profile selection", async () => {
+  await directoryFixture(async () => {
+    await user(member);
+    await db.query("select public.remove_workspace_participant($1,$2)", [
+      directoryOrg,
+      member,
+    ]);
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select organization_id,role,status from public.profiles where id=$1",
+          [member],
+        )
+      ).rows,
+    ).toEqual([
+      { organization_id: fallbackOrg, role: "admin", status: "active" },
+    ]);
+    expect(
+      (
+        await db.query("select count(*)::int n from auth.users where id=$1", [
+          member,
+        ])
+      ).rows,
+    ).toEqual([{ n: 1 }]);
+  });
+});
+it("administrator can leave when another active administrator remains", async () => {
+  await directoryFixture(async () => {
+    await db.exec(
+      `update public.workspace_memberships set role='admin' where user_id='${member}' and organization_id='${directoryOrg}'`,
+    );
+    await user(owner);
+    await db.query("select public.remove_workspace_participant($1,$2)", [
+      directoryOrg,
+      owner,
+    ]);
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select status from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [owner, directoryOrg],
+        )
+      ).rows,
+    ).toEqual([{ status: "inactive" }]);
+  });
+});
+it("authenticated requests without a subject cannot remove or leave another member", async () => {
+  await directoryFixture(async () => {
+    await user("");
+    await rejected(
+      () =>
+        db.query("select public.remove_workspace_participant($1,$2)", [
+          directoryOrg,
+          member,
+        ]),
+      "Workspace administrator required",
     );
   });
 });

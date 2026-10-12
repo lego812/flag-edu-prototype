@@ -66,6 +66,9 @@ it("coach sees target participants and roles without management controls", async
   expect(
     screen.queryByRole("button", { name: /내보내기/ }),
   ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "워크스페이스 나가기" }),
+  ).toBeInTheDocument();
   expect(m.rpc).toHaveBeenCalledWith("list_workspace_participants", {
     p_workspace_id: id,
   });
@@ -79,6 +82,9 @@ it("target admin can remove others even with a different selected workspace", as
   expect(
     screen.queryByRole("button", { name: "본인 내보내기" }),
   ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "워크스페이스 나가기" }),
+  ).toBeInTheDocument();
   expect(screen.queryByText("권한·상태 변경")).not.toBeInTheDocument();
   expect(
     screen.queryByRole("link", { name: "참여자 초대·보낸 초대 확인" }),
