@@ -1,5 +1,4 @@
-import { SubmitButton } from "@/components/submit-button";
-import { logoutAction } from "@/features/auth/actions";
+import { LogoutButton } from "@/features/auth/logout-button";
 
 export const metadata = { title: "접근할 수 없음" };
 
@@ -14,11 +13,7 @@ export default function AccessDeniedPage() {
         <p className="mt-3 leading-7 text-neutral-600">
           구성원 프로필이 없거나 비활성화되었습니다. 관리자에게 문의해 주세요.
         </p>
-        <form action={logoutAction} className="mt-8">
-          <SubmitButton pendingLabel="로그아웃 중…" className="w-full rounded-lg bg-black px-4 py-3 font-semibold text-white">
-            로그아웃
-          </SubmitButton>
-        </form>
+        <LogoutButton />
       </section>
     </main>
   );

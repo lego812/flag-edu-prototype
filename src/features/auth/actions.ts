@@ -36,9 +36,16 @@ export async function loginAction(
   redirect("/dashboard");
 }
 
-export async function logoutAction() {
+export async function logoutAction(
+  _state: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  if (formData.get("confirm") !== "yes") {
+    return { error: "로그아웃 확인이 필요합니다." };
+  }
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (error) return { error: "로그아웃하지 못했습니다. 다시 시도해 주세요." };
   redirect("/login");
 }
 

@@ -77,7 +77,7 @@ describe("AppHeader", () => {
       container.querySelector("header > div")?.firstElementChild,
     ).toContainElement(back);
   });
-  it("keeps administrator navigation and logout accessible", () => {
+  it("keeps administrator navigation and account management accessible", () => {
     render(
       <AppHeader
         userId="f8601730-c133-41b8-8d69-316edc982195"
@@ -106,7 +106,7 @@ describe("AppHeader", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("button", { name: "로그아웃" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "계정 관리" })).toHaveAttribute("href", "/manage/account");
   });
 
   it("does not show administrator navigation to coaches", () => {

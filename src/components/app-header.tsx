@@ -1,5 +1,4 @@
-import { SubmitButton } from "@/components/submit-button";
-import { logoutAction } from "@/features/auth/actions";
+import Link from "@/components/feedback-link";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
 import { WorkspaceSwitcher } from "@/features/workspaces/switcher";
 import { WorkspaceSync } from "@/features/workspaces/sync";
@@ -7,7 +6,6 @@ import { AppNavigation } from "./app-navigation";
 import { HeaderLeading } from "./header-leading";
 export function AppHeader({
   userId,
-  name,
   isAdmin,
   workspace,
   workspaces,
@@ -26,17 +24,13 @@ export function AppHeader({
         <AppNavigation isAdmin={isAdmin} />
         <div className="ml-auto flex min-w-0 items-center gap-3">
           <WorkspaceSwitcher current={workspace} workspaces={workspaces} />
-          <span className="hidden max-w-32 truncate text-sm text-neutral-600 lg:inline">
-            {name}
-          </span>
-          <form action={logoutAction}>
-            <SubmitButton
-              pendingLabel="로그아웃 중…"
-              className="min-h-11 rounded-full border border-neutral-300 px-4 text-xs font-medium"
-            >
-              로그아웃
-            </SubmitButton>
-          </form>
+          <Link
+            href="/manage/account"
+            aria-label="계정 관리"
+            className="min-h-11 whitespace-nowrap rounded-full border border-neutral-300 px-4 py-3 text-xs font-medium"
+          >
+            계정
+          </Link>
         </div>
       </div>
     </header>

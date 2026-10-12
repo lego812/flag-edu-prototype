@@ -6,6 +6,16 @@ export default async function ManagePage() {
   if (profile.role !== "admin") redirect("/dashboard");
   const groups = [
     {
+      title: "계정",
+      items: [
+        {
+          href: "/manage/account",
+          title: "계정 관리",
+          description: "계정 정보와 로그인 방식을 확인하고 로그아웃합니다.",
+        },
+      ],
+    },
+    {
       title: "워크스페이스",
       items: [
         {
