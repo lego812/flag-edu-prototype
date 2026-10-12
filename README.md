@@ -372,4 +372,4 @@ Android 설치형 앱 소스와 빌드/서명/기기 검증 안내는 [android/R
 
 공개 문서는 `/terms`, `/privacy`에 있으며 Google 신규 가입 후 `/signup/consent`에서 필수 두 항목을 받습니다. 기존 회원은 재가입을 요구하지 않습니다. 정책 변경 시 문서와 `SIGNUP_POLICY_VERSION`, DB의 허용 버전을 함께 검토하고 과거 동의 문서의 Git 버전을 보존합니다.
 
-기존 일일 cron(`/api/cron/exports`, 한국 시간 03:15)은 삭제 후 30일이 지난 워크스페이스도 정리합니다. `Authorization: Bearer CRON_SECRET`가 필수이며 `?dryRun=true`는 쓰기 없이 만료 대상 batch 건수만 확인합니다. 운영 절차는 `docs/signup-consent-rollout.md`를 참조하세요.
+기존 일일 cron(`/api/cron/exports`, 한국 시간 03:15)은 삭제 후 30일이 지난 워크스페이스도 정리합니다. `CRON_SECRET`를 사용한 Authorization 헤더 인증이 필수이며 `?dryRun=true`는 쓰기 없이 만료 대상 batch 건수만 확인합니다. 운영 절차는 `docs/signup-consent-rollout.md`를 참조하세요.
