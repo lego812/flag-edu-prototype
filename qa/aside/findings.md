@@ -597,3 +597,12 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 검증: 기존 다중 워크스페이스 회귀의 새 워크스페이스 생성 직후 승격은 그 생성된 scope를 명시하도록 갱신했다. 전체 70파일 353/353 PASS, lint·TypeScript PASS. 기존 보고서 SQL 체인 23개는 scoped API를 포함하고 전체 최신 migration chain은 27개로 정상 변경·다른 선택의 오래된 요청·legacy 직접 호출 거절·삭제 후 변경 차단을 확인했다. 서버 action 4개는 scope 없음/변경된 선택/정상 명시 scope/실패 후 cache 유지 검증. coverage v27과 기존 삭제/전환 시나리오 기준 갱신. PR #11의 삭제 기능은 운영 DB migration 및 main 66d736fb29d4bbbe3a308d8c289b9a97f877d06a에 반영됐으며 이 보완을 포함한 배포 결과는 후속 artifact로 기록한다.
 
 운영 rollback 검증: tagged QA 두 계정만 참여한 임시 workspace/수업/일정/양식/보고서/답변/초대를 transaction 안에서 만들고 삭제함수로 접근을 종료했다. 삭제 표시 true, 각 업무 레코드 1개 유지, 활성 참여 0, 초대 취소 1, 삭제된 선택 0, report RLS 조회 차단 및 다른 WM hash 동일을 확인했다. rollback 후 생성된 임시 workspace ID 조회 0을 확인했다. 기존 실제 workspace/Storage 파일의 삭제는 없었다. 운영 UI HTTP/REST 검증 및 main 최종 배포는 별도 artifact로 추적하고 실제 Chromium 상호작용과 구분한다.
+
+
+## 2026-10-12 회원가입 필수 동의·30일 보관
+
+`AUTH-20261012-required-consent` (R02, 2-d-A/B/C): 기존 문서를 조사했으나 저장소에 없어 사용자 제공 책임자 박다빈·문의 이메일과 확정된 30일 정책으로 이용약관/개인정보처리방침을 작성했다. Google 신규 가입 후 필수 두 항목만 직접 체크하며 마케팅 동의는 없다. 로그인/계정관리에서 공개 문서 링크를 제공한다. 서버가 동의 상태를 검사하고 DB ensure_my_profile에서 생성·초대 수락을 차단한다. 동의 RPC는 인증된 Google 계정·검증된 이메일·두 boolean·공개 버전을 검사하고 auth.uid/서버시각으로 최초 기록을 저장한다. 기존 Auth 계정의 적용 제외는 private snapshot이며 동의로 기록하지 않는다. 사용자 metadata를 동의 근거로 사용하지 않는다. 공개 consent 테이블은 own-select RLS만 허용하고 나머지 설정/제외표는 private/RLS 및 client 권한 차단이다.
+
+`RETENTION-20261012-thirty-days` (R09/R10, 10-c-F): 사용자 확정으로 무기한 보존을 30일 후 영구삭제로 변경했다. 기존 cron에 service-only 만료 RPC/Storage API 정리를 연결하고 dryRun 조회를 추가했다. 만료 재확인·영구 정리 시작 표시·복원 방지·파일 먼저/DB 나중·오류 재시도와 시간/batch 제한을 적용했다. 정상/취소 수업·게시된 양식·참조/미참조 사진·과거 export 및 다른 workspace/회원 보존을 로컬 DB·Storage 모형으로 검증한다. UI의 삭제 안내도 30일 정책을 표시한다. 운영 DB 사전 조회에서 삭제 workspace/30일 만료 대상은 모두 0이었다.
+
+검증 과정: 신규 폼의 Server Action 후 React form 자동 reset으로 체크가 풀리는 회귀를 실제 DOM test에서 발견했다. 수동 transition dispatch와 즉시 busy lock을 사용해 입력을 보존하고 중복 제출을 차단했다. DB test 결과 타입 누락을 보완했다. 전체 75파일 375/375 PASS, lint·TypeScript 포함 Webpack build PASS 뒤 cron dryRun/실패 보고 2개 추가 및 populated 만료 fixture를 확대했다. 최종 관련 2파일 32/32, 전체 75파일 377/377 재검증 및 lint/TypeScript PASS. Supabase 문서·changelog·security checklist/기존 advisors 확인, CLI help/new로 두 migration 생성. 기준/manual/workflow/coverage v28(160개 시나리오) 갱신. 구현 commit/PR은 Git 이력으로 추적하며 운영 적용·검증은 외부 artifact로 기록한다. 실제 신규 Google 브라우저 E2E·실제 Storage 파일 삭제는 운영 테스트에서 수행하지 않는다.

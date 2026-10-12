@@ -44,6 +44,10 @@ export function DeleteWorkspaceForm({
           삭제하면 모든 참여자가 이 워크스페이스에 접근할 수 없습니다. 회원
           계정과 다른 워크스페이스 참여는 유지됩니다.
         </p>
+        <p className="mt-3 text-sm leading-6 text-red-700">
+          수업·보고서·사진은 삭제 후 30일간 보관한 뒤 영구 삭제됩니다. 복구가
+          필요하면 30일 이내에 문의해 주세요.
+        </p>
         <p className="mt-4 break-words text-sm">
           삭제하려면 <strong>{name}</strong>을 아래에 정확히 입력해 주세요.
         </p>
