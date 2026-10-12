@@ -1,5 +1,5 @@
 {
-  "version": 25,
+  "version": 26,
   "requirements": [
     {
       "id": "R01",
@@ -320,7 +320,8 @@
         "10-b-K",
         "10-c-A",
         "10-c-C",
-        "10-c-D"
+        "10-c-D",
+        "10-c-E"
       ],
       "automated": [
         "src/features/workspaces/actions.test.ts",
@@ -337,7 +338,9 @@
         "src/features/workspaces/participant-actions.test.ts",
         "src/app/(work)/workspaces/[id]/page.test.tsx",
         "src/features/workspaces/rename-actions.test.ts",
-        "src/features/workspaces/remove-participant-form.test.tsx"
+        "src/features/workspaces/remove-participant-form.test.tsx",
+        "src/features/workspaces/delete-actions.test.ts",
+        "src/features/workspaces/delete-form.test.tsx"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"
