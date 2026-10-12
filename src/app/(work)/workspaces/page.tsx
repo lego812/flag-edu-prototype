@@ -1,12 +1,15 @@
-import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { CreateWorkspaceForm } from "@/features/workspaces/create-form";
+
+import { InvitationList } from "@/features/workspaces/invitation-list";
 
 export const metadata = { title: "워크스페이스 관리" };
 
 export default async function WorkspacesPage() {
-  const { profile, workspace, workspaces } = await requireCurrentProfile();
-  if (profile.role !== "admin") redirect("/dashboard");
+  const { supabase, workspace, workspaces } = await requireCurrentProfile();
+  const { data: invitations, error: invitationError } = await supabase.rpc(
+    "list_my_workspace_invitations",
+  );
 
   return (
     <div className="space-y-8">
@@ -20,7 +23,10 @@ export default async function WorkspacesPage() {
         <h2 className="font-bold">참여 중인 워크스페이스</h2>
         <ul className="mt-4 divide-y divide-neutral-100">
           {workspaces.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-4 py-4">
+            <li
+              key={item.id}
+              className="flex items-center justify-between gap-4 py-4"
+            >
               <span className="min-w-0">
                 <strong className="block truncate">{item.name}</strong>
                 <span className="text-xs text-neutral-500">
@@ -35,6 +41,13 @@ export default async function WorkspacesPage() {
             </li>
           ))}
         </ul>
+      </section>
+      <section className="surface p-6">
+        <h2 className="mb-4 font-bold">받은 초대</h2>
+        <InvitationList
+          invitations={invitations ?? []}
+          error={!!invitationError}
+        />
       </section>
       <section className="border-t border-neutral-200 pt-8">
         <h2 className="mb-4 text-lg font-bold">새 워크스페이스</h2>

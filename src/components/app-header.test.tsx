@@ -8,6 +8,9 @@ vi.mock("@/features/workspaces/actions", () => ({
   switchWorkspaceInPopupAction: vi.fn(),
 }));
 vi.mock("@/features/workspaces/sync", () => ({ WorkspaceSync: () => null }));
+vi.mock("@/features/workspaces/popup-invitations", () => ({
+  PopupInvitations: () => null,
+}));
 const route = vi.hoisted(() => ({ pathname: "/templates" }));
 vi.mock("next/navigation", () => ({
   usePathname: () => route.pathname,

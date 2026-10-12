@@ -530,3 +530,10 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 검증: 최초 신규 경계 6파일 29/29 PASS. 전체 57파일 286/286 PASS, lint·TypeScript 포함 Webpack 운영 빌드 PASS. 이후 legacy pending 이전·익명 hook/RPC 차단을 추가해 최신 전체 SQL 9개와 문서 매핑 검증 포함 3파일 23/23 PASS, 최종 lint·TypeScript PASS. PostgreSQL 테스트는 PGlite에 저장소 전체 마이그레이션을 적용하며 Auth 스키마/identity는 로컬 픽스처다. 기본 Turbopack의 VM 포트 제한을 피한 Webpack 빌드이며 Vercel 실제 빌드와 구분한다. 기존 보고서 회귀는 기존 migration chain 대상이고, 신규 chain의 테스트는 인증·초대 경계에 집중한다. 실제 Google 동의/자동 identity 연결·로그인 브라우저 E2E는 아직 실행하지 않았다.
 
 운영 준비 조회: Google provider 비활성화, Client ID/Secret 미설정. 코드와 DB 마이그레이션·`private.google_signup_only` Before User Created hook을 준비했다. 훅을 Supabase Auth에 연결하기 전에는 Google-only 신규가입 설정이 완성되지 않는다. `docs/google-oauth-inapp-rollout.md`에 안전한 적용 순서와 기존 계정 호환을 기록했다. 운영 DB/설정/계정/메일 변경 없음. 상태 **VERIFIED_LOCAL / GOOGLE_CONFIG_PENDING**. 구현 커밋 및 PR은 Git 이력으로 추적한다. 실제 OAuth/DB 운영 반영·main 병합·배포는 별도 준비 후 진행한다.
+
+
+## 2026-10-12: 수신자의 워크스페이스 초대 수락 경로 보완
+
+`AUTH-20261012-workspace-recipient-inbox` (R02/R10, 2-b-B/10-b-B): 기존 `/workspaces`는 관리자 전용이어서 초대받은 코치는 접근할 수 없고, 상단 워크스페이스 팝업에도 받은 초대가 없었다. 사용자 요청에 따라 자신의 워크스페이스 화면을 코치에게도 열고 받은 초대 수락·거절 UI를 추가했다. 팝업을 열 때 기존 본인 초대 RPC로 조회하며 오류/빈 목록 구분·재시도·닫은 뒤 늦은 응답 무시·거절 성공 후 행 제거를 제공한다. 시작 화면과 팝업/워크스페이스의 초대 목록을 공통화했다. 초대 폼은 전환 폼 밖에 있고 기존 이메일·만료·권한 판단 RPC를 그대로 사용한다. 신규 DB/Google 설정 변경은 없다.
+
+새 검증: 화면·팝업 경계 3파일 12/12, 전체 59파일 295/295 PASS, lint와 TypeScript 포함 Webpack production build PASS. 코치의 워크스페이스 접근/수락 버튼, 조회 실패 재시도, 서버 확인 전 거절 행 유지, 성공 후 제거, 늦은 응답·팝업 닫기 회귀를 확인했다. 로컬 결과를 운영 브라우저 결과로 대신하지 않으며 운영 반영/후속 브라우저 기록은 별도 artifact에서 추적한다. 이전에 승인된 앱 내 초대 운영 작업의 사용자 요청 후속 보완이다. 구현 커밋·PR은 Git 이력으로 추적한다.

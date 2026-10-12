@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "requirements": [
     {
       "id": "R01",
@@ -66,7 +66,9 @@
         "src/app/auth/callback/page.test.tsx",
         "src/features/workspaces/invitations-db.test.ts",
         "src/features/workspaces/inbox-actions.test.ts",
-        "src/features/auth/google-login.test.tsx"
+        "src/features/auth/google-login.test.tsx",
+        "src/features/workspaces/popup-invitations.test.tsx",
+        "src/app/(work)/workspaces/page.test.tsx"
       ],
       "gaps": [
         "Google 운영 공급자 설정 후 실제 동의·취소·기존 계정 연결 및 앱 내 수락 브라우저 E2E"
@@ -318,7 +320,9 @@
         "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts",
         "src/features/workspaces/invitations-db.test.ts",
-        "src/features/workspaces/inbox-actions.test.ts"
+        "src/features/workspaces/inbox-actions.test.ts",
+        "src/features/workspaces/popup-invitations.test.tsx",
+        "src/app/(work)/workspaces/page.test.tsx"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"

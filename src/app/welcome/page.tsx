@@ -5,7 +5,7 @@ import { logoutAction } from "@/features/auth/actions";
 import { CreateWorkspaceForm } from "@/features/workspaces/create-form";
 import { selectAvailableWorkspaceAction } from "@/features/workspaces/actions";
 
-import { InboxForm } from "@/features/workspaces/inbox-form";
+import { InvitationList } from "@/features/workspaces/invitation-list";
 
 export const metadata = { title: "워크스페이스 시작하기" };
 
@@ -62,32 +62,10 @@ export default async function WelcomePage() {
         <p className="mb-4 break-all text-sm text-neutral-600">
           {user.email} 계정의 초대입니다.
         </p>
-        {invitationError ? (
-          <p role="alert">초대를 불러오지 못했습니다. 새로고침해 주세요.</p>
-        ) : !invitations?.length ? (
-          <p className="text-neutral-600">받은 초대가 없습니다.</p>
-        ) : (
-          <ul className="space-y-4">
-            {invitations.map(
-              (invite: {
-                id: string;
-                workspace_name: string;
-                expires_at: string;
-              }) => (
-                <li key={invite.id} className="rounded-lg border p-4">
-                  <h3 className="font-bold">{invite.workspace_name}</h3>
-                  <p className="mt-2 text-sm text-neutral-600">
-                    {new Date(invite.expires_at).toLocaleDateString("ko-KR", {
-                      timeZone: "Asia/Seoul",
-                    })}
-                    까지 수락할 수 있습니다.
-                  </p>
-                  <InboxForm id={invite.id} />
-                </li>
-              ),
-            )}
-          </ul>
-        )}
+        <InvitationList
+          invitations={invitations ?? []}
+          error={!!invitationError}
+        />
       </section>
       <div className="flex items-center gap-5">
         {!!memberships?.length && (

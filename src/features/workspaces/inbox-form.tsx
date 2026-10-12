@@ -2,8 +2,23 @@
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { respondInvitationAction } from "./inbox-actions";
-export function InboxForm({ id }: { id: string }) {
-  const [state, action, pending] = useActionState(respondInvitationAction, {});
+export function InboxForm({
+  id,
+  onDeclined,
+}: {
+  id: string;
+  onDeclined?: () => void;
+}) {
+  const [state, action, pending] = useActionState(
+    onDeclined
+      ? async (state: { error?: string }, form: FormData) => {
+          const result = await respondInvitationAction(state, form);
+          if (!result.error && form.get("decision") === "decline") onDeclined();
+          return result;
+        }
+      : respondInvitationAction,
+    {},
+  );
   return (
     <form action={action} className="mt-3 flex flex-wrap gap-3">
       <input type="hidden" name="invitationId" value={id} />

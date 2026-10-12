@@ -74,3 +74,8 @@
 ## 2026-10-12 Google OAuth·앱 내 초대
 
 사용자 결정으로 신규가입은 Google OAuth, 기존 계정은 비밀번호 로그인 유지, 워크스페이스 초대는 앱 목록에서 수락·거절하는 구조를 구현했다. SMTP 발송·OTP 가입 UI를 추가하지 않았고 기존 초대 메일/즉시 추가와 비밀번호 일괄 활성화 경로를 닫았다. 현재 회원·역할을 보존하고 pending 멤버십을 앱 초대로 이전한다. 프로필 없는 Google 회원도 시작 화면에 진입하며 자신의 워크스페이스만 생성·관리할 수 있다. 전체 286회귀·lint·TypeScript 포함 Webpack build 통과, 이후 대기 회원 이전/익명 경계를 추가한 SQL 전체 체인 및 문서 23개 검증·최종 lint/타입 통과. Google provider가 아직 비활성/미등록이므로 실제 OAuth·운영 적용은 미실행이다. 상세는 `AUTH-20261012-google-inapp-invitations`와 `docs/google-oauth-inapp-rollout.md`를 따른다.
+
+
+## 2026-10-12 수신자 워크스페이스 초대 수락
+
+사용자 요청으로 코치도 워크스페이스 화면에서 초대를 수락하도록 관리자 전용 화면 제한을 제거하고 상단 팝업에도 본인 받은 초대를 추가했다. 기존 시작 화면과 목록을 공통화하며 조회 재시도·팝업 닫힘 경계·거절 성공 후 즉시 제거를 제공한다. DB/Auth 설정은 유지한다. 전체 295회귀·lint·TypeScript 포함 Webpack build 통과. 상세는 `AUTH-20261012-workspace-recipient-inbox`를 따른다.
