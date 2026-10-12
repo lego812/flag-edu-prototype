@@ -8,14 +8,14 @@ const paths = {
   chalkboard: "M3 4h18v13H3ZM7 21l2-4m8 4-2-4M7 8h6m-6 4h10",
   settings: "M4 7h16M4 17h16M8 4v6m8 4v6",
 };
-export function AppNavigation({ isAdmin }: { isAdmin: boolean }) {
+export function AppNavigation() {
   const pathname = usePathname() ?? "";
   const items = [
     { href: "/dashboard", label: "홈", icon: "home" },
     { href: "/courses", label: "수업", icon: "chalkboard" },
     { href: "/classes", label: "일정", icon: "calendar" },
     { href: "/reports", label: "내 보고서", icon: "book" },
-    ...(isAdmin ? [{ href: "/manage", label: "관리", icon: "settings" }] : []),
+    { href: "/manage", label: "관리", icon: "settings" },
   ];
   return (
     <nav aria-label="주 메뉴" className="app-navigation">

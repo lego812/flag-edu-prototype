@@ -1,7 +1,7 @@
 import Link from "@/components/feedback-link";
 import { SubmitButton } from "@/components/submit-button";
 import { requireAccount } from "@/features/auth/current-user";
-import { logoutAction } from "@/features/auth/actions";
+import { LogoutButton } from "@/features/auth/logout-button";
 import { CreateWorkspaceForm } from "@/features/workspaces/create-form";
 import { selectAvailableWorkspaceAction } from "@/features/workspaces/actions";
 
@@ -73,14 +73,7 @@ export default async function WelcomePage() {
             홈으로
           </Link>
         )}
-        <form action={logoutAction}>
-          <SubmitButton
-            className="text-sm underline"
-            pendingLabel="로그아웃 중…"
-          >
-            로그아웃
-          </SubmitButton>
-        </form>
+        <LogoutButton />
       </div>
     </main>
   );

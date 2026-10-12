@@ -1,5 +1,5 @@
 {
-  "version": 21,
+  "version": 23,
   "requirements": [
     {
       "id": "R01",
@@ -54,7 +54,8 @@
         "2-b-B",
         "2-b-C",
         "2-b-D",
-        "2-b-E"
+        "2-b-E",
+        "2-c-A"
       ],
       "automated": [
         "next.config.test.ts",
@@ -68,7 +69,11 @@
         "src/features/workspaces/inbox-actions.test.ts",
         "src/features/auth/google-login.test.tsx",
         "src/features/workspaces/popup-invitations.test.tsx",
-        "src/app/(work)/workspaces/page.test.tsx"
+        "src/app/(work)/workspaces/page.test.tsx",
+        "src/features/auth/logout-action.test.ts",
+        "src/features/auth/logout-button.test.tsx",
+        "src/app/(work)/manage/account/page.test.tsx",
+        "src/app/(work)/manage/page.test.tsx"
       ],
       "gaps": [
         "Google 운영 공급자 설정 후 실제 동의·취소·기존 계정 연결 및 앱 내 수락 브라우저 E2E"

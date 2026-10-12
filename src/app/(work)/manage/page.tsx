@@ -1,10 +1,18 @@
 import Link from "@/components/feedback-link";
-import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 export default async function ManagePage() {
   const { profile, workspace } = await requireCurrentProfile();
-  if (profile.role !== "admin") redirect("/dashboard");
   const groups = [
+    {
+      title: "계정",
+      items: [
+        {
+          href: "/manage/account",
+          title: "계정 관리",
+          description: "계정 정보와 로그인 방식을 확인하고 로그아웃합니다.",
+        },
+      ],
+    },
     {
       title: "워크스페이스",
       items: [
@@ -44,21 +52,23 @@ export default async function ManagePage() {
           현재 워크스페이스: {workspace.name}
         </p>
       </header>
-      {groups.map((g) => (
-        <section key={g.title}>
-          <h2 className="mb-4 text-lg font-bold">{g.title}</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {g.items.map((i) => (
-              <Link href={i.href} key={i.href} className="surface block p-6">
-                <h3 className="font-bold">{i.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  {i.description}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
+      {groups
+        .filter((g) => profile.role === "admin" || g.title !== "보고서 관리")
+        .map((g) => (
+          <section key={g.title}>
+            <h2 className="mb-4 text-lg font-bold">{g.title}</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {g.items.map((i) => (
+                <Link href={i.href} key={i.href} className="surface block p-6">
+                  <h3 className="font-bold">{i.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-neutral-600">
+                    {i.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
     </div>
   );
 }
