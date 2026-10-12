@@ -3,6 +3,8 @@ import { LoginForm } from "@/features/auth/login-form";
 import { createClient } from "@/lib/supabase/server";
 import Link from "@/components/feedback-link";
 
+import { GoogleLogin } from "@/features/auth/google-login";
+
 export const metadata = { title: "로그인" };
 
 export default async function LoginPage() {
@@ -22,6 +24,10 @@ export default async function LoginPage() {
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-950">
           로그인
         </h1>
+        <GoogleLogin />
+        <p className="mb-4 mt-7 text-sm text-neutral-600">
+          기존 이메일 계정으로 로그인
+        </p>
         <LoginForm />
         <Link
           href="/forgot-password"
@@ -30,7 +36,8 @@ export default async function LoginPage() {
           비밀번호를 잊으셨나요?
         </Link>
         <p className="mt-4 text-sm leading-6 text-neutral-600">
-          회원가입은 관리자 계정의 이메일 초대로만 가능합니다.
+          새 회원가입은 Google 계정으로 진행합니다. 워크스페이스 초대는 로그인
+          후 앱에서 확인하세요.
         </p>
       </section>
     </main>

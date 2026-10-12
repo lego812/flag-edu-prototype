@@ -1,3 +1,4 @@
+import Link from "@/components/feedback-link";
 import { SubmitButton } from "@/components/submit-button";
 import { logoutAction } from "@/features/auth/actions";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
@@ -26,11 +27,20 @@ export function AppHeader({
         <AppNavigation isAdmin={isAdmin} />
         <div className="ml-auto flex min-w-0 items-center gap-3">
           <WorkspaceSwitcher current={workspace} workspaces={workspaces} />
+          <Link
+            href="/welcome"
+            className="min-h-11 whitespace-nowrap rounded-full border border-neutral-300 px-3 py-3 text-xs"
+          >
+            받은 초대
+          </Link>
           <span className="hidden max-w-32 truncate text-sm text-neutral-600 lg:inline">
             {name}
           </span>
           <form action={logoutAction}>
-            <SubmitButton pendingLabel="로그아웃 중…" className="min-h-11 rounded-full border border-neutral-300 px-4 text-xs font-medium">
+            <SubmitButton
+              pendingLabel="로그아웃 중…"
+              className="min-h-11 rounded-full border border-neutral-300 px-4 text-xs font-medium"
+            >
               로그아웃
             </SubmitButton>
           </form>
