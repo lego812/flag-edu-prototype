@@ -444,3 +444,125 @@ it("coach, foreign admin, self and anonymous removal are denied without writes",
     ).toHaveLength(2);
   });
 });
+
+it("target administrator renames an unselected workspace without changing memberships", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    await db.query("select public.rename_workspace($1,$2,$3)", [
+      directoryOrg,
+      "  Renamed  ",
+      "Directory",
+    ]);
+    expect(
+      (
+        await db.query("select name from public.organizations where id=$1", [
+          directoryOrg,
+        ])
+      ).rows,
+    ).toEqual([{ name: "Renamed" }]);
+    await rejected(
+      () =>
+        db.query("select public.rename_workspace($1,$2,$3)", [
+          directoryOrg,
+          "Overwrite",
+          "Directory",
+        ]),
+      "Workspace name changed",
+    );
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select count(*)::int n from public.workspace_memberships where organization_id=$1 and status='active'",
+          [directoryOrg],
+        )
+      ).rows,
+    ).toEqual([{ n: 2 }]);
+    expect(
+      (
+        await db.query(
+          "select organization_id from public.profiles where id=$1",
+          [owner],
+        )
+      ).rows,
+    ).toEqual([{ organization_id: fallbackOrg }]);
+  });
+});
+it("rename denies coaches, foreign administrators, inactive administrators and anonymous callers", async () => {
+  await directoryFixture(async () => {
+    for (const actor of [member, outsider]) {
+      await user(actor);
+      await rejected(
+        () =>
+          db.query("select public.rename_workspace($1,$2,$3)", [
+            directoryOrg,
+            "Injected",
+            "Directory",
+          ]),
+        "Workspace administrator required",
+      );
+    }
+    await db.exec(
+      `reset role;update public.workspace_memberships set status='inactive' where organization_id='${directoryOrg}' and user_id='${owner}'`,
+    );
+    await user(owner);
+    await rejected(() =>
+      db.query("select public.rename_workspace($1,$2,$3)", [
+        directoryOrg,
+        "Injected",
+        "Directory",
+      ]),
+    );
+    await db.exec("reset role;set role anon");
+    await rejected(() =>
+      db.query("select public.rename_workspace($1,$2,$3)", [
+        directoryOrg,
+        "Injected",
+        "Directory",
+      ]),
+    );
+  });
+});
+it("rename validates empty and oversized names at the database boundary", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    for (const name of ["", " ", "a", "x".repeat(101)])
+      await rejected(
+        () =>
+          db.query("select public.rename_workspace($1,$2,$3)", [
+            directoryOrg,
+            name,
+            "Directory",
+          ]),
+        "Invalid workspace name",
+      );
+  });
+});
+it("inline invitations require the rendered workspace to remain selected", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    await rejected(
+      () =>
+        db.query("select public.invite_workspace_coach($1,$2)", [
+          directoryOrg,
+          "new@fixture.test",
+        ]),
+      "Selected workspace administrator required",
+    );
+    await db.query("select public.switch_workspace($1)", [directoryOrg]);
+    const result = (
+      await db.query<{ id: string }>("select public.invite_workspace_coach($1,$2) id", [
+        directoryOrg,
+        "new@fixture.test",
+      ])
+    ).rows[0];
+    expect(result.id).toBeTruthy();
+    await user(member);
+    await rejected(() =>
+      db.query("select public.invite_workspace_coach($1,$2)", [
+        directoryOrg,
+        "other@fixture.test",
+      ]),
+    );
+  });
+});

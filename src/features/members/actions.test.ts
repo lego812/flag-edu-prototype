@@ -9,19 +9,24 @@ beforeEach(() => {
   vi.resetAllMocks();
   m.current.mockResolvedValue({
     supabase: { rpc: m.rpc },
-    profile: { role: "admin" },
+    profile: {
+      role: "admin",
+      organization_id: "20000000-0000-4000-8000-000000000001",
+    },
   });
   m.rpc.mockResolvedValue({ error: null });
 });
 function form() {
   const f = new FormData();
+  f.set("workspaceId", "20000000-0000-4000-8000-000000000001");
   f.set("email", "coach@example.com");
   f.set("invitationId", "10000000-0000-4000-8000-000000000001");
   return f;
 }
 it("registers an invitation without Auth user creation or email transport", async () => {
   expect((await inviteCoachAction({}, form())).success).toContain("앱");
-  expect(m.rpc).toHaveBeenCalledExactlyOnceWith("create_workspace_invitation", {
+  expect(m.rpc).toHaveBeenCalledExactlyOnceWith("invite_workspace_coach", {
+    p_workspace_id: "20000000-0000-4000-8000-000000000001",
     p_email: "coach@example.com",
   });
 });
@@ -48,4 +53,11 @@ it("rejects invalid email and invitation identifiers before authentication", asy
   await inviteCoachAction({}, f);
   await cancelInvitationAction({}, f);
   expect(m.current).not.toHaveBeenCalled();
+});
+
+it("rejects an invitation rendered for a workspace that is no longer selected", async () => {
+  const f = form();
+  f.set("workspaceId", "20000000-0000-4000-8000-000000000099");
+  expect((await inviteCoachAction({}, f)).error).toContain("전환");
+  expect(m.rpc).not.toHaveBeenCalled();
 });
