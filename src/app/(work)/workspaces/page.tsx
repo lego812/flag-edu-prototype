@@ -1,3 +1,4 @@
+import Link from "@/components/feedback-link";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { CreateWorkspaceForm } from "@/features/workspaces/create-form";
 
@@ -28,7 +29,13 @@ export default async function WorkspacesPage() {
               className="flex items-center justify-between gap-4 py-4"
             >
               <span className="min-w-0">
-                <strong className="block truncate">{item.name}</strong>
+                <Link
+                  href={`/workspaces/${item.id}`}
+                  className="block break-words font-bold underline underline-offset-4"
+                  aria-label={`${item.name} 참여자·권한 보기`}
+                >
+                  {item.name}
+                </Link>
                 <span className="text-xs text-neutral-500">
                   {item.role === "admin" ? "관리자" : "코치"}
                 </span>

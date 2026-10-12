@@ -224,15 +224,223 @@ it("new profile requires verified Google identity and ignores role/organization 
 });
 
 it("migrates legacy pending members without granting access and preserves active memberships", async () => {
- await user("10000000-0000-4000-8000-000000000005");
- expect((await db.query("select * from public.workspace_memberships where user_id=auth.uid()")).rows).toHaveLength(0);
- const row=(await db.query<{id:string}>("select * from public.list_my_workspace_invitations()")).rows[0];expect(row).toBeDefined();
- await db.query("select public.respond_workspace_invitation($1,true)",[row.id]);
- expect((await db.query<{role:string}>("select role from public.workspace_memberships where user_id=auth.uid()")).rows).toEqual([{role:"coach"}]);
- await user("10000000-0000-4000-8000-000000000006");expect((await db.query<{role:string}>("select role from public.workspace_memberships where user_id=auth.uid()")).rows).toEqual([{role:"admin"}]);
+  await user("10000000-0000-4000-8000-000000000005");
+  expect(
+    (
+      await db.query(
+        "select * from public.workspace_memberships where user_id=auth.uid()",
+      )
+    ).rows,
+  ).toHaveLength(0);
+  const row = (
+    await db.query<{ id: string }>(
+      "select * from public.list_my_workspace_invitations()",
+    )
+  ).rows[0];
+  expect(row).toBeDefined();
+  await db.query("select public.respond_workspace_invitation($1,true)", [
+    row.id,
+  ]);
+  expect(
+    (
+      await db.query<{ role: string }>(
+        "select role from public.workspace_memberships where user_id=auth.uid()",
+      )
+    ).rows,
+  ).toEqual([{ role: "coach" }]);
+  await user("10000000-0000-4000-8000-000000000006");
+  expect(
+    (
+      await db.query<{ role: string }>(
+        "select role from public.workspace_memberships where user_id=auth.uid()",
+      )
+    ).rows,
+  ).toEqual([{ role: "admin" }]);
 });
 it("anonymous callers cannot execute inbox or the protected signup hook", async () => {
- await db.exec("reset role;set role anon");
- await expect(db.query("select * from public.list_my_workspace_invitations()")).rejects.toThrow();
- await expect(db.query("select private.google_signup_only('{}')")).rejects.toThrow();
+  await db.exec("reset role;set role anon");
+  await expect(
+    db.query("select * from public.list_my_workspace_invitations()"),
+  ).rejects.toThrow();
+  await expect(
+    db.query("select private.google_signup_only('{}')"),
+  ).rejects.toThrow();
+});
+
+const directoryOrg = "20000000-0000-4000-8000-000000000011";
+const fallbackOrg = "20000000-0000-4000-8000-000000000012";
+const owner = "10000000-0000-4000-8000-000000000011";
+const member = "10000000-0000-4000-8000-000000000012";
+const outsider = "10000000-0000-4000-8000-000000000013";
+async function rejected(run: () => Promise<unknown>, message?: string) {
+  await db.exec("savepoint denied");
+  try {
+    await expect(run()).rejects.toThrow(message);
+  } finally {
+    await db.exec("rollback to savepoint denied;release savepoint denied");
+  }
+}
+async function directoryFixture(run: () => Promise<void>) {
+  await db.exec(`reset role;begin;
+ insert into auth.users(id,email,email_confirmed_at) values('${owner}','owner@fixture.test',now()),('${member}','member@fixture.test',now()),('${outsider}','outsider@fixture.test',now());
+ insert into public.organizations(id,name) values('${directoryOrg}','Directory'),('${fallbackOrg}','Fallback');
+ insert into public.profiles(id,organization_id,name,role,status) values('${owner}','${fallbackOrg}','Owner','coach','active'),('${member}','${directoryOrg}','Member','coach','active'),('${outsider}','${fallbackOrg}','Outsider','admin','active');
+ insert into public.workspace_memberships(user_id,organization_id,role,status) values('${owner}','${directoryOrg}','admin','active'),('${owner}','${fallbackOrg}','coach','active'),('${member}','${directoryOrg}','coach','active'),('${member}','${fallbackOrg}','admin','active'),('${outsider}','${fallbackOrg}','admin','active');`);
+  try {
+    await run();
+  } finally {
+    await db.exec("rollback;reset role");
+  }
+}
+it("directory uses target workspace roles and leaves profiles RLS narrow", async () => {
+  await directoryFixture(async () => {
+    await user(member);
+    const rows = (
+      await db.query("select * from public.list_workspace_participants($1)", [
+        directoryOrg,
+      ])
+    ).rows;
+    expect(rows).toEqual([
+      { user_id: owner, name: "Owner", role: "admin", status: "active" },
+      { user_id: member, name: "Member", role: "coach", status: "active" },
+    ]);
+    expect((await db.query("select id from public.profiles")).rows).toEqual([
+      { id: member },
+    ]);
+    await user(outsider);
+    await rejected(
+      () =>
+        db.query("select * from public.list_workspace_participants($1)", [
+          directoryOrg,
+        ]),
+      "Active workspace membership required",
+    );
+    await db.exec("reset role;set role anon");
+    await rejected(() =>
+      db.query("select * from public.list_workspace_participants($1)", [
+        directoryOrg,
+      ]),
+    );
+  });
+});
+it("removal authorizes target admin, preserves account and other memberships, selects fallback", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    await db.query("select public.remove_workspace_participant($1,$2)", [
+      directoryOrg,
+      member,
+    ]);
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select organization_id,role,status from public.workspace_memberships where user_id=$1 order by organization_id",
+          [member],
+        )
+      ).rows,
+    ).toEqual([
+      { organization_id: directoryOrg, role: "coach", status: "inactive" },
+      { organization_id: fallbackOrg, role: "admin", status: "active" },
+    ]);
+    expect(
+      (
+        await db.query(
+          "select organization_id,role,status from public.profiles where id=$1",
+          [member],
+        )
+      ).rows,
+    ).toEqual([
+      { organization_id: fallbackOrg, role: "admin", status: "active" },
+    ]);
+    expect(
+      (await db.query("select id from auth.users where id=$1", [member])).rows,
+    ).toHaveLength(1);
+    await user(member);
+    await rejected(() =>
+      db.query("select * from public.list_workspace_participants($1)", [
+        directoryOrg,
+      ]),
+    );
+    await user(owner);
+    expect(
+      (
+        await db.query("select * from public.list_workspace_participants($1)", [
+          directoryOrg,
+        ])
+      ).rows,
+    ).toHaveLength(2);
+    await rejected(
+      () =>
+        db.query("select public.remove_workspace_participant($1,$2)", [
+          directoryOrg,
+          member,
+        ]),
+      "Active participant not found",
+    );
+  });
+});
+it("last workspace removal preserves profile without business access", async () => {
+  await directoryFixture(async () => {
+    await db.exec(
+      `delete from public.workspace_memberships where user_id='${member}' and organization_id='${fallbackOrg}'`,
+    );
+    await user(owner);
+    await db.query("select public.remove_workspace_participant($1,$2)", [
+      directoryOrg,
+      member,
+    ]);
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select organization_id,role,status from public.profiles where id=$1",
+          [member],
+        )
+      ).rows,
+    ).toEqual([{ organization_id: null, role: "coach", status: "inactive" }]);
+    await user(member);
+    expect(
+      (await db.query("select public.current_organization_id() id")).rows,
+    ).toEqual([{ id: null }]);
+  });
+});
+it("coach, foreign admin, self and anonymous removal are denied without writes", async () => {
+  await directoryFixture(async () => {
+    for (const actor of [member, outsider]) {
+      await user(actor);
+      await rejected(
+        () =>
+          db.query("select public.remove_workspace_participant($1,$2)", [
+            directoryOrg,
+            owner,
+          ]),
+        "Workspace administrator required",
+      );
+    }
+    await user(owner);
+    await rejected(
+      () =>
+        db.query("select public.remove_workspace_participant($1,$2)", [
+          directoryOrg,
+          owner,
+        ]),
+      "Cannot remove yourself",
+    );
+    await db.exec("reset role;set role anon");
+    await rejected(() =>
+      db.query("select public.remove_workspace_participant($1,$2)", [
+        directoryOrg,
+        member,
+      ]),
+    );
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select * from public.workspace_memberships where organization_id=$1 and status='active'",
+          [directoryOrg],
+        )
+      ).rows,
+    ).toHaveLength(2);
+  });
 });
