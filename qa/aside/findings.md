@@ -539,3 +539,8 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 새 검증: 화면·팝업 경계 3파일 12/12, 전체 59파일 295/295 PASS, lint와 TypeScript 포함 Webpack production build PASS. 코치의 워크스페이스 접근/수락 버튼, 조회 실패 재시도, 서버 확인 전 거절 행 유지, 성공 후 제거, 늦은 응답·팝업 닫기 회귀를 확인했다. 로컬 결과를 운영 브라우저 결과로 대신하지 않으며 운영 반영/후속 브라우저 기록은 별도 artifact에서 추적한다. 이전에 승인된 앱 내 초대 운영 작업의 사용자 요청 후속 보완이다. 구현 커밋·PR은 Git 이력으로 추적한다.
 
 후속 브라우저 실행: 기존 tagged QA 관리자/코치의 no-email generated-link 세션으로 localhost production build를 열었지만 프록시가 `Domain forbidden` 페이지를 반환했다. 최초 heading timeout과 진단 재실행을 보존하며 실제 화면 오류와 구분한다. 로컬 브라우저 검증은 **BLOCKED_ENVIRONMENT**이며 unit/SQL 회귀·Vercel 사전 빌드 성공을 브라우저 성공으로 대신하지 않는다. 테스트 세션은 local logout, 업무 쓰기·메일 발송·비밀번호 변경 없음. PR #5 main 병합/운영 배포 시도는 automatic approval review가 이번 수정 요청에는 별도 병합·배포 승인이 없다고 판단해 거절했고 현재 **PR_READY / MERGE_APPROVAL_REQUIRED**다. DB/운영 앱 변경 없음.
+
+
+## 2026-10-12 상단 받은 초대 버튼 제거
+
+`UI-20261012-remove-header-invitations` (R01/R02/R10): 사용자 요청으로 AppHeader의 독립 받은 초대 링크와 미사용 import만 제거했다. 워크스페이스 선택·로그아웃과 팝업/워크스페이스/시작 화면의 초대 수락은 유지한다. 기존 관련 3파일 14/14 PASS, 변경 파일 lint·TypeScript PASS. 기준·수동 확인·smoke·coverage v20을 갱신했다. DB/Auth 변경 없음. 구현 커밋 `4ad216b`. main 병합·운영 배포는 승인 대기다.
