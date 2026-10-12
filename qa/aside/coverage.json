@@ -1,5 +1,5 @@
 {
-  "version": 22,
+  "version": 23,
   "requirements": [
     {
       "id": "R01",
@@ -72,7 +72,8 @@
         "src/app/(work)/workspaces/page.test.tsx",
         "src/features/auth/logout-action.test.ts",
         "src/features/auth/logout-button.test.tsx",
-        "src/app/(work)/manage/account/page.test.tsx"
+        "src/app/(work)/manage/account/page.test.tsx",
+        "src/app/(work)/manage/page.test.tsx"
       ],
       "gaps": [
         "Google 운영 공급자 설정 후 실제 동의·취소·기존 계정 연결 및 앱 내 수락 브라우저 E2E"

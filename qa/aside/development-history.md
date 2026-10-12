@@ -100,3 +100,10 @@
 검증: 계정 화면 1개·로그아웃 UI 3개·서버 action 3개 신규 경계 PASS, 기존 헤더 4개 포함 관련 11/11 PASS. 전체 64파일 314/314 PASS, lint와 TypeScript 포함 Webpack production build PASS. QA 기준·manual/workflow·coverage v22/시나리오 153개를 함께 갱신했다. Supabase 최신 signOut 문서로 local/global 의미 확인; changelog.md 접근은 환경 프록시의 domain denial로 BLOCKED이며 docs connector 조회로 보완했다. 이번 변경의 신규 DB migration/메일/프로필·권한 쓰기 없음. 구현 커밋/PR은 Git 이력으로 추적하며 상태 VERIFIED_LOCAL / PR_READY.
 
 이전 작업 운영 반영: 사용자 “일단 병합해” 승인으로 PR #7의 기존 migration을 적용하고 기록 버전을 저장소의 20261012065304로 맞춘 뒤 main에 병합했다. main 71209679d48e2e2ceaf184ebd08e55a3ead0acfc, 운영 deployment 7008688535 성공. 실제 DB에서 두 RPC의 익명 실행 금지·authenticated 실행 허용과 QA 관리자 디렉터리 4명 조회를 확인했다. advisors의 새 두 RPC authenticated 경고는 의도된 인증 호출이며 함수 내부에 대상 멤버십/역할 검사가 있다. 운영 브라우저 검증은 ERR_CERT_AUTHORITY_INVALID로 BLOCKED_ENVIRONMENT; Chromium CA 저장소는 읽기 전용이라 환경 CA 설치에 실패했다. 인증서 검증을 끄지 않았고 테스트에 만든 기존 tagged QA 계정의 no-email 세션은 local logout으로 종료했다. 업무 멤버십 제외·보고서 쓰기 없음. Vercel 배포 성공과 DB 검증을 브라우저 PASS로 대신하지 않는다. 계정 관리 추가는 PR #7 승인 범위와 구분하여 별도 PR로 준비한다.
+
+
+## 2026-10-12 상단 계정 버튼 제거 후 계정 진입 경로 유지
+
+`UI-20261012-remove-header-account` (R01/R02, 2-c-A): 사용자 요청으로 헤더의 별도 계정 링크와 미사용 import를 제거했다. 기존 경로를 제거하면 코치가 계정 관리/로그아웃에 접근할 수 없으므로 공통 관리 메뉴에 계정/워크스페이스 항목을 제공하고 관리자에게만 보고서 관리 항목을 표시한다. 관리자 전용 실제 보고서/양식/다운로드 페이지의 서버·DB 권한 검사는 유지했다. 계정 정보와 로그아웃 확인 동작은 기존 PR #8 구현을 유지한다. 코치/관리자 헤더·관리 페이지 회귀로 상단 링크 없음, 관리→계정 링크 유지, 코치 보고서 관리 링크 없음, 관리자 기존 링크 보존을 확인했다.
+
+검증: 관련 6파일 25/25 PASS, 전체 65파일 316/316 PASS, lint·TypeScript PASS, coverage v23·manual/workflow 기준 갱신. 구현 커밋/PR은 Git 이력으로 추적한다. 사용자 “완료되면 main에 병합하고 배포” 승인에 따라 PR #8 수정 후 사전 배포 검증·main 병합·운영 배포를 진행한다. 신규 DB/메일/프로필 변경 없음. 운영 배포와 인증된 HTTP 확인은 별도 실행 artifact로 기록한다. 기존 Chromium CA 신뢰 문제로 실제 브라우저 클릭 결과는 확인된 것으로 간주하지 않는다.

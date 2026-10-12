@@ -106,10 +106,12 @@ describe("AppHeader", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: "계정 관리" })).toHaveAttribute("href", "/manage/account");
+    expect(
+      screen.queryByRole("link", { name: "계정 관리" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("does not show administrator navigation to coaches", () => {
+  it("keeps management access for coaches without a separate header account button", () => {
     render(
       <AppHeader
         userId="f8601730-c133-41b8-8d69-316edc982195"
@@ -119,8 +121,12 @@ describe("AppHeader", () => {
         workspaces={workspaces}
       />,
     );
+    expect(screen.getByRole("link", { name: "관리" })).toHaveAttribute(
+      "href",
+      "/manage",
+    );
     expect(
-      screen.queryByRole("link", { name: "관리" }),
+      screen.queryByRole("link", { name: "계정 관리" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "수업" })).toBeInTheDocument();
   });
