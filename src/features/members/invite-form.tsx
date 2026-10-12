@@ -19,16 +19,9 @@ export function InviteForm() {
     <form action={action} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-semibold text-neutral-700">이름</span>
-          <input
-            name="name"
-            maxLength={50}
-            required
-            className="mt-2 w-full rounded-lg border border-neutral-300 px-4 py-3 outline-none focus:border-black focus:ring-2 focus:ring-neutral-200"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-neutral-700">이메일</span>
+          <span className="text-sm font-semibold text-neutral-700">
+            로그인 이메일
+          </span>
           <input
             type="email"
             name="email"
@@ -40,7 +33,10 @@ export function InviteForm() {
       </div>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">
+        <p
+          className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
+          role="alert"
+        >
           {state.error}
         </p>
       )}
@@ -53,12 +49,13 @@ export function InviteForm() {
         </p>
       )}
 
-      <SubmitButton pendingLabel="초대 중…"
+      <SubmitButton
+        pendingLabel="초대 중…"
         type="submit"
         pending={pending}
         className="rounded-lg bg-black px-5 py-3 font-semibold text-white disabled:opacity-60"
       >
-        코치 초대
+        앱으로 초대
       </SubmitButton>
     </form>
   );

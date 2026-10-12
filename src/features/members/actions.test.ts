@@ -1,103 +1,51 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({
-  current: vi.fn(), invite: vi.fn(), recovery: vi.fn(), getUser: vi.fn(),
-  single: vi.fn(), remove: vi.fn(), deleteUser: vi.fn(),
-  eq: vi.fn(), select: vi.fn(), rpc: vi.fn(),
-}));
+import { beforeEach, it, expect, vi } from "vitest";
+const m = vi.hoisted(() => ({ current: vi.fn(), rpc: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("@/features/auth/current-user", () => ({ requireCurrentProfile: mocks.current }));
-vi.mock("@/lib/env", () => ({ requireServerEnv: () => ({ siteUrl: "http://localhost:3000" }) }));
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({
-    auth: { admin: { inviteUserByEmail: mocks.invite, getUserById: mocks.getUser, deleteUser: mocks.deleteUser }, resetPasswordForEmail: mocks.recovery },
-    from: () => ({ select: mocks.select, delete: mocks.remove }),
-  }),
+vi.mock("@/features/auth/current-user", () => ({
+  requireCurrentProfile: m.current,
 }));
-import { inviteCoachAction, resendCoachInvitationAction } from "./actions";
-const form = () => {
-  const data = new FormData();
-  data.set("userId", "f8601730-c133-41b8-8d69-316edc982195");
-  data.set("email", "coach@example.com");
-  data.set("name", "코치");
-  return data;
-};
-describe("invitation account preservation", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-    mocks.current.mockResolvedValue({
-      profile: { role: "admin", organization_id: "org" },
-      supabase: { rpc: mocks.rpc },
-    });
-    mocks.select.mockReturnValue({ eq: mocks.eq });
-    mocks.eq.mockReturnValue({ eq: mocks.eq, single: mocks.single });
-    mocks.single.mockResolvedValue({
-      data: { profiles: { name: "코치" }, status: "pending" },
-    });
-    mocks.getUser.mockResolvedValue({ data: { user: { email: "coach@example.com", user_metadata: { must_change_password: true } } } });
-    mocks.invite.mockResolvedValue({ data: { user: { id: "existing" } }, error: null });
-    mocks.rpc.mockImplementation(async (name: string) => ({
-      data: name === "find_workspace_user_by_email" ? null : undefined,
-      error: null,
-    }));
-    mocks.recovery.mockResolvedValue({ error: null });
+import { inviteCoachAction, cancelInvitationAction } from "./actions";
+beforeEach(() => {
+  vi.resetAllMocks();
+  m.current.mockResolvedValue({
+    supabase: { rpc: m.rpc },
+    profile: { role: "admin" },
   });
-  it("registers a new invitation in the current workspace", async () => {
-    expect((await inviteCoachAction({}, form())).success).toBeDefined();
-    expect(mocks.rpc).toHaveBeenCalledWith(
-      "register_workspace_invitee",
-      expect.objectContaining({ p_user_id: "existing", p_name: "코치" }),
-    );
+  m.rpc.mockResolvedValue({ error: null });
+});
+function form() {
+  const f = new FormData();
+  f.set("email", "coach@example.com");
+  f.set("invitationId", "10000000-0000-4000-8000-000000000001");
+  return f;
+}
+it("registers an invitation without Auth user creation or email transport", async () => {
+  expect((await inviteCoachAction({}, form())).success).toContain("앱");
+  expect(m.rpc).toHaveBeenCalledExactlyOnceWith("create_workspace_invitation", {
+    p_email: "coach@example.com",
   });
-  it("adds an existing account without sending another invitation", async () => {
-    mocks.rpc.mockImplementation(async (name: string) => ({
-      data:
-        name === "find_workspace_user_by_email"
-          ? "f8601730-c133-41b8-8d69-316edc982195"
-          : undefined,
-      error: null,
-    }));
-    expect((await inviteCoachAction({}, form())).success).toContain(
-      "워크스페이스",
-    );
-    expect(mocks.rpc).toHaveBeenCalledWith("add_existing_workspace_member", {
-      p_user_id: "f8601730-c133-41b8-8d69-316edc982195",
-    });
-    expect(mocks.invite).not.toHaveBeenCalled();
+});
+it("rejects a coach before writing", async () => {
+  m.current.mockResolvedValue({
+    supabase: { rpc: m.rpc },
+    profile: { role: "coach" },
   });
-  it("preserves the account when sending hits the email limit", async () => {
-    mocks.invite.mockResolvedValue({ data: {}, error: { code: "over_email_send_rate_limit", status: 429, message: "limited" } });
-    expect((await resendCoachInvitationAction({}, form())).error).toContain("한도");
-    expect(mocks.invite).toHaveBeenCalledTimes(1);
-    expect(mocks.remove).not.toHaveBeenCalled();
-    expect(mocks.deleteUser).not.toHaveBeenCalled();
+  expect((await inviteCoachAction({}, form())).error).toBeDefined();
+  expect(m.rpc).not.toHaveBeenCalled();
+});
+it("does not treat existing active membership as a successful invitation", async () => {
+  m.rpc.mockResolvedValue({ error: { code: "PT409" } });
+  expect((await inviteCoachAction({}, form())).error).toContain("참여");
+});
+it("cancels only through the authorized RPC", async () => {
+  await cancelInvitationAction({}, form());
+  expect(m.rpc).toHaveBeenCalledWith("cancel_workspace_invitation", {
+    p_invitation_id: "10000000-0000-4000-8000-000000000001",
   });
-  it("sends recovery for confirmed users who still need a password", async () => {
-    mocks.getUser.mockResolvedValue({ data: { user: { email: "coach@example.com", email_confirmed_at: "2026-01-01", user_metadata: { must_change_password: true } } } });
-    expect((await resendCoachInvitationAction({}, form())).success).toBeDefined();
-    expect(mocks.recovery).toHaveBeenCalledTimes(1);
-    expect(mocks.invite).not.toHaveBeenCalled();
-  });
-  it("rejects a target outside the current organization", async () => {
-    mocks.single.mockResolvedValue({ data: null });
-    expect((await resendCoachInvitationAction({}, form())).error).toBeDefined();
-    expect(mocks.eq).toHaveBeenCalledWith("organization_id", "org");
-    expect(mocks.invite).not.toHaveBeenCalled();
-    expect(mocks.recovery).not.toHaveBeenCalled();
-  });
-  it("rejects coaches before accessing the admin API", async () => {
-    mocks.current.mockResolvedValue({
-      profile: { role: "coach" },
-      supabase: { rpc: mocks.rpc },
-    });
-    expect((await resendCoachInvitationAction({}, form())).error).toBeDefined();
-    expect(mocks.getUser).not.toHaveBeenCalled();
-  });
-  it("does not delete an invited account after membership registration fails", async () => {
-    mocks.rpc.mockImplementation(async (name: string) => ({
-      data: name === "find_workspace_user_by_email" ? null : undefined,
-      error: name === "register_workspace_invitee" ? { code: "23505" } : null,
-    }));
-    expect((await inviteCoachAction({}, form())).error).toBeDefined();
-    expect(mocks.deleteUser).not.toHaveBeenCalled();
-  });
+});
+it("rejects invalid email and invitation identifiers before authentication", async () => {
+  const f = new FormData();
+  await inviteCoachAction({}, f);
+  await cancelInvitationAction({}, f);
+  expect(m.current).not.toHaveBeenCalled();
 });

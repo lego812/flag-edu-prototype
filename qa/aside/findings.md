@@ -521,3 +521,12 @@ FeedbackLink의 클릭 위치 스피너·상단 이동 표시, SubmitButton의 �
 최종 범위의 새 회귀 54파일 272/272 PASS, lint PASS, Webpack 운영 빌드의 컴파일·TypeScript·25개 페이지 생성 PASS. 기본 Turbopack 빌드는 VM 포트 바인딩 제한으로 대체했다. 실제 브라우저와 운영 배포 검증은 이 로컬 결과와 구분한다.
 
 TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
+
+
+## 2026-10-12: Google 신규 가입·앱 내 워크스페이스 초대
+
+`AUTH-20261012-google-inapp-invitations` (R02/R09/R10, manual 2-a-D/2-b-A~E/workflow 10-b): 사용자는 인증코드 가입을 없애고 Google OAuth 신규가입·앱 내 초대를 선택했으며 기존 비밀번호 로그인 유지에 응답했다. 새 로그인 버튼은 PKCE를 사용하며 callback 교환 성공 후 받은 초대/시작 화면으로 이동한다. 초대는 이메일에 바인딩된 앱 목록이고 등록 시 계정·멤버십·메일을 만들지 않는다. 수락·거절·취소·재초대·7일 만료, 다른 이메일 비노출/수락 거절, 초대자 권한 회수, 수락 중복·비활성화 후 재사용 차단을 DB에서 처리한다. 기존 비밀번호 설정의 pending 일괄 활성화를 제거하고 기존 직접 추가 RPC도 닫았다. 새 회원은 신뢰된 Google identity와 인증 이메일이 있어야 프로필을 만들 수 있으며 자신이 만든 새 워크스페이스에서만 관리자가 된다. 기존 활성 계정·멤버십·다른 역할·비밀번호는 보존한다. 기존 pending 멤버십은 관리자 있는 경우 앱 초대로 이동한다.
+
+검증: 최초 신규 경계 6파일 29/29 PASS. 전체 57파일 286/286 PASS, lint·TypeScript 포함 Webpack 운영 빌드 PASS. 이후 legacy pending 이전·익명 hook/RPC 차단을 추가해 최신 전체 SQL 9개와 문서 매핑 검증 포함 3파일 23/23 PASS, 최종 lint·TypeScript PASS. PostgreSQL 테스트는 PGlite에 저장소 전체 마이그레이션을 적용하며 Auth 스키마/identity는 로컬 픽스처다. 기본 Turbopack의 VM 포트 제한을 피한 Webpack 빌드이며 Vercel 실제 빌드와 구분한다. 기존 보고서 회귀는 기존 migration chain 대상이고, 신규 chain의 테스트는 인증·초대 경계에 집중한다. 실제 Google 동의/자동 identity 연결·로그인 브라우저 E2E는 아직 실행하지 않았다.
+
+운영 준비 조회: Google provider 비활성화, Client ID/Secret 미설정. 코드와 DB 마이그레이션·`private.google_signup_only` Before User Created hook을 준비했다. 훅을 Supabase Auth에 연결하기 전에는 Google-only 신규가입 설정이 완성되지 않는다. `docs/google-oauth-inapp-rollout.md`에 안전한 적용 순서와 기존 계정 호환을 기록했다. 운영 DB/설정/계정/메일 변경 없음. 상태 **VERIFIED_LOCAL / GOOGLE_CONFIG_PENDING**. 구현 커밋 및 PR은 Git 이력으로 추적한다. 실제 OAuth/DB 운영 반영·main 병합·배포는 별도 준비 후 진행한다.

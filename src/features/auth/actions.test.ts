@@ -1,81 +1,54 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const mocks = vi.hoisted(() => ({
-  createClient: vi.fn(),
-  createAdminClient: vi.fn(),
-  redirect: vi.fn(),
+import { beforeEach, it, expect, vi } from "vitest";
+const m = vi.hoisted(() => ({
   getUser: vi.fn(),
   updateUser: vi.fn(),
-  adminFrom: vi.fn(),
-  adminRpc: vi.fn(),
-  profileSingle: vi.fn(),
+  redirect: vi.fn(),
+  signInWithPassword: vi.fn(),
 }));
-
-vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
-vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: mocks.createAdminClient,
+vi.mock("next/navigation", () => ({ redirect: m.redirect }));
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: async () => ({ auth: m }),
 }));
-
-import { setPasswordAction } from "./actions";
-
-function passwordForm() {
-  const form = new FormData();
-  form.set("password", "new-password");
-  form.set("passwordConfirm", "new-password");
-  return form;
-}
-
-describe("password setup activation", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-    mocks.createClient.mockResolvedValue({
-      auth: { getUser: mocks.getUser, updateUser: mocks.updateUser },
-    });
-    mocks.createAdminClient.mockReturnValue({
-      from: mocks.adminFrom,
-      rpc: mocks.adminRpc,
-    });
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "member-id" } } });
-    mocks.updateUser.mockResolvedValue({ error: null });
-    mocks.profileSingle.mockResolvedValue({
-      data: { status: "pending" },
-      error: null,
-    });
-    mocks.adminRpc.mockResolvedValue({ error: null });
-    mocks.adminFrom.mockReturnValue({
-      select: () => ({
-        eq: () => ({ single: mocks.profileSingle }),
-      }),
-    });
-    mocks.redirect.mockImplementation(() => {
-      throw new Error("NEXT_REDIRECT");
-    });
+import { setPasswordAction, loginAction } from "./actions";
+beforeEach(() => {
+  vi.resetAllMocks();
+  m.getUser.mockResolvedValue({ data: { user: { id: "legacy" } } });
+  m.updateUser.mockResolvedValue({ error: null });
+  m.redirect.mockImplementation((p: string) => {
+    throw Error(p);
   });
-
-  it("activates only a pending profile after the password is updated", async () => {
-    await expect(setPasswordAction({}, passwordForm())).rejects.toThrow(
-      "NEXT_REDIRECT",
-    );
-
-    expect(mocks.updateUser).toHaveBeenNthCalledWith(1, {
-      password: "new-password",
-    });
-    expect(mocks.adminRpc).toHaveBeenCalledWith("activate_invited_user", {
-      p_user_id: "member-id",
-    });
-    expect(mocks.updateUser).toHaveBeenNthCalledWith(2, {
-      data: { must_change_password: false },
-    });
+});
+it("preserves password setup without granting any workspace membership", async () => {
+  const f = new FormData();
+  f.set("password", "existing-password");
+  f.set("passwordConfirm", "existing-password");
+  await expect(setPasswordAction({}, f)).rejects.toThrow("/welcome");
+  expect(m.updateUser).toHaveBeenNthCalledWith(1, {
+    password: "existing-password",
   });
-
-  it("keeps the password-change flag when pending activation fails", async () => {
-    mocks.adminRpc.mockResolvedValue({ error: { code: "P0001" } });
-
-    const result = await setPasswordAction({}, passwordForm());
-
-    expect(result.error).toContain("가입을 완료하지 못했습니다");
-    expect(mocks.updateUser).toHaveBeenCalledTimes(1);
-    expect(mocks.redirect).not.toHaveBeenCalled();
+  expect(m.updateUser).toHaveBeenNthCalledWith(2, {
+    data: { must_change_password: false },
   });
+});
+it("keeps legacy password login", async () => {
+  m.signInWithPassword.mockResolvedValue({
+    data: { user: { user_metadata: {} } },
+    error: null,
+  });
+  const f = new FormData();
+  f.set("email", "legacy@example.com");
+  f.set("password", "legacy-password");
+  await expect(loginAction({}, f)).rejects.toThrow("/dashboard");
+  expect(m.signInWithPassword).toHaveBeenCalledWith({
+    email: "legacy@example.com",
+    password: "legacy-password",
+  });
+});
+it("does not redirect when password update fails", async () => {
+  m.updateUser.mockResolvedValue({ error: { code: "failure" } });
+  const f = new FormData();
+  f.set("password", "existing-password");
+  f.set("passwordConfirm", "existing-password");
+  expect((await setPasswordAction({}, f)).error).toBeDefined();
+  expect(m.redirect).not.toHaveBeenCalled();
 });

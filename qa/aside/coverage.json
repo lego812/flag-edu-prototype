@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "requirements": [
     {
       "id": "R01",
@@ -63,11 +63,13 @@
         "src/features/auth/validation.test.ts",
         "src/features/auth/actions.test.ts",
         "src/features/members/actions.test.ts",
-        "src/app/auth/callback/page.test.tsx"
+        "src/app/auth/callback/page.test.tsx",
+        "src/features/workspaces/invitations-db.test.ts",
+        "src/features/workspaces/inbox-actions.test.ts",
+        "src/features/auth/google-login.test.tsx"
       ],
       "gaps": [
-        "만료된 초대·복구 링크 거절 E2E",
-        "워크스페이스 적용 후 실제 초대 메일 발송·수신·링크 수락 E2E"
+        "Google 운영 공급자 설정 후 실제 동의·취소·기존 계정 연결 및 앱 내 수락 브라우저 E2E"
       ]
     },
     {
@@ -281,7 +283,9 @@
         "scripts/service-worker.test.mjs",
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/workflows.test.ts",
-        "src/features/classes/actions.test.ts"
+        "src/features/classes/actions.test.ts",
+        "src/features/workspaces/invitations-db.test.ts",
+        "src/features/workspaces/inbox-actions.test.ts"
       ],
       "gaps": []
     },
@@ -312,7 +316,9 @@
         "src/app/api/workspaces/current/route.test.ts",
         "src/features/members/actions.test.ts",
         "src/features/members/repository.test.ts",
-        "src/features/reports/workflows.test.ts"
+        "src/features/reports/workflows.test.ts",
+        "src/features/workspaces/invitations-db.test.ts",
+        "src/features/workspaces/inbox-actions.test.ts"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"
