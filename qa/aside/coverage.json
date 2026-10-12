@@ -1,5 +1,5 @@
 {
-  "version": 26,
+  "version": 27,
   "requirements": [
     {
       "id": "R01",
@@ -295,7 +295,8 @@
         "src/features/workspaces/invitations-db.test.ts",
         "src/features/workspaces/inbox-actions.test.ts",
         "src/features/workspaces/participant-actions.test.ts",
-        "src/app/(work)/workspaces/[id]/page.test.tsx"
+        "src/app/(work)/workspaces/[id]/page.test.tsx",
+        "src/features/members/manage-action.test.ts"
       ],
       "gaps": []
     },

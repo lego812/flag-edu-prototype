@@ -893,3 +893,59 @@ it("the deletion marker blocks archived access even if an operator reactivates a
     );
   });
 });
+
+it("stale member forms and legacy RPC cannot change a shared member in another workspace", async () => {
+  await directoryFixture(async () => {
+    await db.exec(
+      `update public.workspace_memberships set role='admin' where user_id='${owner}' and organization_id='${fallbackOrg}';update public.profiles set role='admin' where id='${owner}'`,
+    );
+    await user(owner);
+    await rejected(
+      () =>
+        db.query(
+          "select public.manage_workspace_member($1,$2,'coach','inactive')",
+          [directoryOrg, member],
+        ),
+      "Selected workspace administrator required",
+    );
+    await rejected(() =>
+      db.query("select public.manage_member($1,'coach','inactive')", [member]),
+    );
+    expect(
+      (
+        await db.query(
+          "select role,status from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [member, fallbackOrg],
+        )
+      ).rows,
+    ).toEqual([{ role: "admin", status: "active" }]);
+  });
+});
+it("scoped member changes work normally and respect deletion", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    await db.query("select public.switch_workspace($1)", [directoryOrg]);
+    await db.query(
+      "select public.manage_workspace_member($1,$2,'admin','active')",
+      [directoryOrg, member],
+    );
+    expect(
+      (
+        await db.query(
+          "select role from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [member, directoryOrg],
+        )
+      ).rows,
+    ).toEqual([{ role: "admin" }]);
+    await db.query("select public.delete_workspace($1,$2)", [
+      directoryOrg,
+      "Directory",
+    ]);
+    await rejected(() =>
+      db.query(
+        "select public.manage_workspace_member($1,$2,'coach','active')",
+        [directoryOrg, member],
+      ),
+    );
+  });
+});

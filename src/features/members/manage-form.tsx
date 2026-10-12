@@ -4,11 +4,13 @@ import { useActionState } from "react";
 import { manageMemberAction } from "./manage-action";
 export function ManageMemberForm({
   id,
+  workspaceId,
   role,
   status,
   self,
 }: {
   id: string;
+  workspaceId: string;
   role: string;
   status: string;
   self: boolean;
@@ -17,6 +19,7 @@ export function ManageMemberForm({
   return (
     <form action={action} className="w-full space-y-2">
       <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="workspaceId" value={workspaceId} />
       <fieldset disabled={pending} className="flex flex-wrap items-end gap-2">
         <label className="text-xs">
           역할
@@ -42,7 +45,9 @@ export function ManageMemberForm({
           <input type="checkbox" name="confirm" value="yes" required />
           변경 확인
         </label>
-        <SubmitButton pendingLabel="적용 중…" className="btn-secondary">적용</SubmitButton>
+        <SubmitButton pendingLabel="적용 중…" className="btn-secondary">
+          적용
+        </SubmitButton>
       </fieldset>
       {state.error && (
         <p role="alert" className="text-sm text-red-700">
