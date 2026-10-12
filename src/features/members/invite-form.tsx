@@ -9,7 +9,7 @@ import {
 
 const initialState: InviteActionState = {};
 
-export function InviteForm() {
+export function InviteForm({ workspaceId }: { workspaceId: string }) {
   const [state, action, pending] = useActionState(
     inviteCoachAction,
     initialState,
@@ -17,6 +17,7 @@ export function InviteForm() {
 
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="workspaceId" value={workspaceId} />
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="text-sm font-semibold text-neutral-700">

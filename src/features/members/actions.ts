@@ -8,12 +8,16 @@ export async function inviteCoachAction(
   _state: InviteActionState,
   form: FormData,
 ): Promise<InviteActionState> {
+  const workspaceId = String(form.get("workspaceId") ?? "");
+  if (!isUuid(workspaceId))
+    return { error: "워크스페이스를 다시 확인해 주세요." };
   const email = validateEmail(form.get("email"));
   if (!email) return { error: "올바른 이메일 주소를 입력해 주세요." };
   const { supabase, profile } = await requireCurrentProfile();
-  if (profile.role !== "admin")
-    return { error: "관리자만 구성원을 초대할 수 있습니다." };
-  const { error } = await supabase.rpc("create_workspace_invitation", {
+  if (profile.role !== "admin" || profile.organization_id !== workspaceId)
+    return { error: "이 워크스페이스로 전환한 관리자만 초대할 수 있습니다." };
+  const { error } = await supabase.rpc("invite_workspace_coach", {
+    p_workspace_id: workspaceId,
     p_email: email,
   });
   if (error)
@@ -23,7 +27,7 @@ export async function inviteCoachAction(
           ? "이미 참여한 구성원입니다."
           : "초대를 만들지 못했습니다. 다시 시도해 주세요.",
     };
-  revalidatePath("/members");
+  revalidatePath("/", "layout");
   revalidatePath("/welcome");
   return {
     success:
@@ -43,7 +47,7 @@ export async function cancelInvitationAction(
     p_invitation_id: id,
   });
   if (error) return { error: "초대를 취소하지 못했습니다." };
-  revalidatePath("/members");
+  revalidatePath("/", "layout");
   revalidatePath("/welcome");
   return { success: "초대를 취소했습니다." };
 }

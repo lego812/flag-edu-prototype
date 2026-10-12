@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({ current: vi.fn(), rpc: vi.fn() }));
 vi.mock("@/features/auth/current-user", () => ({
@@ -12,6 +12,13 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/features/workspaces/participant-actions", () => ({
   removeParticipantAction: vi.fn(),
 }));
+vi.mock("@/features/workspaces/rename-actions", () => ({
+  renameWorkspaceAction: vi.fn(),
+}));
+vi.mock("@/features/members/actions", () => ({
+  inviteCoachAction: vi.fn(),
+  cancelInvitationAction: vi.fn(),
+}));
 vi.mock("@/features/members/manage-form", () => ({
   ManageMemberForm: () => <div>권한 편집</div>,
 }));
@@ -24,7 +31,14 @@ function current(role = "coach", selected = id) {
     profile: { id: self, role: "coach" },
     workspace: { id: selected },
     workspaces: [{ id, name: "테스트 기관", role }],
-    supabase: { rpc: m.rpc },
+    supabase: {
+      rpc: m.rpc,
+      from: () => ({
+        select: () => ({
+          eq: () => ({ order: async () => ({ data: [], error: null }) }),
+        }),
+      }),
+    },
   };
 }
 beforeEach(() => {
@@ -44,6 +58,10 @@ it("coach sees target participants and roles without management controls", async
     screen.getByRole("heading", { name: "테스트 기관" }),
   ).toBeInTheDocument();
   expect(screen.getByText("참여자")).toBeInTheDocument();
+  expect(screen.queryByText("워크스페이스 이름 변경")).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "앱으로 초대" }),
+  ).not.toBeInTheDocument();
   expect(screen.getByText("관리자 · 참여 중")).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /내보내기/ }),
@@ -77,4 +95,23 @@ it("shows directory failures explicitly", async () => {
   m.rpc.mockResolvedValue({ error: { code: "42501" }, data: null });
   render(await WorkspaceDetailPage({ params: Promise.resolve({ id }) }));
   expect(screen.getByRole("alert")).toHaveTextContent("참여자");
+});
+
+it("selected administrator sees invitations inside participants rather than a separate page link", async () => {
+  m.current.mockResolvedValue(current("admin"));
+  render(await WorkspaceDetailPage({ params: Promise.resolve({ id }) }));
+  expect(screen.getByText("워크스페이스 이름 변경")).toBeInTheDocument();
+  const panel = screen
+    .getByRole("heading", { name: "참여자·권한" })
+    .closest("section")!;
+  expect(
+    within(panel).getByRole("button", { name: "앱으로 초대" }),
+  ).toBeInTheDocument();
+  expect(
+    within(panel).getByRole("heading", { name: "보낸 초대" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: "참여자 초대·보낸 초대 확인" }),
+  ).not.toBeInTheDocument();
+  expect(panel.querySelector('input[name="workspaceId"]')).toHaveValue(id);
 });

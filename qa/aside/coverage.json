@@ -1,5 +1,5 @@
 {
-  "version": 23,
+  "version": 24,
   "requirements": [
     {
       "id": "R01",
@@ -318,7 +318,8 @@
         "10-b-I",
         "10-b-J",
         "10-b-K",
-        "10-c-A"
+        "10-c-A",
+        "10-c-C"
       ],
       "automated": [
         "src/features/workspaces/actions.test.ts",
@@ -333,7 +334,8 @@
         "src/features/workspaces/popup-invitations.test.tsx",
         "src/app/(work)/workspaces/page.test.tsx",
         "src/features/workspaces/participant-actions.test.ts",
-        "src/app/(work)/workspaces/[id]/page.test.tsx"
+        "src/app/(work)/workspaces/[id]/page.test.tsx",
+        "src/features/workspaces/rename-actions.test.ts"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"

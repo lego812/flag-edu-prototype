@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { isUuid } from "@/features/classes/model";
 import { RemoveParticipantForm } from "@/features/workspaces/remove-participant-form";
+import { RenameWorkspaceForm } from "@/features/workspaces/rename-form";
+import { WorkspaceInvitationPanel } from "@/features/workspaces/invitation-panel";
 import { ManageMemberForm } from "@/features/members/manage-form";
 
 export const metadata = { title: "워크스페이스 참여자" };
@@ -21,6 +23,14 @@ export default async function WorkspaceDetailPage({
     "list_workspace_participants",
     { p_workspace_id: id },
   );
+  const inviteResult =
+    target.role === "admin" && target.id === workspace.id
+      ? await supabase
+          .from("workspace_invitations")
+          .select("id,email,status,expires_at")
+          .eq("organization_id", id)
+          .order("created_at", { ascending: false })
+      : null;
   return (
     <div className="space-y-8">
       <header>
@@ -32,21 +42,14 @@ export default async function WorkspaceDetailPage({
           내 권한: {target.role === "admin" ? "관리자" : "코치"}
         </p>
       </header>
-      {target.role === "admin" && target.id === workspace.id && (
-        <section className="surface p-6">
-          <h2 className="mb-3 font-bold">초대 관리</h2>
-          <Link href="/members" className="text-sm underline">
-            참여자 초대·보낸 초대 확인
-          </Link>
-        </section>
+      {target.role === "admin" && (
+        <RenameWorkspaceForm
+          key={target.name}
+          workspaceId={id}
+          name={target.name}
+        />
       )}
-      {target.role === "admin" && target.id !== workspace.id && (
-        <p className="text-sm text-neutral-600">
-          초대와 권한 변경은 상단에서 이 워크스페이스로 전환한 후 사용할 수
-          있습니다.
-        </p>
-      )}
-      <section className="surface p-6">
+      <section id="participants" className="surface p-6">
         <h2 className="mb-4 font-bold">참여자·권한</h2>
         <p className="mb-4 text-sm leading-6 text-neutral-600">
           관리자는 수업·보고서·양식과 참여자를 관리하고, 코치는 수업 조회와 본인
@@ -110,6 +113,19 @@ export default async function WorkspaceDetailPage({
             )}
           </ul>
         )}
+        {target.role === "admin" &&
+          (target.id === workspace.id ? (
+            <WorkspaceInvitationPanel
+              workspaceId={id}
+              invitations={inviteResult?.data ?? []}
+              error={!!inviteResult?.error}
+            />
+          ) : (
+            <p className="mt-6 text-sm text-neutral-600">
+              초대와 권한 변경은 상단에서 이 워크스페이스로 전환한 후 사용할 수
+              있습니다.
+            </p>
+          ))}
       </section>
     </div>
   );
