@@ -103,6 +103,7 @@ export default async function WorkspaceDetailPage({
                         </summary>
                         <ManageMemberForm
                           id={m.user_id}
+                          workspaceId={id}
                           role={m.role}
                           status={m.status}
                           self={m.user_id === profile.id}

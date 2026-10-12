@@ -67,6 +67,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
       "202610070001_operational_workflow.sql",
       "202610070002_workspace_memberships.sql",
       "202610070003_photo_mutation_version.sql",
+      "20261012092729_workspace_member_action_scope.sql",
     ]) {
       await db.exec(await readFile("supabase/migrations/" + file, "utf8"));
     }
@@ -394,20 +395,20 @@ describe("reporting PostgreSQL workflows and RLS", () => {
   it("protects the last administrator and cross-organization members", async () => {
     await asUser(ids.admin);
     await expect(
-      db.query("select public.manage_member($1,'coach','active')", [ids.admin]),
+      db.query(`select public.manage_workspace_member('${ids.org}',$1,'coach','active')`, [ids.admin]),
     ).rejects.toThrow();
     await expect(
-      db.query("select public.manage_member($1,'coach','inactive')", [
+      db.query(`select public.manage_workspace_member('${ids.org}',$1,'coach','inactive')`, [
         ids.other,
       ]),
     ).rejects.toThrow();
     await expect(
-      db.query("select public.manage_member($1,'coach','active')", [
+      db.query(`select public.manage_workspace_member('${ids.org}',$1,'coach','active')`, [
         ids.pending,
       ]),
     ).rejects.toThrow();
     await expect(
-      db.query("select public.manage_member($1,'coach','pending')", [ids.coach]),
+      db.query(`select public.manage_workspace_member('${ids.org}',$1,'coach','pending')`, [ids.coach]),
     ).rejects.toThrow();
   });
   it("requires stored photos, enforces count, and returns changed attachments to draft", async () => {
@@ -782,7 +783,7 @@ describe("reporting PostgreSQL workflows and RLS", () => {
         )
       ).rows[0].status,
     ).toBe("pending");
-    await db.query("select public.manage_member($1,'admin','active')", [ids.coach]);
+    await db.query("select public.manage_workspace_member($1,$2,'admin','active')", [workspaceId,ids.coach]);
     await db.query("select public.switch_workspace($1)", [ids.org]);
 
     await asUser(ids.coach);

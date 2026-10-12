@@ -8,11 +8,14 @@ export async function manageMemberAction(
   form: FormData,
 ): Promise<ActionState> {
   const { supabase, profile } = await requireCurrentProfile();
+  const workspaceId = String(form.get("workspaceId") ?? "");
   const id = String(form.get("id")),
     role = String(form.get("role")),
     status = String(form.get("status"));
   if (
     profile.role !== "admin" ||
+    !isUuid(workspaceId) ||
+    profile.organization_id !== workspaceId ||
     !isUuid(id) ||
     !["admin", "coach"].includes(role) ||
     !["active", "inactive"].includes(status) ||
@@ -21,7 +24,8 @@ export async function manageMemberAction(
     return { error: "변경 내용과 관리자 권한을 확인해 주세요." };
   if (id === profile.id && status === "inactive")
     return { error: "본인 계정의 비활성화는 다른 관리자가 처리해야 합니다." };
-  const { error } = await supabase.rpc("manage_member", {
+  const { error } = await supabase.rpc("manage_workspace_member", {
+    p_workspace_id: workspaceId,
     p_user_id: id,
     p_role: role,
     p_status: status,
@@ -32,6 +36,6 @@ export async function manageMemberAction(
     };
   revalidatePath("/members");
   revalidatePath("/workspaces");
-  revalidatePath("/","layout");
+  revalidatePath("/", "layout");
   return { success: "변경했습니다." };
 }
