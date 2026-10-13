@@ -200,6 +200,9 @@ describe("photo thumbnails", () => {
 
 describe("multiple photo uploads", () => {
   beforeEach(() => {
+    let counter = 0;
+    URL.createObjectURL = vi.fn(() => `blob:photo-${++counter}`);
+    URL.revokeObjectURL = vi.fn();
     photo.refresh.mockClear();
     photo.compress.mockReset().mockResolvedValue(new Blob(["compressed"], { type: "image/jpeg" }));
     actions.save.mockReset().mockResolvedValue({ success: "저장했습니다.", version: "saved-version" });
@@ -319,6 +322,49 @@ describe("multiple photo uploads", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("0/3장 업로드 완료");
     expect(ui.container.querySelector('input[name="version"]')).toHaveValue("version-1");
     expect(photo.refresh).not.toHaveBeenCalled();
+  });
+
+  it("shows an uploading local preview before the response and reuses it after success", async () => {
+    let finish!: (value:Response)=>void;
+    vi.spyOn(globalThis,"fetch").mockReturnValue(new Promise(resolve=>{finish=resolve;}));
+    const ui=editor();
+    fireEvent.change(screen.getByLabelText("활동 사진 선택"),{target:{files:files().slice(0,1)}});
+    const image=await screen.findByRole("img");
+    expect(image).toHaveAttribute("src","blob:photo-1");
+    expect(screen.getByText("업로드 중",{exact:true})).toBeInTheDocument();
+    expect(screen.getByText("0/5장")).toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:/사진 1 삭제/})).not.toBeInTheDocument();
+    await act(async()=>finish(response(0,"version-2")));
+    expect(screen.getByRole("img")).toHaveAttribute("src","blob:photo-1");
+    expect(screen.queryByText("업로드 중",{exact:true})).not.toBeInTheDocument();
+    expect(screen.getByText("1/5장")).toBeInTheDocument();
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    ui.unmount();expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-1");
+  });
+  it("maps noncontiguous successes to their own previews and releases failed previews", async () => {
+    vi.spyOn(globalThis,"fetch").mockResolvedValueOnce(new Response(JSON.stringify({attachments:[{...attachments[0],clientIndex:0},{...attachments[1],clientIndex:2}],version:"version-2",error:"일부 실패"})));
+    editor();fireEvent.change(screen.getByLabelText("활동 사진 선택"),{target:{files:files()}});
+    await screen.findByRole("alert");
+    expect(screen.getAllByRole("img").map(img=>img.getAttribute("src"))).toEqual(["blob:photo-1","blob:photo-3"]);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-2");
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:photo-1");
+  });
+  it("releases a saved preview only after successful deletion", async () => {
+    const fetch=vi.spyOn(globalThis,"fetch").mockResolvedValueOnce(response(0,"version-2")).mockResolvedValueOnce(new Response(JSON.stringify({error:"실패"}),{status:409})).mockResolvedValueOnce(new Response(JSON.stringify({ok:true,version:"version-3"})));
+    editor();fireEvent.change(screen.getByLabelText("활동 사진 선택"),{target:{files:files().slice(0,1)}});
+    await screen.findByText("1/5장");fireEvent.click(screen.getByRole("button",{name:"활동 사진 1 삭제"}));fireEvent.click(screen.getByRole("button",{name:"삭제"}));
+    await screen.findByRole("alert");expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button",{name:"삭제"}));
+    await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(3));
+    await waitFor(()=>expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:photo-1"));
+  });
+  it("does not allocate a preview or upload after unmount during compression", async () => {
+    let finish!: (blob:Blob)=>void;
+    photo.compress.mockReturnValueOnce(new Promise(resolve=>{finish=resolve;}));
+    const fetch=vi.spyOn(globalThis,"fetch");const ui=editor();
+    fireEvent.change(screen.getByLabelText("활동 사진 선택"),{target:{files:files().slice(0,1)}});ui.unmount();
+    await act(async()=>finish(new Blob(["jpeg"])));
+    expect(URL.createObjectURL).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
   });
 
 });
