@@ -205,3 +205,7 @@ node --env-file=.env.local scripts/qa-workspace-sync.mjs admin webkit <설치된
 
 
 삭제 후 자동 전환된 다른 워크스페이스에는 이전 권한 변경 폼이 적용되지 않는다. 권한 폼은 렌더된 워크스페이스 ID를 제출하고 서버·DB는 선택/권한을 잠금 후 다시 확인한다. 기존 workspace ID 없는 관리 RPC는 인증 클라이언트에서 실행하지 못한다. 오래된 배포의 폼도 다른 워크스페이스 권한을 변경할 수 없다.
+
+### 신규 가입·보관 만료 검증 경계
+
+2-d-A/B/C와 10-c-F는 별도 동의/권한 시나리오다. 기본 Aside 업무 생성 시나리오에 가입 또는 만료 데이터 청소를 추가하지 않는다. 보관 만료는 로컬 Storage 모형의 삭제와 운영 Storage API의 실파일 삭제를 구분해서 기록한다. 운영 cron은 `?dryRun=true`를 사용하면 만료 batch 건수만 조회하고 기존 export/session/retention 변경을 실행하지 않는다.

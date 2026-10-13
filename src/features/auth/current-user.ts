@@ -23,6 +23,14 @@ export async function requireAccount() {
     redirect("/access-denied");
   }
 
+  const { data: consented, error: consentError } =
+    await supabase.rpc("has_signup_consent");
+  if (consentError)
+    throw new Error(
+      "가입 동의 상태를 확인하지 못했습니다. 다시 시도해 주세요.",
+    );
+  if (consented !== true) redirect("/signup/consent");
+
   if (
     user.user_metadata?.must_change_password === true &&
     !user.identities?.some((identity) => identity.provider === "google")

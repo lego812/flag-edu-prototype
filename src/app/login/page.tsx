@@ -25,6 +25,15 @@ export default async function LoginPage() {
           로그인
         </h1>
         <GoogleLogin />
+        <p className="mt-3 text-sm text-neutral-600">
+          <Link href="/terms" className="underline">
+            이용약관
+          </Link>
+          {" · "}
+          <Link href="/privacy" className="underline">
+            개인정보처리방침
+          </Link>
+        </p>
         <p className="mb-4 mt-7 text-sm text-neutral-600">
           기존 이메일 계정으로 로그인
         </p>

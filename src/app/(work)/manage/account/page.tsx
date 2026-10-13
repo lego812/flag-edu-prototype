@@ -61,6 +61,14 @@ export default async function AccountPage() {
         <h2 className="mb-4 text-lg font-bold">로그아웃</h2>
         <LogoutButton />
       </section>
+      <nav aria-label="서비스 안내" className="flex gap-5 text-sm">
+        <a href="/terms" className="underline">
+          이용약관
+        </a>
+        <a href="/privacy" className="underline">
+          개인정보처리방침
+        </a>
+      </nav>
     </div>
   );
 }

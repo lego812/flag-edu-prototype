@@ -50,6 +50,10 @@ beforeAll(async () => {
   await db.exec(
     `insert into auth.users(id,email,email_confirmed_at) values('${admin}','admin@example.com',now()),('${recipient}','recipient@example.com',now()),('${stranger}','stranger@example.com',now());insert into auth.identities values('${recipient}','google'),('${stranger}','google');insert into public.organizations(id,name) values('${org}','Test workspace');insert into public.profiles(id,organization_id,name,role,status) values('${admin}','${org}','Admin','admin','active');insert into public.workspace_memberships(user_id,organization_id,role,status) values('${admin}','${org}','admin','active');`,
   );
+  // These fixtures model accounts present before signup-consent rollout.
+  await db.exec(
+    "insert into private.signup_existing_accounts(user_id) select id from auth.users on conflict do nothing",
+  );
 }, 30000);
 afterAll(async () => {
   await db?.close();
@@ -205,6 +209,9 @@ it("new profile requires verified Google identity and ignores role/organization 
     `reset role;insert into auth.identities values('${id}','google')`,
   );
   await user(id);
+  await db.query(
+    "select public.accept_signup_consents('2026-10-12',true,true)",
+  );
   const p = (
     await db.query<{ role: string; organization_id: null }>(
       "select (public.ensure_my_profile()).*",
@@ -286,6 +293,9 @@ async function directoryFixture(run: () => Promise<void>) {
  insert into public.organizations(id,name) values('${directoryOrg}','Directory'),('${fallbackOrg}','Fallback');
  insert into public.profiles(id,organization_id,name,role,status) values('${owner}','${fallbackOrg}','Owner','coach','active'),('${member}','${directoryOrg}','Member','coach','active'),('${outsider}','${fallbackOrg}','Outsider','admin','active');
  insert into public.workspace_memberships(user_id,organization_id,role,status) values('${owner}','${directoryOrg}','admin','active'),('${owner}','${fallbackOrg}','coach','active'),('${member}','${directoryOrg}','coach','active'),('${member}','${fallbackOrg}','admin','active'),('${outsider}','${fallbackOrg}','admin','active');`);
+  await db.exec(
+    "insert into private.signup_existing_accounts(user_id) select id from auth.users on conflict do nothing",
+  );
   try {
     await run();
   } finally {
@@ -947,5 +957,176 @@ it("scoped member changes work normally and respect deletion", async () => {
         [directoryOrg, member],
       ),
     );
+  });
+});
+
+it("purges only expired tombstones after Storage cleanup, preserves accounts and blocks client purge", async () => {
+  await directoryFixture(async () => {
+    const course = "30000000-0000-4000-8000-000000000011",
+      session = "40000000-0000-4000-8000-000000000011",
+      template = "50000000-0000-4000-8000-000000000011",
+      field = "60000000-0000-4000-8000-000000000011",
+      report = "70000000-0000-4000-8000-000000000011";
+    const path = `${directoryOrg}/${report}/80000000-0000-4000-8000-000000000011.jpg`;
+    await db.exec(`set request.jwt.claim.role='service_role';
+   insert into public.courses(id,organization_id,title,location,created_by,updated_by) values('${course}','${directoryOrg}','Class','Room','${owner}','${owner}');
+   insert into public.class_sessions(id,organization_id,course_id,title,location,start_at,end_at,created_by,updated_by) values('${session}','${directoryOrg}','${course}','Class','Room','2050-01-01 00:00:00Z','2050-01-01 01:00:00Z','${owner}','${owner}');
+   insert into public.template_versions(id,organization_id,version,status,created_by,published_at) values('${template}','${directoryOrg}',1,'draft','${owner}',null);
+   insert into public.template_fields(id,template_version_id,label,field_type,sort_order) values('${field}','${template}','Photo','photo',1);
+   update public.template_versions set status='active',published_at=now() where id='${template}';
+   insert into public.reports(id,organization_id,class_session_id,author_id,template_version_id) values('${report}','${directoryOrg}','${session}','${member}','${template}');
+   insert into storage.objects(bucket_id,name) values('report-images','${path}');
+   insert into public.report_attachments(organization_id,report_id,field_id,storage_path,original_filename,file_size) values('${directoryOrg}','${report}','${field}','${path}','photo.jpg',100);
+
+   insert into public.workspace_invitations(organization_id,email,invited_by) values('${directoryOrg}','pending@fixture.test','${owner}');`);
+
+    await db.exec(`update public.class_sessions set status='cancelled' where id='${session}';
+      insert into public.export_jobs(organization_id,requested_by,format,status,storage_path) values('${directoryOrg}','${owner}','pdf','completed','${directoryOrg}/old/export.pdf');
+      insert into storage.objects(bucket_id,name) values('report-images','${directoryOrg}/orphan/photo.jpg'),('report-exports','${directoryOrg}/old/export.pdf'),('report-images','${fallbackOrg}/keep/photo.jpg');`);
+    await user(owner);
+    for (const fn of [
+      "list_workspaces_due_for_purge()",
+      "begin_workspace_purge($1)",
+      "list_workspace_purge_objects($1)",
+      "finish_workspace_purge($1)",
+    ]) {
+      await rejected(() =>
+        db.query(
+          "select public." + fn,
+          fn.includes("$1") ? [directoryOrg] : [],
+        ),
+      );
+    }
+    await db.query("select public.delete_workspace($1,'Directory')", [
+      directoryOrg,
+    ]);
+    await db.exec(
+      "reset role;set request.jwt.claim.role='service_role';set role service_role",
+    );
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.begin_workspace_purge($1) ok",
+          [directoryOrg],
+        )
+      ).rows[0].ok,
+    ).toBe(false);
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.begin_workspace_purge($1) ok",
+          [fallbackOrg],
+        )
+      ).rows[0].ok,
+    ).toBe(false);
+    await db.exec(
+      `reset role;update public.organizations set deleted_at=now()-interval '30 days' where id='${directoryOrg}';set role service_role`,
+    );
+    expect(
+      (await db.query("select * from public.list_workspaces_due_for_purge()"))
+        .rows,
+    ).toEqual([{ id: directoryOrg }]);
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.begin_workspace_purge($1) ok",
+          [directoryOrg],
+        )
+      ).rows[0].ok,
+    ).toBe(true);
+    await rejected(
+      () =>
+        db.query("select public.finish_workspace_purge($1)", [directoryOrg]),
+      "Workspace files still exist",
+    );
+    expect(
+      (
+        await db.query(
+          "select * from public.list_workspace_purge_objects($1)",
+          [directoryOrg],
+        )
+      ).rows,
+    ).toEqual([
+      { bucket_id: "report-exports", name: `${directoryOrg}/old/export.pdf` },
+      { bucket_id: "report-images", name: path },
+      { bucket_id: "report-images", name: `${directoryOrg}/orphan/photo.jpg` },
+    ]);
+    await db.exec("reset role");
+    await rejected(
+      () =>
+        db.query(
+          "update public.organizations set deleted_at=null where id=$1",
+          [directoryOrg],
+        ),
+      "purge already started",
+    );
+    // Local metadata removal models successful Storage API deletion; never used against production Storage.
+    await db.query("delete from storage.objects where name like $1", [
+      directoryOrg + "/%",
+    ]);
+    await db.exec(
+      "set request.jwt.claim.role='service_role';set role service_role",
+    );
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.finish_workspace_purge($1) ok",
+          [directoryOrg],
+        )
+      ).rows[0].ok,
+    ).toBe(true);
+    expect(
+      (
+        await db.query<{ ok: boolean }>(
+          "select public.finish_workspace_purge($1) ok",
+          [directoryOrg],
+        )
+      ).rows[0].ok,
+    ).toBe(false);
+    await db.exec("reset role");
+    for (const table of [
+      "organizations",
+      "courses",
+      "class_sessions",
+      "template_versions",
+      "reports",
+      "export_jobs",
+      "report_attachments",
+      "workspace_memberships",
+      "workspace_invitations",
+    ]) {
+      expect(
+        (
+          await db.query(
+            `select * from public.${table} where ${table === "organizations" ? "id" : "organization_id"}=$1`,
+            [directoryOrg],
+          )
+        ).rows,
+      ).toHaveLength(0);
+    }
+    expect(
+      (
+        await db.query("select * from public.template_fields where id=$1", [
+          field,
+        ])
+      ).rows,
+    ).toHaveLength(0);
+    expect(
+      (
+        await db.query("select name from storage.objects where name=$1", [
+          `${fallbackOrg}/keep/photo.jpg`,
+        ])
+      ).rows,
+    ).toHaveLength(1);
+    expect(
+      (await db.query("select * from auth.users where id=$1", [owner])).rows,
+    ).toHaveLength(1);
+    expect(
+      (
+        await db.query("select * from public.organizations where id=$1", [
+          fallbackOrg,
+        ])
+      ).rows,
+    ).toHaveLength(1);
   });
 });

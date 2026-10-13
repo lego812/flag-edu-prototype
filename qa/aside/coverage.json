@@ -1,5 +1,5 @@
 {
-  "version": 27,
+  "version": 28,
   "requirements": [
     {
       "id": "R01",
@@ -55,7 +55,10 @@
         "2-b-C",
         "2-b-D",
         "2-b-E",
-        "2-c-A"
+        "2-c-A",
+        "2-d-A",
+        "2-d-B",
+        "2-d-C"
       ],
       "automated": [
         "next.config.test.ts",
@@ -73,7 +76,11 @@
         "src/features/auth/logout-action.test.ts",
         "src/features/auth/logout-button.test.tsx",
         "src/app/(work)/manage/account/page.test.tsx",
-        "src/app/(work)/manage/page.test.tsx"
+        "src/app/(work)/manage/page.test.tsx",
+        "src/features/auth/consent-action.test.ts",
+        "src/features/auth/consent-form.test.tsx",
+        "src/features/auth/consent-db.test.ts",
+        "src/features/auth/current-user.test.ts"
       ],
       "gaps": [
         "Google 운영 공급자 설정 후 실제 동의·취소·기존 계정 연결 및 앱 내 수락 브라우저 E2E"
@@ -322,7 +329,8 @@
         "10-c-A",
         "10-c-C",
         "10-c-D",
-        "10-c-E"
+        "10-c-E",
+        "10-c-F"
       ],
       "automated": [
         "src/features/workspaces/actions.test.ts",
@@ -341,7 +349,9 @@
         "src/features/workspaces/rename-actions.test.ts",
         "src/features/workspaces/remove-participant-form.test.tsx",
         "src/features/workspaces/delete-actions.test.ts",
-        "src/features/workspaces/delete-form.test.tsx"
+        "src/features/workspaces/delete-form.test.tsx",
+        "src/features/workspaces/retention.test.ts",
+        "src/app/api/cron/exports/route.test.ts"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"
