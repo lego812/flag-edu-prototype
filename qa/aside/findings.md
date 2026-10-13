@@ -615,3 +615,10 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 `WORKSPACE-20261013-hide-inactive` (R09/R10, 10-c-A/10-c-D): 사용자는 참여 해제된 인원을 리스트에서 숨기고 soft delete로 기록을 유지하도록 요구했다. 기존 제거/나가기 RPC는 이미 membership status=inactive와 이력 보존을 수행하므로 DB 변경 없이 상세 렌더링에서 inactive 행을 제외했다. 관리자·코치 모두 inactive 이름·제외 버튼·권한 편집을 숨기고 active/pending과 초대를 유지한다. 계정·멤버십·기존 보고서 삭제는 실행하지 않는다. 테스트에서 이름 변경/삭제 폼의 동일 sibling key 경고도 확인하여 이름 기반 key에 각 폼 구분을 추가했다.
 
 검증: 관리자·코치 혼합 상태 회귀 2개를 추가했다. 최초 회귀의 권한 편집 개수 기대값은 활성 본인 편집까지 제외해 실패하여 활성 본인 1개/코치 0개로 수정했다. 관련 2파일 19/19 PASS, lint·TypeScript PASS. 기준/manual/coverage v29를 갱신했으며 시나리오 수는 160개 유지. 구현 commit/PR 및 운영 배포는 Git 이력과 외부 artifact로 추적한다. 운영 인원 상태는 테스트로 변경하지 않는다.
+
+
+## 2026-10-13 워크스페이스 이름 저장 버튼
+
+`UI-20261013-workspace-name-button` (R01/R10, 10-c-C): 사용자 요청으로 이름 저장 버튼의 스타일을 수업 목록의 수업 등록 버튼과 동일한 공통 `btn` 클래스로 변경했다. 저장 action·진행 중 표시·중복 제출 차단은 기존 SubmitButton을 유지한다. 단순 스타일 변경으로 신규 테스트를 추가하지 않고 기존 상세/rename action 회귀와 lint로 검증한다. 구현 commit/PR·배포는 Git 이력과 외부 artifact로 추적한다.
+
+검증: 관련 2파일 11/11 PASS, lint PASS.
