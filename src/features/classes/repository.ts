@@ -11,6 +11,8 @@ import type {
 import type { ClassCalendarFilters, ClassFilters } from "./validation";
 
 export const CLASS_PAGE_SIZE = 20;
+const CLASS_LIST_SELECT =
+  "id,title,location,start_at,end_at,has_time,teaching_method,status,created_by";
 
 async function syncCompletedSessions(
   client: SupabaseClient,
@@ -25,7 +27,7 @@ export function classRepository(client: SupabaseClient, actor: ClassActor) {
   return {
     async list(filters: ClassFilters) {
       await syncCompletedSessions(client, actor.organization_id);
-      let query = client.from("class_sessions").select("*", { count: "exact" })
+      let query = client.from("class_sessions").select(CLASS_LIST_SELECT, { count: "exact" })
         .eq("organization_id", actor.organization_id);
       if (filters.from)
         query = query.gte("start_at", filters.from + "T00:00:00+09:00");
@@ -38,13 +40,13 @@ export function classRepository(client: SupabaseClient, actor: ClassActor) {
         .order("start_at", { ascending: filters.sort === "oldest" })
         .order("id", { ascending: filters.sort === "oldest" });
       if (filters.status !== "all") query = query.eq("status", filters.status);
-      return query.range((filters.page - 1) * CLASS_PAGE_SIZE, filters.page * CLASS_PAGE_SIZE - 1).returns<ClassSession[]>();
+      return query.range((filters.page - 1) * CLASS_PAGE_SIZE, filters.page * CLASS_PAGE_SIZE - 1).returns<ClassCalendarSession[]>();
     },
     async calendar(filters: ClassCalendarFilters) {
       await syncCompletedSessions(client, actor.organization_id);
       const range = monthRange(filters.month);
       let query = client.from("class_sessions").select(
-        "id,title,location,start_at,end_at,has_time,teaching_method,status,created_by",
+        CLASS_LIST_SELECT,
         { count: "exact" },
       )
         .eq("organization_id", actor.organization_id)
