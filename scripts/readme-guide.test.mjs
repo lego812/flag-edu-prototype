@@ -43,7 +43,7 @@ describe("role-based README guide", () => {
   it("keeps the requested chapter order and all local document links usable", async () => {
     const readme = await readFile("README.md", "utf8");
     expect(
-      [...readme.matchAll(/^## (.+)$/gm)].map((match) => match[1]),
+      [...readme.split("<!-- USER_GUIDE_END -->")[0].matchAll(/^## (.+)$/gm)].map((match) => match[1]),
     ).toEqual([
       "1. 개요 및 용어정리",
       "2. 공통기능 — 회원가입 및 로그인",

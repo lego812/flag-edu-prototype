@@ -12,7 +12,8 @@ import tempfile
 import markdown
 
 ROOT = Path(__file__).resolve().parents[1]
-readme = (ROOT / 'README.md').read_text()
+# Keep README-only engineering appendices out of the four-chapter guide.
+readme = (ROOT / 'README.md').read_text().partition('<!-- USER_GUIDE_END -->')[0]
 font = base64.b64encode((ROOT / 'assets/fonts/NanumGothic-Regular.ttf').read_bytes()).decode()
 output = ROOT / 'docs/Flag-Edu-User-Guide.pdf'
 
