@@ -8,6 +8,7 @@ import { compressPhoto } from "./photo";
 import type { Attachment, Field } from "./model";
 import { useReportMutation } from "./mutation-context";
 import { PhotoPreview } from "./photo-preview";
+import { PHOTO_BATCH_SIZE } from "./photo-batch";
 export function Photos({
   reportId,
   fields,
@@ -48,24 +49,32 @@ export function Photos({
     let version = mutation?.version;
     let completed = 0;
     try {
-      // Keep the report locked for the batch; each request uses the preceding
-      // successful revision instead of racing concurrent photo mutations.
-      for (const file of files) {
-        const blob = await compressPhoto(file);
+      // Bound request size and memory; only one chunk changes the report at a
+      // time, using the last successful revision returned by the server.
+      for (let offset = 0; offset < files.length; offset += PHOTO_BATCH_SIZE) {
+        const blobs: Blob[] = [];
+        let compressionError: unknown;
+        for (const file of files.slice(offset, offset + PHOTO_BATCH_SIZE)) {
+          try { blobs.push(await compressPhoto(file)); }
+          catch (error) { compressionError = error; break; }
+        }
+        if (!blobs.length) throw compressionError;
         const form = new FormData();
         form.set("field", field.id);
         form.set("version", version ?? "");
-        form.set("file", blob, "photo.jpg");
-        const response = await fetch(`/api/reports/${reportId}/photos`, {
+        blobs.forEach(blob => form.append("file", blob, "photo.jpg"));
+        const response = await fetch(`/api/reports/${reportId}/photos/batch`, {
           method: "POST",
           body: form,
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error);
-        setItems((current) => [...current, result.attachment]);
+        setItems((current) => [...current, ...result.attachments]);
         version = result.version;
-        completed++;
+        completed += result.attachments.length;
         setUploadProgress({ completed, total: files.length });
+        if (result.error) throw new Error(result.error);
+        if (compressionError) throw compressionError;
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : "사진 업로드에 실패했습니다.";

@@ -207,7 +207,7 @@ describe("multiple photo uploads", () => {
   afterEach(() => vi.restoreAllMocks());
 
   const files = () => [1, 2, 3].map((i) => new File([`image-${i}`], `photo-${i}.png`, { type: "image/png" }));
-  const response = (index: number, version: string) => new Response(JSON.stringify({ attachment: attachments[index], version }), { status: 200 });
+  const response = (index: number, version: string) => new Response(JSON.stringify({ attachments: [{ ...attachments[index], clientIndex: 0 }], version }), { status: 200 });
   function editor(initial: Attachment[] = []) {
     const report = { id: "report", updated_at: "version-1", status: "draft", report_answers: [], class_sessions: { status: "scheduled" } } as unknown as Report;
     return render(<ReportMutationProvider version={report.updated_at}>
@@ -216,7 +216,7 @@ describe("multiple photo uploads", () => {
     </ReportMutationProvider>);
   }
 
-  it("uploads selected photos in order with chained revisions and locks the report for the whole batch", async () => {
+  it("sends at most three photos per request and chains chunk revisions while locking the editor", async () => {
     let first!: (value: Response) => void;
     let second!: (value: Response) => void;
     const fetch = vi.spyOn(globalThis, "fetch")
@@ -224,23 +224,25 @@ describe("multiple photo uploads", () => {
       .mockReturnValueOnce(new Promise(resolve => { second = resolve; }));
     editor();
     const input = screen.getByLabelText("활동 사진 선택");
-    const selected = files().slice(0, 2);
-    expect(input).toHaveAttribute("multiple");
+    const selected = [...files(), files()[0]];
     fireEvent.change(input, { target: { files: selected } });
     fireEvent.change(input, { target: { files: selected } });
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
-    expect((fetch.mock.calls[0][1]!.body as FormData).get("version")).toBe("version-1");
+    expect(fetch.mock.calls[0][0]).toBe("/api/reports/report/photos/batch");
+    const body = fetch.mock.calls[0][1]!.body as FormData;
+    expect(body.getAll("file")).toHaveLength(3);
+    expect(body.get("version")).toBe("version-1");
     expect(screen.getByRole("button", { name: "임시저장" })).toBeDisabled();
     expect(input).toBeDisabled();
-    await act(async () => first(response(0, "version-2")));
+    await act(async () => first(new Response(JSON.stringify({ attachments: attachments.slice(0,3).map((a,i)=>({...a,clientIndex:i})), version: "version-2" }))));
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
     expect((fetch.mock.calls[1][1]!.body as FormData).get("version")).toBe("version-2");
-    expect(screen.getByText("1/5장")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "제출" })).toBeDisabled();
+    expect((fetch.mock.calls[1][1]!.body as FormData).getAll("file")).toHaveLength(1);
+    expect(screen.getByText("3/5장")).toBeInTheDocument();
     expect(input).toBeDisabled();
-    await act(async () => second(response(1, "version-3")));
+    await act(async () => second(response(3, "version-3")));
     await waitFor(() => expect(input).toBeEnabled());
-    expect(screen.getByText("2/5장")).toBeInTheDocument();
+    expect(screen.getByText("4/5장")).toBeInTheDocument();
     expect(photo.refresh).toHaveBeenCalledTimes(1);
     expect(photo.compress.mock.calls.map(([file]) => file.name)).toEqual(selected.map(file => file.name));
     fireEvent.click(screen.getByRole("button", { name: "임시저장" }));
@@ -280,8 +282,7 @@ describe("multiple photo uploads", () => {
 
   it("keeps successful photos and the last successful revision after a partial failure, then allows retry", async () => {
     const fetch = vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(response(0, "version-2"))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "다른 화면에서 변경됐습니다.", version: "other-writer" }), { status: 409 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ attachments: [{ ...attachments[0], clientIndex: 0 }], version: "version-2", error: "일부 사진 업로드에 실패했습니다." })))
       .mockResolvedValueOnce(response(1, "version-3"));
     editor();
     const selected = files();
@@ -290,16 +291,34 @@ describe("multiple photo uploads", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("1/3장 업로드 완료");
     expect(screen.getByText("1/5장")).toBeInTheDocument();
     expect(photo.refresh).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(photo.compress).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(photo.compress).toHaveBeenCalledTimes(3);
     expect(input).toBeEnabled();
     expect(screen.getByRole("button", { name: "임시저장" })).toBeEnabled();
     fireEvent.change(input, { target: { files: [selected[1]] } });
     await waitFor(() => expect(screen.getByText("2/5장")).toBeInTheDocument());
-    expect((fetch.mock.calls[2][1]!.body as FormData).get("version")).toBe("version-2");
+    expect((fetch.mock.calls[1][1]!.body as FormData).get("version")).toBe("version-2");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "임시저장" }));
     await screen.findByText("저장했습니다.");
     expect(actions.save.mock.calls[0][2].get("version")).toBe("version-3");
   });
+  it("preserves the compressed prefix when a later file cannot be decoded", async () => {
+    photo.compress.mockResolvedValueOnce(new Blob(["ok"], {type:"image/jpeg"})).mockRejectedValueOnce(new Error("사진을 읽지 못했습니다."));
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(0,"version-2"));
+    editor();
+    fireEvent.change(screen.getByLabelText("활동 사진 선택"),{target:{files:files()}});
+    expect(await screen.findByRole("alert")).toHaveTextContent("1/3장 업로드 완료");
+    expect((fetch.mock.calls[0][1]!.body as FormData).getAll("file")).toHaveLength(1);
+    expect(photo.refresh).toHaveBeenCalledOnce();
+  });
+  it("does not adopt a revision from a rejected batch", async () => {
+    vi.spyOn(globalThis,"fetch").mockResolvedValueOnce(new Response(JSON.stringify({error:"변경됐습니다",version:"other-writer"}),{status:409}));
+    const ui=editor();
+    fireEvent.change(screen.getByLabelText("활동 사진 선택"),{target:{files:files()}});
+    expect(await screen.findByRole("alert")).toHaveTextContent("0/3장 업로드 완료");
+    expect(ui.container.querySelector('input[name="version"]')).toHaveValue("version-1");
+    expect(photo.refresh).not.toHaveBeenCalled();
+  });
+
 });
