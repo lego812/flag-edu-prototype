@@ -634,3 +634,10 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 ## 2026-10-13 워크스페이스 설명 문구
 
 `UI-20261013-workspace-description` (R10): 사용자 지정 문구 “워크스페이스와 소속 구성원 정보를 관리합니다.”로 목록 설명을 교체했다. 단순 문구 변경이며 권한·데이터·동작 변경은 없다. 신규 테스트 없이 기존 목록 회귀로 검증한다. 구현 commit/PR/배포는 Git 이력과 외부 artifact로 추적한다.
+
+
+## 2026-10-13 우측 상단 이동 표시 제거
+
+`UI-20261013-remove-navigation-badge` (R01, 1-f): 사용자는 클릭 후 우측 상단에 뜨는 이동 중 문구와 스피너 제거를 요청했다. 링크/조회 transition portal의 우측 배지를 화면에 표시하지 않는 sr-only 상태 안내로 바꾸고 미사용 배지 CSS를 제거했다. 클릭한 링크/제출 버튼 처리 표시, 상단 진행 막대와 route skeleton은 유지한다. 기존 navigation 테스트에 화면 문구 부재와 접근성 상태 유지 기대를 반영했다.
+
+검증: 관련 3파일 3/3 PASS, lint·TypeScript PASS. 기준/manual/coverage v31 갱신, 기존 시나리오 수160개 유지. 구현 commit/PR 및 운영 결과는 Git 이력과 외부 artifact로 추적한다.
