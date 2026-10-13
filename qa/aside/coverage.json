@@ -133,7 +133,8 @@
         "src/features/classes/session-card.test.tsx",
         "src/features/classes/view-switcher.test.tsx",
         "src/app/classes/page.test.tsx",
-        "src/features/reports/workflows.test.ts"
+        "src/features/reports/workflows.test.ts",
+        "src/features/reports/repository.test.ts"
       ],
       "gaps": []
     },
@@ -161,7 +162,8 @@
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/editor.test.tsx",
         "src/features/reports/workflows.test.ts",
-        "src/components/navigation-guard.test.tsx"
+        "src/components/navigation-guard.test.tsx",
+        "src/features/reports/repository.test.ts"
       ],
       "gaps": []
     },
@@ -224,7 +226,8 @@
         "src/features/reports/reader.test.tsx",
         "src/app/(work)/reports/[id]/page.test.tsx",
         "src/features/members/repository.test.ts",
-        "src/features/reports/workflows.test.ts"
+        "src/features/reports/workflows.test.ts",
+        "src/features/reports/repository.test.ts"
       ],
       "gaps": [
         "검색 30건 초과·기간 경계·페이지 이동 E2E"

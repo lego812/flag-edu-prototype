@@ -1,11 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Report, Template } from "./model";
+import type { Report, ReportSummary, Template } from "./model";
 import { compareAttachmentsByUpload } from "./model";
 import { addDays, isDate } from "@/features/classes/dates";
 import { isUuid } from "@/features/classes/model";
 
 export const REPORT_SELECT =
   "*, class_sessions!inner(title,location,start_at,end_at,status,has_time), profiles!reports_author_id_fkey(name), report_answers(field_id,value), report_attachments(id,field_id,storage_path,original_filename,file_size,created_at)";
+
+export const REPORT_SUMMARY_SELECT =
+  "id,created_at,class_sessions!inner(title),profiles!reports_author_id_fkey(name)";
 
 function sortReportAttachments(report: Report) {
   report.report_attachments.sort(compareAttachmentsByUpload);
@@ -77,20 +80,43 @@ export async function listReports(
   await client.rpc("sync_completed_class_sessions", {
     p_organization_id: org,
   });
+  const result = await reportListQuery(client, org, f, author, limit, REPORT_SELECT)
+    .returns<Report[]>();
+  result.data?.forEach(sortReportAttachments);
+  return result;
+}
+
+// Keep identical tenant/author/date/pagination constraints for UI and exports.
+function reportListQuery(
+  client: SupabaseClient,
+  org: string,
+  f: ReportFilters,
+  author: string | undefined,
+  limit: number,
+  select: string,
+) {
   let q = client
     .from("reports")
-    .select(REPORT_SELECT, { count: "exact" })
+    .select(select, { count: "exact" })
     .eq("organization_id", org);
   if (author || f.author) q = q.eq("author_id", author || f.author);
   if (f.session) q = q.eq("class_session_id", f.session);
   if (f.from) q = q.gte("class_sessions.start_at", f.from + "T00:00:00+09:00");
   if (f.to)
     q = q.lt("class_sessions.start_at", addDays(f.to, 1) + "T00:00:00+09:00");
-  const result = await q
+  return q
     .order("updated_at", { ascending: false })
     .order("id")
-    .range((f.page - 1) * limit, f.page * limit - 1)
-    .returns<Report[]>();
-  result.data?.forEach(sortReportAttachments);
-  return result;
+    .range((f.page - 1) * limit, f.page * limit - 1);
+}
+
+export async function listReportSummaries(
+  client: SupabaseClient,
+  org: string,
+  f: ReportFilters,
+  author?: string,
+) {
+  await client.rpc("sync_completed_class_sessions", { p_organization_id: org });
+  return reportListQuery(client, org, f, author, 20, REPORT_SUMMARY_SELECT)
+    .returns<ReportSummary[]>();
 }

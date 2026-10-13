@@ -4,7 +4,7 @@ import Link from "@/components/feedback-link";
 import { ListFilters } from "@/components/list-filters";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { redirect } from "next/navigation";
-import { listReports, reportFilters } from "./repository";
+import { listReportSummaries, reportFilters } from "./repository";
 import { ReportMetadata } from "./metadata";
 import { ClassSearchPicker } from "@/features/classes/search-picker";
 import { listWorkspaceAuthors } from "@/features/members/repository";
@@ -35,7 +35,7 @@ export async function ReportList({
   }
   const [{ data, error, count }, { data: members }, { data: selectedSession }] =
     await Promise.all([
-      listReports(
+      listReportSummaries(
         supabase,
         profile.organization_id,
         filters,
