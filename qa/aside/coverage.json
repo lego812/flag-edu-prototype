@@ -1,5 +1,5 @@
 {
-  "version": 33,
+  "version": 34,
   "requirements": [
     {
       "id": "R01",
@@ -199,7 +199,8 @@
         "src/features/reports/photo-preview.test.tsx",
         "src/app/api/reports/[id]/photos/route.test.ts",
         "src/features/reports/field-input.test.tsx",
-        "src/features/reports/workflows.test.ts"
+        "src/features/reports/workflows.test.ts",
+        "src/app/api/reports/[id]/photos/batch/route.test.ts"
       ],
       "gaps": [
         "실기기 카메라·HEIC",
