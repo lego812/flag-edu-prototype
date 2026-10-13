@@ -13,7 +13,7 @@ describe("current workspace identity", () => {
       workspace: { id: "workspace-1", name: "private workspace", role: "admin" },
     } as never);
     const response = await GET();
-    expect(await response.json()).toEqual({ userId: "user-1", workspaceId: "workspace-1" });
+    expect(await response.json()).toEqual({ userId: "user-1", workspaceId: "workspace-1", role: "admin" });
     expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
     expect(dynamic).toBe("force-dynamic");
   });

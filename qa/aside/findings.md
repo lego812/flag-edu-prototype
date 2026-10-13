@@ -688,3 +688,13 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 - 검증: 실제 supabase-js 요청을 가짜 HTTP 응답에 연결해 필터·권한 범위·페이징과 내보내기 데이터 보존 3개 회귀 추가. 관련5파일24/24, lint·TypeScript·Webpack production build PASS. 운영 tagged QA 세션으로 읽기 전용 전체/요약 쿼리를 비교해 2건 동일 카드/날짜 필터를 확인했고 응답2378→380bytes(약84% 감소). DB 응답량이며 페이지 전체나 대규모 데이터의 지연 개선율은 아니다. QA 세션은 종료했다.
 - 선행 결과: PR #22 main 84d3852 병합·운영 Vercel 성공. 추가 HTTP 측정은 네트워크 변동이 있어 지역 변경 이후보다 확실한 지연 감소로 단정하지 않는다.
 - 추적: perf/03-lean-list-queries 및 Git 이력. 기능 기준은 유지하고 자동화 매핑 확장.
+
+
+### PERF-20261013-04 — 목록 이동 데이터 재사용
+
+- 원인: 동적 화면 기본 prefetch는 loading 경계까지만 준비해 보고서 재방문 때도 RSC 조회가 다시 발생했다.
+- 변경: 읽기 전용 홈/수업/보고서 목록에 한해 hover·focus·touch 의도 후 full prefetch를 활성화한다. 명시적 일정 view URL만 포함하며 편집/계정/인증 화면은 대상에서 제외한다. Next 16.3.8의 experimental staleTimes를 static30/dynamic0으로 지정해 메모리 재사용을 제한하고 서비스워커·서버 데이터 캐시는 변경하지 않는다.
+- 최신성: 보고서 생성/수업 변경 후 관련 홈·목록을 무효화한다. 사진 배치 성공(부분 성공 포함)/삭제 뒤 router.refresh로 segment/BF cache를 비우고 로컬 미저장 입력을 유지한다. 현 버전 Next 구현의 invalidateSegmentCacheEntries와 공식 refresh 문서를 확인했다. 서버 identity 응답에 역할을 추가하고 역할 변경·welcome/consent redirect 때 문서 이동으로 이전 화면을 폐기한다. 기존 workspace/계정 전환·권한/RLS 검사는 유지한다.
+- 검증: 최종 전체81파일414/414, lint, TypeScript 포함 Webpack production build PASS. 최초 기본 sandbox의 QA CLI stdout 캡처 테스트1건이 실패했고 단독 기본 실행에서도 재현됐다. 기능 변경 없이 이전 검증과 같은 네트워크 허용 실행 환경에서 해당12/12 및 전체414/414를 재확인했다.
+- 실제 Chromium: 변경 전 운영 보고서 재방문848ms/RSC1회. 로컬 운영 빌드 재방문49~92ms/RSC0회,30초 만료 후 재조회, 실제 QA 세션의 로그아웃 후 뒤로가기 차단, JS 오류0 확인. 운영/로컬 환경이 달라 위 시간을 직접 개선율로 계산하지 않는다. 신규 테스트는 미저장 답변을 둔 사진 갱신·부분 실패, 캐시 경로 제한/입력별 intent, 역할 해제 후 화면 폐기를 포함한다. 운영 데이터 수정·사진 업로드는 모형으로 검증했고 실기기 테스트는 아니다.
+- 추적: perf/04-navigation-reuse 브랜치 및 Git 이력. R01/R09 기준·수동 시나리오·coverage v33 갱신(기존160개 시나리오). PR #23 main a0d9f64 운영 배포 성공 이후 시작했다. 최종 운영 비교 결과는 외부 artifact로 기록한다.

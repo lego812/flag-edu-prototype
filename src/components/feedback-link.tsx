@@ -3,8 +3,9 @@
 import Link, { useLinkStatus } from "next/link";
 import { createPortal } from "react-dom";
 import type { ComponentProps } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useNavigationGuard } from "./navigation-guard";
+import { canPrefetchList } from "./navigation-prefetch";
 import { LoadingSpinner } from "./loading-indicator";
 
 function LinkFeedback() {
@@ -39,13 +40,36 @@ export default function FeedbackLink({
   className = "",
   onClick,
   onNavigate,
+  onMouseEnter,
+  onFocus,
+  onTouchStart,
+  prefetch,
   ...props
 }: ComponentProps<typeof Link>) {
+  const [intentHref, setIntentHref] = useState<string>();
+  const targeted = prefetch === undefined && canPrefetchList(props.href) &&
+    (!props.target || props.target === "_self") && !props.download;
+  const prepare = () => {
+    if (targeted && typeof props.href === "string") setIntentHref(props.href);
+  };
   const destination = useRef<string | undefined>(undefined);
   const { requestNavigation, navigate } = useNavigationGuard();
   return (
     <Link
       {...props}
+      prefetch={targeted ? intentHref === props.href : prefetch}
+      onMouseEnter={(event) => {
+        onMouseEnter?.(event);
+        if (!event.defaultPrevented) prepare();
+      }}
+      onFocus={(event) => {
+        onFocus?.(event);
+        if (!event.defaultPrevented) prepare();
+      }}
+      onTouchStart={(event) => {
+        onTouchStart?.(event);
+        if (!event.defaultPrevented) prepare();
+      }}
       className={`feedback-link ${className}`}
       onClick={(event) => {
         destination.current = event.currentTarget.href;

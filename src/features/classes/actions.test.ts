@@ -1,11 +1,11 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ context: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), cancel: vi.fn(), courseGet: vi.fn(), redirect: vi.fn() }));
+const mocks = vi.hoisted(() => ({ context: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), cancel: vi.fn(), courseGet: vi.fn(), redirect: vi.fn(), revalidate: vi.fn() }));
 vi.mock("@/features/auth/current-user", () => ({ requireCurrentProfile: mocks.context }));
 vi.mock("./repository", () => ({
   classRepository: () => mocks,
   courseRepository: () => ({ get: mocks.courseGet }),
 }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 import { createClassAction, updateClassAction, cancelClassAction } from "./actions";
 const id = "f8601730-c133-41b8-8d69-316edc982195";
@@ -62,4 +62,10 @@ it("cancels through the RPC and reports server rejection", async () => {
 it("preserves form input on network failure", async () => {
   mocks.create.mockRejectedValue(new Error("offline"));
   expect(await createClassAction({}, form())).toMatchObject({ error: expect.any(String), values: { title: "수업" } });
+});
+
+it.each([updateClassAction, cancelClassAction])("invalidates prefetched overviews after a successful class change", async (action) => {
+  await expect(action(id, {}, form())).rejects.toThrow("REDIRECT:");
+  for (const path of ["/classes", "/dashboard", "/reports", "/admin-reports"])
+    expect(mocks.revalidate).toHaveBeenCalledWith(path);
 });

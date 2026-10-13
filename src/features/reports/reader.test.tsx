@@ -1,7 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Field, Report } from "./model";
 import { ReportReader } from "./reader";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 const field = (id: string, field_type: Field["field_type"], label = id): Field => ({
   id, label, field_type, help_text: null, required: false, sort_order: 0,

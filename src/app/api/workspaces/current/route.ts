@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const { profile, workspace } = await requireCurrentProfile();
   return NextResponse.json(
-    { userId: profile.id, workspaceId: workspace.id },
+    { userId: profile.id, workspaceId: workspace.id, role: workspace.role },
     { headers: { "Cache-Control": "private, no-store, max-age=0" } },
   );
 }

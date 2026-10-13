@@ -1,7 +1,7 @@
 import { isUuid } from "@/features/classes/model";
 
 const observedWorkspaces = new Map<string, string>();
-const authDestinations = new Set(["/login", "/set-password", "/access-denied"]);
+const authDestinations = new Set(["/login", "/set-password", "/access-denied", "/welcome", "/signup/consent"]);
 export const WORKSPACE_SYNC_INTERVAL = 30_000;
 const requestTimeout = 10_000;
 const retryDelay = 1_000;
@@ -10,10 +10,12 @@ const transientStatuses = new Set([500, 502, 503, 504]);
 export function startWorkspaceSync({
   userId,
   workspaceId,
+  role,
   navigate,
 }: {
   userId: string;
   workspaceId: string;
+  role?: "admin" | "coach";
   navigate: (path: string) => void;
 }) {
   const key = `flag-edu-workspace:${userId}`;
@@ -73,7 +75,9 @@ export function startWorkspaceSync({
           identity && typeof identity === "object" &&
           "userId" in identity && typeof identity.userId === "string" && isUuid(identity.userId) &&
           "workspaceId" in identity && typeof identity.workspaceId === "string" && isUuid(identity.workspaceId) &&
-          (identity.userId !== userId || identity.workspaceId !== workspaceId)
+          (identity.userId !== userId || identity.workspaceId !== workspaceId ||
+            (role !== undefined && "role" in identity &&
+              (identity.role === "admin" || identity.role === "coach") && identity.role !== role))
         ) {
           destination = "/dashboard";
         }

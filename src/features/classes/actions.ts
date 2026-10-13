@@ -178,6 +178,9 @@ export async function updateClassAction(
   }
   revalidatePath("/classes");
   revalidatePath("/classes/" + id);
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+  revalidatePath("/admin-reports");
   redirect("/classes/" + id);
 }
 
@@ -248,5 +251,8 @@ export async function cancelClassAction(
   }
   revalidatePath("/classes");
   revalidatePath("/classes/" + id);
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+  revalidatePath("/admin-reports");
   redirect("/classes/" + id);
 }
