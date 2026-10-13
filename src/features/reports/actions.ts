@@ -23,6 +23,8 @@ export async function startReportAction(
         "보고서를 열지 못했습니다. 수업이 취소됐거나 게시된 템플릿이 없을 수 있습니다.",
     };
   revalidatePath("/reports");
+  revalidatePath("/admin-reports");
+  revalidatePath("/dashboard");
   redirect("/reports/" + data.id + "?edit=1");
 }
 export async function saveReportAction(

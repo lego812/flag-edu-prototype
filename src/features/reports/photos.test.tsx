@@ -7,7 +7,7 @@ import { ReportMutationProvider } from "./mutation-context";
 import { ReportEditor } from "./editor";
 
 const actions = vi.hoisted(() => ({ save: vi.fn() }));
-const photo = vi.hoisted(() => ({ compress: vi.fn() }));
+const photo = vi.hoisted(() => ({ compress: vi.fn(), refresh: vi.fn() }));
 vi.mock("./photo", () => ({ compressPhoto: photo.compress }));
 vi.mock("./actions", () => ({ saveReportAction: actions.save }));
 // Native dialog behavior is covered by photo-preview tests and browser QA.
@@ -20,7 +20,7 @@ vi.mock("./photo-preview", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: photo.refresh }),
 }));
 
 const field: Field = {
@@ -200,6 +200,7 @@ describe("photo thumbnails", () => {
 
 describe("multiple photo uploads", () => {
   beforeEach(() => {
+    photo.refresh.mockClear();
     photo.compress.mockReset().mockResolvedValue(new Blob(["compressed"], { type: "image/jpeg" }));
     actions.save.mockReset().mockResolvedValue({ success: "저장했습니다.", version: "saved-version" });
   });
@@ -240,10 +241,29 @@ describe("multiple photo uploads", () => {
     await act(async () => second(response(1, "version-3")));
     await waitFor(() => expect(input).toBeEnabled());
     expect(screen.getByText("2/5장")).toBeInTheDocument();
+    expect(photo.refresh).toHaveBeenCalledTimes(1);
     expect(photo.compress.mock.calls.map(([file]) => file.name)).toEqual(selected.map(file => file.name));
     fireEvent.click(screen.getByRole("button", { name: "임시저장" }));
     await screen.findByText("저장했습니다.");
     expect(actions.save.mock.calls[0][2].get("version")).toBe("version-3");
+  });
+
+  it("preserves unsaved answers when a successful photo upload refreshes server props", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response(0, "version-2"));
+    const textField: Field = { ...field, id: "text-field", field_type: "short_text", label: "수업 메모" };
+    const report = { id: "report", updated_at: "version-1", status: "draft", report_answers: [], class_sessions: { status: "scheduled" } } as unknown as Report;
+    const tree = (version: string) => <ReportMutationProvider version={version}>
+      <ReportEditor report={{ ...report, updated_at: version }} fields={[textField]} />
+      <Photos reportId={report.id} fields={[field]} attachments={version === "version-1" ? [] : [attachments[0]]} editable />
+    </ReportMutationProvider>;
+    const ui = render(tree("version-1"));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "아직 저장하지 않은 메모" } });
+    fireEvent.change(screen.getByLabelText("활동 사진 선택"), { target: { files: files().slice(0, 1) } });
+    await waitFor(() => expect(photo.refresh).toHaveBeenCalledOnce());
+    ui.rerender(tree("version-2"));
+    expect(screen.getByRole("textbox")).toHaveValue("아직 저장하지 않은 메모");
+    expect(ui.container.querySelector('input[name="version"]')).toHaveValue("version-2");
+    expect(screen.getByText("1/5장")).toBeInTheDocument();
   });
 
   it("rejects a selection beyond the remaining slots before compressing or uploading", () => {
@@ -253,6 +273,7 @@ describe("multiple photo uploads", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("1장 이하로 다시 선택");
     expect(screen.getByText("4/5장")).toBeInTheDocument();
     expect(photo.compress).not.toHaveBeenCalled();
+    expect(photo.refresh).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "임시저장" })).toBeEnabled();
   });
@@ -268,6 +289,7 @@ describe("multiple photo uploads", () => {
     fireEvent.change(input, { target: { files: selected } });
     expect(await screen.findByRole("alert")).toHaveTextContent("1/3장 업로드 완료");
     expect(screen.getByText("1/5장")).toBeInTheDocument();
+    expect(photo.refresh).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(photo.compress).toHaveBeenCalledTimes(2);
     expect(input).toBeEnabled();

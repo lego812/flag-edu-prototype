@@ -16,7 +16,7 @@ export function AppHeader({
 }) {
   return (
     <header className="app-header">
-      <WorkspaceSync userId={userId} workspaceId={workspace.id} />
+      <WorkspaceSync userId={userId} workspaceId={workspace.id} role={workspace.role} />
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-8">
         <HeaderLeading />
         <AppNavigation />

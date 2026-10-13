@@ -1,5 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private short-lived URLs are loaded directly, without a shared image cache. */
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { LoadingSpinner } from "@/components/loading-indicator";
 import { SubmitButton } from "@/components/submit-button";
@@ -20,6 +21,7 @@ export function Photos({
   editable: boolean;
   reading?: boolean;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const processing = useRef(false);
   const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number } | null>(null);
@@ -72,6 +74,9 @@ export function Photos({
         : message);
     } finally {
       mutation?.finish(version);
+      // Route Handler revalidation alone does not clear the browser Router Cache.
+      // Refresh once per successful batch, preserving local unsaved form state.
+      if (completed > 0) router.refresh();
       processing.current = false;
       setUploadProgress(null);
       setBusy(false);
@@ -94,6 +99,7 @@ export function Photos({
       setItems((current) => current.filter((item) => item.id !== id));
       setDeleteTarget(null);
       mutation?.finish(result.version);
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "삭제 실패");
     } finally {

@@ -1,5 +1,5 @@
 {
-  "version": 32,
+  "version": 33,
   "requirements": [
     {
       "id": "R01",
@@ -36,7 +36,8 @@
         "scripts/patch-next-rsc-performance.test.mjs",
         "scripts/qa-network-idle.test.mjs",
         "scripts/qa-browser-observations.test.mjs",
-        "src/components/navigation-guard.test.tsx"
+        "src/components/navigation-guard.test.tsx",
+        "src/components/navigation-prefetch.test.tsx"
       ],
       "gaps": [
         "실기기 PWA 설치와 모션 감소 시각 검사",

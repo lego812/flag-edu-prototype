@@ -233,6 +233,19 @@ describe("workspace tab synchronization", () => {
     expect(navigate).toHaveBeenCalledWith("/set-password");
   });
 
+  it("clears cached admin screens after the server confirms a role downgrade", async () => {
+    fetchIdentity.mockImplementation(async () => Response.json({ userId, workspaceId: workspaceA, role: "coach" }));
+    cleanup = startWorkspaceSync({ userId, workspaceId: workspaceA, role: "admin", navigate });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/dashboard");
+  });
+
+  it.each(["/welcome", "/signup/consent"])("clears cached work screens when access moves to %s", async (path) => {
+    fetchIdentity.mockResolvedValue({ redirected: true, url: window.location.origin + path });
+    await start();
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(path);
+  });
+
   it("still detects changes when storage access is denied", async () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("storage denied"); });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("storage denied"); });
