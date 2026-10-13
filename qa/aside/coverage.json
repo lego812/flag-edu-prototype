@@ -1,5 +1,5 @@
 {
-  "version": 29,
+  "version": 30,
   "requirements": [
     {
       "id": "R01",
@@ -351,7 +351,8 @@
         "src/features/workspaces/delete-actions.test.ts",
         "src/features/workspaces/delete-form.test.tsx",
         "src/features/workspaces/retention.test.ts",
-        "src/app/api/cron/exports/route.test.ts"
+        "src/app/api/cron/exports/route.test.ts",
+        "src/features/workspaces/role-help.test.tsx"
       ],
       "gaps": [
         "이번 UI 배포의 실제 로그인 팝업 전환·모바일 브라우저 확인은 별도 검증 필요"

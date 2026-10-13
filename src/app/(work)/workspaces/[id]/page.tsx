@@ -7,6 +7,7 @@ import { RenameWorkspaceForm } from "@/features/workspaces/rename-form";
 import { WorkspaceInvitationPanel } from "@/features/workspaces/invitation-panel";
 import { DeleteWorkspaceForm } from "@/features/workspaces/delete-form";
 import { ManageMemberForm } from "@/features/members/manage-form";
+import { WorkspaceRoleHelp } from "@/features/workspaces/role-help";
 
 export const metadata = { title: "워크스페이스 참여자" };
 export default async function WorkspaceDetailPage({
@@ -51,11 +52,10 @@ export default async function WorkspaceDetailPage({
         />
       )}
       <section id="participants" className="surface p-6">
-        <h2 className="mb-4 font-bold">참여자·권한</h2>
-        <p className="mb-4 text-sm leading-6 text-neutral-600">
-          관리자는 수업·보고서·양식과 참여자를 관리하고, 코치는 수업 조회와 본인
-          보고서 작성·수정을 할 수 있습니다.
-        </p>
+        <div className="mb-4 flex items-center gap-1">
+          <h2 className="font-bold">참여자·권한</h2>
+          <WorkspaceRoleHelp />
+        </div>
         {error ? (
           <p role="alert">참여자를 불러오지 못했습니다. 새로고침해 주세요.</p>
         ) : (
