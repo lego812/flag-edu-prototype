@@ -45,7 +45,7 @@ export default async function WorkspaceDetailPage({
       </header>
       {target.role === "admin" && (
         <RenameWorkspaceForm
-          key={target.name}
+          key={`rename:${target.name}`}
           workspaceId={id}
           name={target.name}
         />
@@ -60,59 +60,63 @@ export default async function WorkspaceDetailPage({
           <p role="alert">참여자를 불러오지 못했습니다. 새로고침해 주세요.</p>
         ) : (
           <ul className="divide-y divide-neutral-100">
-            {members?.map(
-              (m: {
-                user_id: string;
-                name: string;
-                role: string;
-                status: string;
-              }) => (
-                <li
-                  key={m.user_id}
-                  className="flex flex-wrap items-center justify-between gap-3 py-4"
-                >
-                  <span className="min-w-0 break-words font-medium">
-                    {m.name}
-                    {m.user_id === profile.id && (
-                      <span className="ml-2 text-xs text-neutral-500">나</span>
-                    )}
-                  </span>
-                  <span className="text-sm">
-                    {m.role === "admin" ? "관리자" : "코치"} ·{" "}
-                    {m.status === "active"
-                      ? "참여 중"
-                      : m.status === "pending"
-                        ? "대기"
-                        : "참여 해제"}
-                  </span>
-                  {m.status === "active" &&
-                    (m.user_id === profile.id || target.role === "admin") && (
-                      <RemoveParticipantForm
-                        workspaceId={id}
-                        userId={m.user_id}
-                        name={m.name}
-                        self={m.user_id === profile.id}
-                      />
-                    )}
-                  {target.role === "admin" &&
-                    target.id === workspace.id &&
-                    m.status !== "pending" && (
-                      <details className="w-full">
-                        <summary className="min-h-11 py-3 text-sm">
-                          권한·상태 변경
-                        </summary>
-                        <ManageMemberForm
-                          id={m.user_id}
+            {members
+              ?.filter((m: { status: string }) => m.status !== "inactive")
+              .map(
+                (m: {
+                  user_id: string;
+                  name: string;
+                  role: string;
+                  status: string;
+                }) => (
+                  <li
+                    key={m.user_id}
+                    className="flex flex-wrap items-center justify-between gap-3 py-4"
+                  >
+                    <span className="min-w-0 break-words font-medium">
+                      {m.name}
+                      {m.user_id === profile.id && (
+                        <span className="ml-2 text-xs text-neutral-500">
+                          나
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-sm">
+                      {m.role === "admin" ? "관리자" : "코치"} ·{" "}
+                      {m.status === "active"
+                        ? "참여 중"
+                        : m.status === "pending"
+                          ? "대기"
+                          : "참여 해제"}
+                    </span>
+                    {m.status === "active" &&
+                      (m.user_id === profile.id || target.role === "admin") && (
+                        <RemoveParticipantForm
                           workspaceId={id}
-                          role={m.role}
-                          status={m.status}
+                          userId={m.user_id}
+                          name={m.name}
                           self={m.user_id === profile.id}
                         />
-                      </details>
-                    )}
-                </li>
-              ),
-            )}
+                      )}
+                    {target.role === "admin" &&
+                      target.id === workspace.id &&
+                      m.status !== "pending" && (
+                        <details className="w-full">
+                          <summary className="min-h-11 py-3 text-sm">
+                            권한·상태 변경
+                          </summary>
+                          <ManageMemberForm
+                            id={m.user_id}
+                            workspaceId={id}
+                            role={m.role}
+                            status={m.status}
+                            self={m.user_id === profile.id}
+                          />
+                        </details>
+                      )}
+                  </li>
+                ),
+              )}
           </ul>
         )}
         {target.role === "admin" &&
@@ -131,7 +135,7 @@ export default async function WorkspaceDetailPage({
       </section>
       {target.role === "admin" && (
         <DeleteWorkspaceForm
-          key={target.name}
+          key={`delete:${target.name}`}
           workspaceId={id}
           name={target.name}
         />

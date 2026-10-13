@@ -148,3 +148,10 @@
 검증 과정: 신규 폼의 Server Action 후 React form 자동 reset으로 체크가 풀리는 회귀를 실제 DOM test에서 발견했다. 수동 transition dispatch와 즉시 busy lock을 사용해 입력을 보존하고 중복 제출을 차단했다. DB test 결과 타입 누락을 보완했다. 전체 75파일 375/375 PASS, lint·TypeScript 포함 Webpack build PASS 뒤 cron dryRun/실패 보고 2개 추가 및 populated 만료 fixture를 확대했다. 관련 2파일 32/32와 lint/TypeScript PASS. 이후 전체 재검증에서 QA 시나리오 수/표 등록 누락과 README의 인증 헤더 예시가 비밀 검사 정규식에 잡히는 문서 회귀 2건을 발견하여 시나리오 160개 매핑과 인증 설명 문구를 수정했다. 최종 전체 재검증 결과는 아래 후속 기록으로 남긴다. Supabase 문서·changelog·security checklist/기존 advisors 확인, CLI help/new로 두 migration 생성. 기준/manual/workflow/coverage v28(160개 시나리오) 갱신. 구현 commit/PR은 Git 이력으로 추적하며 운영 적용·검증은 외부 artifact로 기록한다. 실제 신규 Google 브라우저 E2E·실제 Storage 파일 삭제는 운영 테스트에서 수행하지 않는다.
 
 최종 재검증: 전체 75파일 377/377 PASS. 운영 기능 코드의 Vercel preview build SUCCESS 확인 후 문서/QA 매핑 보완을 push했다. 실제 신규 Google 가입 브라우저 E2E와 운영 Storage 실파일 파기는 수행하지 않았다.
+
+
+## 2026-10-13 참여 해제 인원 숨김
+
+`WORKSPACE-20261013-hide-inactive` (R09/R10, 10-c-A/10-c-D): 사용자는 참여 해제된 인원을 리스트에서 숨기고 soft delete로 기록을 유지하도록 요구했다. 기존 제거/나가기 RPC는 이미 membership status=inactive와 이력 보존을 수행하므로 DB 변경 없이 상세 렌더링에서 inactive 행을 제외했다. 관리자·코치 모두 inactive 이름·제외 버튼·권한 편집을 숨기고 active/pending과 초대를 유지한다. 계정·멤버십·기존 보고서 삭제는 실행하지 않는다. 테스트에서 이름 변경/삭제 폼의 동일 sibling key 경고도 확인하여 이름 기반 key에 각 폼 구분을 추가했다.
+
+검증: 관리자·코치 혼합 상태 회귀 2개를 추가했다. 최초 회귀의 권한 편집 개수 기대값은 활성 본인 편집까지 제외해 실패하여 활성 본인 1개/코치 0개로 수정했다. 관련 2파일 19/19 PASS, lint·TypeScript PASS. 기준/manual/coverage v29를 갱신했으며 시나리오 수는 160개 유지. 구현 commit/PR 및 운영 배포는 Git 이력과 외부 artifact로 추적한다. 운영 인원 상태는 테스트로 변경하지 않는다.
