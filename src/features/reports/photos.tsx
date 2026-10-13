@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Private short-lived URLs are loaded directly, without a shared image cache. */
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LoadingSpinner } from "@/components/loading-indicator";
 import { SubmitButton } from "@/components/submit-button";
 import { compressPhoto } from "./photo";
@@ -28,6 +28,17 @@ export function Photos({
   const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number } | null>(null);
   const [error, setError] = useState("");
   const [items, setItems] = useState(attachments);
+  const [pendingPhotos, setPendingPhotos] = useState<Attachment[]>([]);
+  const localUrls = useRef(new Set<string>());
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    const urls = localUrls.current;
+    return () => { mounted.current = false; urls.forEach(url => URL.revokeObjectURL(url)); urls.clear(); };
+  }, []);
+  function releasePreview(url?: string) {
+    if (url && localUrls.current.delete(url)) URL.revokeObjectURL(url);
+  }
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ url: string; label: string } | null>(null);
   const previewTrigger = useRef<HTMLButtonElement | null>(null);
@@ -48,14 +59,30 @@ export function Photos({
     setUploadProgress({ completed: 0, total: files.length });
     let version = mutation?.version;
     let completed = 0;
+    const previews: Attachment[] = [];
+    const savedUrls = new Set<string>();
     try {
       // Bound request size and memory; only one chunk changes the report at a
       // time, using the last successful revision returned by the server.
       for (let offset = 0; offset < files.length; offset += PHOTO_BATCH_SIZE) {
         const blobs: Blob[] = [];
+        const chunkPreviews: Attachment[] = [];
         let compressionError: unknown;
         for (const file of files.slice(offset, offset + PHOTO_BATCH_SIZE)) {
-          try { blobs.push(await compressPhoto(file)); }
+          try {
+            const blob = await compressPhoto(file);
+            if (!mounted.current) throw new Error("사진 업로드가 중단되었습니다.");
+            const url = URL.createObjectURL(blob);
+            localUrls.current.add(url);
+            const preview: Attachment = {
+              id: `pending-${crypto.randomUUID()}`, field_id: field.id,
+              storage_path: "", original_filename: "photo.jpg", url,
+            };
+            blobs.push(blob);
+            previews.push(preview);
+            chunkPreviews.push(preview);
+            setPendingPhotos(current => [...current, preview]);
+          }
           catch (error) { compressionError = error; break; }
         }
         if (!blobs.length) throw compressionError;
@@ -69,7 +96,13 @@ export function Photos({
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error);
-        setItems((current) => [...current, ...result.attachments]);
+        const saved = (result.attachments as (Attachment & { clientIndex: number })[]).map(attachment => {
+          const url = chunkPreviews[attachment.clientIndex]?.url;
+          if (url) savedUrls.add(url);
+          return { ...attachment, url: url ?? attachment.url };
+        });
+        setItems((current) => [...current, ...saved]);
+        setPendingPhotos(current => current.filter(photo => !chunkPreviews.some(preview => preview.id === photo.id)));
         version = result.version;
         completed += result.attachments.length;
         setUploadProgress({ completed, total: files.length });
@@ -82,10 +115,12 @@ export function Photos({
         ? `${completed}/${files.length}장 업로드 완료. ${message} 업로드되지 않은 사진은 다시 선택해 주세요.`
         : message);
     } finally {
+      setPendingPhotos([]);
+      previews.forEach(photo => { if (!savedUrls.has(photo.url!)) releasePreview(photo.url); });
       mutation?.finish(version);
       // Route Handler revalidation alone does not clear the browser Router Cache.
       // Refresh once per successful batch, preserving local unsaved form state.
-      if (completed > 0) router.refresh();
+      if (mounted.current && completed > 0) router.refresh();
       processing.current = false;
       setUploadProgress(null);
       setBusy(false);
@@ -105,6 +140,7 @@ export function Photos({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
+      releasePreview(items.find(item => item.id === id)?.url);
       setItems((current) => current.filter((item) => item.id !== id));
       setDeleteTarget(null);
       mutation?.finish(result.version);
@@ -123,6 +159,8 @@ export function Photos({
         .filter((f) => f.field_type === "photo")
         .map((f) => {
           const photos = items.filter((a) => a.field_id === f.id);
+          const pending = pendingPhotos.filter(photo => photo.field_id === f.id);
+          const displayed = [...photos, ...pending];
           const maxFiles = f.settings.max_files ?? 3;
           return (
             <div key={f.id} className="space-y-4">
@@ -135,13 +173,13 @@ export function Photos({
                   {reading ? `${photos.length}장` : `${photos.length}/${maxFiles}장`}
                 </span>
               </div>
-              {!!photos.length && (
+              {!!displayed.length && (
                 <ul
-                  aria-label={`${f.label} ${photos.length}장`}
+                  aria-label={`${f.label} ${photos.length}장${pending.length ? `, 업로드 중 ${pending.length}장` : ""}`}
                   tabIndex={0}
                   className="-mx-1 flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto px-1 pb-3 pt-2 focus-visible:outline-2 focus-visible:outline-black"
                 >
-                  {photos.map((a, index) => (
+                  {displayed.map((a, index) => (
                     <li
                       key={a.id}
                       className="relative size-20 shrink-0 snap-start sm:size-24"
@@ -151,6 +189,7 @@ export function Photos({
                           type="button"
                           aria-label={`${f.label} ${index + 1} 크게 보기`}
                           aria-haspopup="dialog"
+                          disabled={pending.includes(a)}
                           className="block size-full rounded-xl focus-visible:outline-2 focus-visible:outline-black"
                           onClick={(event) => {
                             previewTrigger.current = event.currentTarget;
@@ -168,7 +207,10 @@ export function Photos({
                           사진을 열지 못했습니다.
                         </p>
                       )}
-                      {editable && (
+                      {pending.includes(a) && (
+                        <span className="absolute inset-x-0 bottom-0 rounded-b-xl bg-black/75 px-1 py-1 text-center text-xs text-white">업로드 중</span>
+                      )}
+                      {editable && !pending.includes(a) && (
                         <button
                           type="button"
                           aria-label={`${f.label} ${index + 1} 삭제`}
