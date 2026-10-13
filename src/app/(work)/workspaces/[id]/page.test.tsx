@@ -109,6 +109,40 @@ it("shows directory failures explicitly", async () => {
   expect(screen.getByRole("alert")).toHaveTextContent("참여자");
 });
 
+it.each(["admin", "coach"])(
+  "hides removed participants and their controls from the %s directory",
+  async (role) => {
+    m.current.mockResolvedValue(current(role));
+    m.rpc.mockResolvedValue({
+      data: [
+        { user_id: self, name: "본인", role: "coach", status: "active" },
+        {
+          user_id: member,
+          name: "참여 해제된 회원",
+          role: "coach",
+          status: "inactive",
+        },
+        {
+          user_id: "10000000-0000-4000-8000-000000000003",
+          name: "대기 회원",
+          role: "coach",
+          status: "pending",
+        },
+      ],
+      error: null,
+    });
+    render(await WorkspaceDetailPage({ params: Promise.resolve({ id }) }));
+    expect(screen.queryByText("참여 해제된 회원")).not.toBeInTheDocument();
+    expect(screen.queryByText("참여 해제")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "참여 해제된 회원 내보내기" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryAllByText("권한 편집")).toHaveLength(role === "admin" ? 1 : 0);
+    expect(screen.getByText("본인")).toBeInTheDocument();
+    expect(screen.getByText("대기 회원")).toBeInTheDocument();
+  },
+);
+
 it("selected administrator sees invitations inside participants rather than a separate page link", async () => {
   m.current.mockResolvedValue(current("admin"));
   render(await WorkspaceDetailPage({ params: Promise.resolve({ id }) }));
