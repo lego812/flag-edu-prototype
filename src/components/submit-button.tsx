@@ -2,7 +2,6 @@
 
 import { useFormStatus } from "react-dom";
 import { createContext, useContext, type ComponentProps } from "react";
-import { LoadingSpinner } from "./loading-indicator";
 
 export const NavigationFormPending = createContext(false);
 
@@ -16,7 +15,7 @@ export function SubmitButton({ children, pending: externalPending = false, pendi
       <span className="grid items-center justify-items-center">
         <span className={`col-start-1 row-start-1 ${busy ? "invisible" : ""}`} aria-hidden={busy}>{children}</span>
         <span className={`col-start-1 row-start-1 inline-flex items-center gap-2 ${busy ? "" : "invisible"}`} aria-hidden={!busy}>
-          <LoadingSpinner />{pendingLabel}
+          {pendingLabel}
         </span>
       </span>
     </button>

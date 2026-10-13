@@ -1,7 +1,6 @@
 "use client";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "@/components/feedback-link";
-import { LoadingSpinner } from "@/components/loading-indicator";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
 import { PopupInvitations } from "./popup-invitations";
 import { switchWorkspaceInPopupAction } from "./actions";
@@ -99,7 +98,6 @@ export function WorkspaceSwitcher({
                     >
                       {pending && selected === workspace.id ? (
                         <span className="inline-flex items-center gap-2">
-                          <LoadingSpinner />
                           전환 중…
                         </span>
                       ) : (

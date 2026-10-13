@@ -1,6 +1,5 @@
 "use client";
 import { useTransition } from "react";
-import { LoadingSpinner } from "./loading-indicator";
 import { useRouter } from "next/navigation";
 import { useNavigationGuard } from "./navigation-guard";
 export function BackButton() {
@@ -23,21 +22,17 @@ export function BackButton() {
         if (requestNavigation(go)) go();
       }}
     >
-      {pending ? (
-        <LoadingSpinner />
-      ) : (
-        <svg
-          aria-hidden="true"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="m15 5-7 7 7 7" />
-        </svg>
-      )}
+      <svg
+        aria-hidden="true"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="m15 5-7 7 7 7" />
+      </svg>
     </button>
   );
 }
