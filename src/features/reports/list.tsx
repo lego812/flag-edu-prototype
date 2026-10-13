@@ -33,24 +33,27 @@ export async function ReportList({
       </p>
     );
   }
-  const { data, error, count } = await listReports(
-    supabase,
-    profile.organization_id,
-    filters,
-    admin ? undefined : profile.id,
-  );
+  const [{ data, error, count }, { data: members }, { data: selectedSession }] =
+    await Promise.all([
+      listReports(
+        supabase,
+        profile.organization_id,
+        filters,
+        admin ? undefined : profile.id,
+      ),
+      admin
+        ? listWorkspaceAuthors(supabase, profile.organization_id)
+        : Promise.resolve({ data: [] }),
+      filters.session
+        ? supabase
+            .from("class_sessions")
+            .select("id,title,start_at,has_time")
+            .eq("organization_id", profile.organization_id)
+            .eq("id", filters.session)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
   if (error) throw new Error("보고서 조회 실패");
-  const { data: members } = admin
-    ? await listWorkspaceAuthors(supabase, profile.organization_id)
-    : { data: [] };
-  const { data: selectedSession } = filters.session
-    ? await supabase
-        .from("class_sessions")
-        .select("id,title,start_at,has_time")
-        .eq("organization_id", profile.organization_id)
-        .eq("id", filters.session)
-        .maybeSingle()
-    : { data: null };
   const base = admin ? "/admin-reports" : "/reports";
   const link = (page: number) =>
     base + "?" + new URLSearchParams({ ...filters, page: String(page) });
