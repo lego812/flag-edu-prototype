@@ -91,7 +91,7 @@ export function SignupConsentForm() {
         disabled={!terms || !privacy || !SIGNUP_POLICY_PUBLISHED}
         pending={pending}
         pendingLabel="가입 완료 중…"
-        className="btn-primary w-full"
+        className="btn w-full"
       >
         동의하고 가입 완료
       </SubmitButton>

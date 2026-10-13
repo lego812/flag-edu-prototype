@@ -209,3 +209,5 @@ node --env-file=.env.local scripts/qa-workspace-sync.mjs admin webkit <설치된
 ### 신규 가입·보관 만료 검증 경계
 
 2-d-A/B/C와 10-c-F는 별도 동의/권한 시나리오다. 기본 Aside 업무 생성 시나리오에 가입 또는 만료 데이터 청소를 추가하지 않는다. 보관 만료는 로컬 Storage 모형의 삭제와 운영 Storage API의 실파일 삭제를 구분해서 기록한다. 운영 cron은 `?dryRun=true`를 사용하면 만료 batch 건수만 조회하고 기존 export/session/retention 변경을 실행하지 않는다.
+
+2026-10-13 보완: 미저장 보고서의 앱 내 이동은 확인 후에만 진행한다. 계정 관리 조회는 현재 workspace가 없어도 가능하다. 상태 변경·내보내기·오류 로그 쓰기 검증은 별도 승인된 fixture에서만 실행하며 cron 운영 점검은 dryRun을 유지한다. 실제 Google 신규 가입은 사용자 확인으로 기록하고 자동 E2E 실행으로 대신하지 않는다.

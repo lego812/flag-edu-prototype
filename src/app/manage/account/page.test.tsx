@@ -2,9 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({ current: vi.fn() }));
 vi.mock("@/features/auth/current-user", () => ({
-  requireCurrentProfile: m.current,
+  requireAccountWithWorkspaces: m.current,
 }));
 vi.mock("@/features/auth/actions", () => ({ logoutAction: vi.fn() }));
+vi.mock("@/components/app-header", () => ({
+  AppHeader: () => <header>앱 메뉴</header>,
+}));
 import AccountPage from "./page";
 it("shows the coach's own account and workspace roles without requiring administrator access", async () => {
   m.current.mockResolvedValue({
@@ -28,4 +31,29 @@ it("shows the coach's own account and workspace roles without requiring administ
   expect(screen.getByText("현재")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
   expect(container).not.toHaveTextContent("must-not-render");
+});
+it("keeps account information, logout and privacy contact available without any workspace", async () => {
+  m.current.mockResolvedValue({
+    user: {
+      id: "own",
+      email: "own@example.test",
+      identities: [{ provider: "google" }],
+    },
+    profile: { name: "무소속", status: "inactive" },
+    workspace: undefined,
+    workspaces: [],
+  });
+  render(await AccountPage());
+  expect(screen.getByText("own@example.test")).toBeInTheDocument();
+  expect(
+    screen.getByText("참여 중인 워크스페이스가 없습니다."),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "시작 화면으로" })).toHaveAttribute(
+    "href",
+    "/welcome",
+  );
+  expect(
+    screen.getByRole("link", { name: "davin990812@gmail.com" }),
+  ).toHaveAttribute("href", "mailto:davin990812@gmail.com");
 });

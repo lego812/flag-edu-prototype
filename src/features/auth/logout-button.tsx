@@ -46,7 +46,7 @@ export function LogoutButton() {
             <SubmitButton
               pending={pending}
               pendingLabel="로그아웃 중…"
-              className="btn-primary"
+              className="btn"
             >
               로그아웃
             </SubmitButton>

@@ -36,8 +36,8 @@ export function ManageMemberForm({
             className="input mt-1"
             disabled={self}
           >
-            <option value="active">활성</option>
-            <option value="inactive">비활성</option>
+            <option value="active">참여 중</option>
+            <option value="inactive">비활성 (접근 중지)</option>
           </select>
         </label>
         {self && <input type="hidden" name="status" value={status} />}
@@ -59,6 +59,7 @@ export function ManageMemberForm({
           {state.success}
         </p>
       )}
+      <p className="text-xs text-neutral-500">비활성은 참여 정보를 유지하고 접근만 중지합니다. 참여를 종료하려면 내보내기를 사용하세요.</p>
     </form>
   );
 }

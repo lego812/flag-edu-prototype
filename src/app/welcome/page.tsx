@@ -68,6 +68,9 @@ export default async function WelcomePage() {
         />
       </section>
       <div className="flex items-center gap-5">
+        <Link href="/manage/account" className="text-sm underline">
+          계정 관리
+        </Link>
         {!!memberships?.length && (
           <Link href="/dashboard" className="text-sm underline">
             홈으로

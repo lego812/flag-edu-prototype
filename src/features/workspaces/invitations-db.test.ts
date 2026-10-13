@@ -45,6 +45,12 @@ beforeAll(async () => {
       insert into public.profiles(id,organization_id,name,role,status) values('10000000-0000-4000-8000-000000000005','20000000-0000-4000-8000-000000000005','Pending','coach','pending'),('10000000-0000-4000-8000-000000000006','20000000-0000-4000-8000-000000000005','Admin','admin','active');
       insert into public.workspace_memberships(user_id,organization_id,role,status) select id,organization_id,role,status from public.profiles;`);
     }
+    if (file.endsWith("_workspace_participation_states.sql")) {
+      await db.exec(`insert into auth.users(id,email,email_confirmed_at) values('10000000-0000-4000-8000-000000000007','legacy-hidden@fixture.test',now());
+      insert into public.organizations(id,name) values('20000000-0000-4000-8000-000000000007','Legacy hidden');
+      insert into public.profiles(id,organization_id,name,role,status) values('10000000-0000-4000-8000-000000000007','20000000-0000-4000-8000-000000000007','Legacy hidden','coach','inactive');
+      insert into public.workspace_memberships(user_id,organization_id,role,status) values('10000000-0000-4000-8000-000000000007','20000000-0000-4000-8000-000000000007','coach','inactive');`);
+    }
     await db.exec(sql);
   }
   await db.exec(
@@ -349,7 +355,7 @@ it("removal authorizes target admin, preserves account and other memberships, se
         )
       ).rows,
     ).toEqual([
-      { organization_id: directoryOrg, role: "coach", status: "inactive" },
+      { organization_id: directoryOrg, role: "coach", status: "removed" },
       { organization_id: fallbackOrg, role: "admin", status: "active" },
     ]);
     expect(
@@ -378,7 +384,7 @@ it("removal authorizes target admin, preserves account and other memberships, se
           directoryOrg,
         ])
       ).rows,
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     await rejected(
       () =>
         db.query("select public.remove_workspace_participant($1,$2)", [
@@ -622,7 +628,7 @@ it("administrator can leave when another active administrator remains", async ()
           [owner, directoryOrg],
         )
       ).rows,
-    ).toEqual([{ status: "inactive" }]);
+    ).toEqual([{ status: "removed" }]);
   });
 });
 it("authenticated requests without a subject cannot remove or leave another member", async () => {
@@ -1129,4 +1135,148 @@ it("purges only expired tombstones after Storage cleanup, preserves accounts and
       ).rows,
     ).toHaveLength(1);
   });
+});
+
+it("suspension stays visible to admins, denies access, can reactivate, and is distinct from removal", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    await db.query("select public.switch_workspace($1)", [directoryOrg]);
+    await db.query(
+      "select public.manage_workspace_member($1,$2,'coach','inactive')",
+      [directoryOrg, member],
+    );
+    expect(
+      (
+        await db.query(
+          "select status from public.list_workspace_participants($1) where user_id=$2",
+          [directoryOrg, member],
+        )
+      ).rows,
+    ).toEqual([{ status: "inactive" }]);
+    const invitation = (
+      await db.query<{ id: string }>(
+        "select public.create_workspace_invitation('member@fixture.test') id",
+      )
+    ).rows[0].id;
+    await user(member);
+    await rejected(() =>
+      db.query("select public.switch_workspace($1)", [directoryOrg]),
+    );
+    await rejected(
+      () =>
+        db.query("select public.respond_workspace_invitation($1,true)", [
+          invitation,
+        ]),
+      "Suspended membership",
+    );
+    await user(owner);
+    await db.query(
+      "select public.manage_workspace_member($1,$2,'coach','active')",
+      [directoryOrg, member],
+    );
+    await user(member);
+    await db.query("select public.switch_workspace($1)", [directoryOrg]);
+    await user(owner);
+    await db.query(
+      "select public.manage_workspace_member($1,$2,'coach','inactive')",
+      [directoryOrg, member],
+    );
+    await db.query("select public.remove_workspace_participant($1,$2)", [
+      directoryOrg,
+      member,
+    ]);
+    expect(
+      (
+        await db.query(
+          "select user_id from public.list_workspace_participants($1) where user_id=$2",
+          [directoryOrg, member],
+        )
+      ).rows,
+    ).toHaveLength(0);
+    await rejected(
+      () =>
+        db.query(
+          "select public.manage_workspace_member($1,$2,'coach','active')",
+          [directoryOrg, member],
+        ),
+      "Invite required",
+    );
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select status from public.workspace_memberships where user_id=$1 and organization_id=$2",
+          [member, directoryOrg],
+        )
+      ).rows,
+    ).toEqual([{ status: "removed" }]);
+    expect(
+      (await db.query("select id from auth.users where id=$1", [member])).rows,
+    ).toHaveLength(1);
+  });
+});
+it("logs are service-only, sanitized, and purge retries do not starve unattempted workspaces", async () => {
+  await directoryFixture(async () => {
+    await user(owner);
+    await rejected(() =>
+      db.query(
+        "select public.record_maintenance_failure(gen_random_uuid(),'sessions_sync',null,'42501')",
+      ),
+    );
+    await rejected(() =>
+      db.query("select * from private.maintenance_failures"),
+    );
+    await db.exec("reset role;set role anon");
+    await rejected(() =>
+      db.query(
+        "select public.record_maintenance_failure(gen_random_uuid(),'sessions_sync',null,'42501')",
+      ),
+    );
+    await db.exec(
+      "reset role;insert into public.organizations(name,deleted_at) select 'Expired fixture',now()-interval '40 days' from generate_series(1,11);set request.jwt.claim.role='service_role';set role service_role",
+    );
+    const first = (
+      await db.query<{ id: string }>(
+        "select * from public.list_workspaces_due_for_purge()",
+      )
+    ).rows;
+    expect(first).toHaveLength(10);
+    await db.query("select public.begin_workspace_purge($1)", [first[0].id]);
+    const next = (
+      await db.query<{ id: string }>(
+        "select * from public.list_workspaces_due_for_purge()",
+      )
+    ).rows;
+    expect(next.map((x) => x.id)).not.toContain(first[0].id);
+    await db.query(
+      "select public.record_maintenance_failure(gen_random_uuid(),'retention_finish',$1,'PT409')",
+      [first[0].id],
+    );
+    await rejected(() =>
+      db.query(
+        "select public.record_maintenance_failure(gen_random_uuid(),'retention_finish',null,'secret@example.test')",
+      ),
+    );
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query(
+          "select stage,error_code from private.maintenance_failures where stage='retention_finish'",
+        )
+      ).rows,
+    ).toEqual([{ stage: "retention_finish", error_code: "PT409" }]);
+  });
+});
+
+it("preserves existing hidden memberships as removed during rollout without deleting the account", async () => {
+  await db.exec("reset role");
+  expect(
+    (
+      await db.query(
+        "select wm.status,u.id from public.workspace_memberships wm join auth.users u on u.id=wm.user_id where wm.user_id='10000000-0000-4000-8000-000000000007'",
+      )
+    ).rows,
+  ).toEqual([
+    { status: "removed", id: "10000000-0000-4000-8000-000000000007" },
+  ]);
 });

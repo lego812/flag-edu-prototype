@@ -5,6 +5,7 @@ import { LoadingSpinner } from "@/components/loading-indicator";
 import type { WorkspaceSummary } from "@/features/auth/current-user";
 import { PopupInvitations } from "./popup-invitations";
 import { switchWorkspaceInPopupAction } from "./actions";
+import { GuardedNavigationForm } from "@/components/navigation-guard";
 
 export function WorkspaceSwitcher({
   current,
@@ -68,7 +69,7 @@ export function WorkspaceSwitcher({
               ✕
             </button>
           </div>
-          <form action={action}>
+          <GuardedNavigationForm action={action}>
             <ul className="mt-4 max-h-[55svh] space-y-2 overflow-y-auto">
               {workspaces.map((workspace) => (
                 <li key={workspace.id}>
@@ -121,7 +122,7 @@ export function WorkspaceSwitcher({
                 {state.error}
               </p>
             )}
-          </form>
+          </GuardedNavigationForm>
           {open && <PopupInvitations />}
           <Link
             href="/workspaces"

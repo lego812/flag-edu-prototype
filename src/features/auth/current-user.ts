@@ -53,7 +53,7 @@ export async function requireAccount() {
   return { supabase, user, profile: profile! };
 }
 
-export async function requireCurrentProfile() {
+export async function requireAccountWithWorkspaces() {
   const { supabase, user, profile } = await requireAccount();
 
   const { data: memberships, error: membershipError } = await supabase
@@ -81,6 +81,12 @@ export async function requireCurrentProfile() {
   );
 
   if (membershipError) redirect("/access-denied");
+  return { supabase, user, profile, workspace, workspaces };
+}
+
+export async function requireCurrentProfile() {
+  const { supabase, user, profile, workspace, workspaces } =
+    await requireAccountWithWorkspaces();
   if (profile.status !== "active" || !workspace) redirect("/welcome");
 
   return {
