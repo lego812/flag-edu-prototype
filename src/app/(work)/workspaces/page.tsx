@@ -17,7 +17,7 @@ export default async function WorkspacesPage() {
       <header>
         <h1 className="text-3xl font-bold">워크스페이스</h1>
         <p className="mt-2 text-neutral-600">
-          기관별 수업·일정·보고서·구성원을 서로 분리합니다.
+          워크스페이스와 소속 구성원 정보를 관리합니다.
         </p>
       </header>
       <section className="surface p-6">

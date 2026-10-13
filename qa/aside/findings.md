@@ -629,3 +629,8 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 `UI-20261013-workspace-role-help` (R01/R10, 10-c-A): 상시 권한 설명을 참여자·권한 제목 옆 물음표 버튼에서 여는 native dialog로 옮겼다. 44px 버튼 영역과 접근성 이름·dialog 제목/설명 연결을 제공하고 기존 관리자/코치 설명을 유지했다. 닫기·배경 클릭·native Escape 및 닫힌 후 trigger focus 복귀를 지원한다. 다른 관리 동작/DB 변경은 없다.
 
 검증: 공개/닫힘 상태·권한 문구·닫기/배경 클릭·본문 클릭 유지·focus 복귀 회귀 2개를 추가했다. 관련 상세/QA 매핑 포함 3파일 21/21 PASS, lint·TypeScript PASS. 기준/manual/coverage v30 갱신, 시나리오 수160개 유지. 구현 commit/PR/운영 배포 결과는 Git 이력 및 외부 artifact로 추적한다. native Escape·focus trap의 실제 브라우저 동작과 DOM 모형 결과는 구분한다.
+
+
+## 2026-10-13 워크스페이스 설명 문구
+
+`UI-20261013-workspace-description` (R10): 사용자 지정 문구 “워크스페이스와 소속 구성원 정보를 관리합니다.”로 목록 설명을 교체했다. 단순 문구 변경이며 권한·데이터·동작 변경은 없다. 신규 테스트 없이 기존 목록 회귀로 검증한다. 구현 commit/PR/배포는 Git 이력과 외부 artifact로 추적한다.
