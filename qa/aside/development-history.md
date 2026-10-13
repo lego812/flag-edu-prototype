@@ -162,3 +162,10 @@
 `UI-20261013-workspace-name-button` (R01/R10, 10-c-C): 사용자 요청으로 이름 저장 버튼의 스타일을 수업 목록의 수업 등록 버튼과 동일한 공통 `btn` 클래스로 변경했다. 저장 action·진행 중 표시·중복 제출 차단은 기존 SubmitButton을 유지한다. 단순 스타일 변경으로 신규 테스트를 추가하지 않고 기존 상세/rename action 회귀와 lint로 검증한다. 구현 commit/PR·배포는 Git 이력과 외부 artifact로 추적한다.
 
 검증: 관련 2파일 11/11 PASS, lint PASS.
+
+
+## 2026-10-13 참여자 권한 안내 팝업
+
+`UI-20261013-workspace-role-help` (R01/R10, 10-c-A): 상시 권한 설명을 참여자·권한 제목 옆 물음표 버튼에서 여는 native dialog로 옮겼다. 44px 버튼 영역과 접근성 이름·dialog 제목/설명 연결을 제공하고 기존 관리자/코치 설명을 유지했다. 닫기·배경 클릭·native Escape 및 닫힌 후 trigger focus 복귀를 지원한다. 다른 관리 동작/DB 변경은 없다.
+
+검증: 공개/닫힘 상태·권한 문구·닫기/배경 클릭·본문 클릭 유지·focus 복귀 회귀 2개를 추가했다. 관련 상세/QA 매핑 포함 3파일 21/21 PASS, lint·TypeScript PASS. 기준/manual/coverage v30 갱신, 시나리오 수160개 유지. 구현 commit/PR/운영 배포 결과는 Git 이력 및 외부 artifact로 추적한다. native Escape·focus trap의 실제 브라우저 동작과 DOM 모형 결과는 구분한다.
