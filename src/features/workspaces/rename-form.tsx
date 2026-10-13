@@ -33,7 +33,7 @@ export function RenameWorkspaceForm({
         <SubmitButton
           pending={pending}
           pendingLabel="변경 중…"
-          className="btn-primary"
+          className="btn"
         >
           이름 저장
         </SubmitButton>
