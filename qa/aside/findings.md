@@ -654,3 +654,11 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 기준/manual/workflow/coverage v32 갱신, 기존160개 시나리오 유지. 운영 사전 조회에서 이전할 inactive WM1개, 만료 workspace0개를 확인했다. 적용·rollback/HTTP/운영 배포는 외부 artifact로 추적하며 운영 실제 워크스페이스/파일을 삭제해 시험하지 않는다. 운영 작업 정보 조회 방법과 실패 분리/복원 정책은 docs/account-workspace-safeguards-rollout.md에 기록했다.
 
 최종 전체 검증: 78파일395/395 PASS, lint·TypeScript 포함 Webpack production build PASS. 로컬 preview 제거·본인 QA session 종료 완료. 운영 DB 적용/반영 결과는 외부 artifact로 기록한다.
+
+### DOC-20261013-ROLE-GUIDE — 권한별 README·PDF (VERIFIED)
+
+- 원인: 기존 README와 화면 사진에 이전 이메일 초대·관리 메뉴 구조가 남아 최신 운영 동작과 달랐다.
+- 변경: 요청한 네 장 순서로 사용자 절차를 다시 작성하고, 익명화한 운영 캡처 29장과 같은 원문의 PDF 23쪽을 추가했다. 신규 가입의 필수 동의, 앱 초대, 소속 없는 계정, 비활성/참여 종료, 미저장 보호의 적용 범위와 삭제 후 30일 보관을 설명한다.
+- 검증: `scripts/readme-guide.test.mjs`의 이미지 해시·크기·대체 텍스트·문서 링크 검사 통과. PDF 한글 추출, 전체 페이지 렌더링, 목차 4개와 페이지 넘침 검사 통과. 초대 입력란이 처음 캡처의 하단에 잘려 해당 화면의 스크롤 위치를 조정했다.
+- 범위: 운영 앱의 전용 QA 계정과 미저장 폼 예시만 사용했다. 402×874 Chromium 화면으로, 실물 휴대전화 검증은 아니다. 기존 취소 일정의 보고서·테스트 이미지는 읽기 전용 예시로 명시했다. 생성한 QA 로그인 세션은 캡처 후 종료하며 원본 로그·세션은 커밋하지 않는다.
+- 추적: 브랜치 `docs/role-based-user-guide`. 앱 기준 커밋은 캡처 매니페스트에 기록하며 문서 변경 커밋은 이 항목을 포함한 Git 이력으로 추적한다.

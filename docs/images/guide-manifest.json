@@ -1,15 +1,10 @@
 {
-  "sourceCommit": "4ad47c4b89f85a14bf8f238e21bbce61e7f16c57",
-  "capturedAt": "2026-10-07T05:34:05.266Z",
-  "base": "http://localhost:3000",
-  "engine": "webkit",
-  "installedProfile": "iPhone 17 Pro",
-  "intendedSize": "iPhone 18 Pro size approximation",
+  "sourceCommit": "f4faf04d3bbf65a1e900d7534a573d311e060eae",
+  "capturedAt": "2026-10-13T02:43:12.109Z",
+  "base": "https://flag-edu-prototype.vercel.app",
+  "engine": "Chromium",
+  "transport": "Verified TLS through managed proxy; unchanged production responses",
   "viewport": {
-    "width": 402,
-    "height": 874
-  },
-  "screen": {
     "width": 402,
     "height": 874
   },
@@ -20,121 +15,185 @@
   },
   "realDevice": false,
   "captureValidation": {
-    "checksPassed": 43,
-    "browserGatePassed": true,
-    "unclassifiedBrowserErrors": 0,
-    "domExceptions": 0,
-    "businessDataUnchanged": true
+    "businessWrites": 0,
+    "browserErrors": 0,
+    "images": 29
   },
-  "privacy": "Only tagged QA accounts; example identities anonymized in a disposable DOM; no browser chrome, credentials, signed URLs or raw QA logs.",
+  "privacy": "Only tagged QA accounts. Example identities redacted in disposable DOM; no raw logs, credentials, browser chrome or signed URLs.",
   "images": [
     {
       "file": "common-login.jpg",
       "role": "common",
       "route": "/login",
-      "sha256": "40c14698d5b2b023546e46a6a8e54b66a37f948e37a84697104af791fe7cc7a1"
+      "sha256": "15e92fb30b436adf5a29308612e14a348cb45ced425cb95654ef0a4a20ad8989"
     },
     {
-      "file": "admin-manage.jpg",
-      "role": "admin",
-      "route": "/manage",
-      "sha256": "76910c2556ce7c45b6b6670abd8f61050b66bbabc1940e3c2bdfa826304e4644"
+      "file": "common-welcome.jpg",
+      "role": "common",
+      "route": "/welcome",
+      "sha256": "b8196c044ecc472a2003968d9f20e6b8284749299c754a046c87f702e9327e13"
     },
     {
-      "file": "admin-reports.jpg",
-      "role": "admin",
-      "route": "/admin-reports",
-      "sha256": "b23fdd4a10b58d0c2238f1cd6f05deb69da526b5266e704ebf153fee52db78ea"
-    },
-    {
-      "file": "admin-templates.jpg",
-      "role": "admin",
-      "route": "/templates",
-      "sha256": "952828b2217d3f5149e75161800760443e7b9f8b413de5d658db62cc1b45245b"
-    },
-    {
-      "file": "admin-members.jpg",
-      "role": "admin",
-      "route": "/members",
-      "sha256": "1ee0d0bbbebac39b3e94e0e0d9dc3f8569f5da2d0bdad562f77384bf1d7d27c7"
-    },
-    {
-      "file": "admin-exports.jpg",
-      "role": "admin",
-      "route": "/exports",
-      "sha256": "c9da5d05965d4c0d6875625b0329c9afe6283cd7a630bb5c914aeb3e4fa4fa9c"
-    },
-    {
-      "file": "common-workspaces.jpg",
-      "role": "admin",
-      "route": "/workspaces",
-      "sha256": "777f626d0059e707a0a68fe0179c2804fd34431ea8563d751994036e760f5166"
-    },
-    {
-      "file": "admin-template-editor.jpg",
-      "role": "admin",
-      "route": "/templates/new",
-      "sha256": "5c52c2dd5b654e9d11f7d5521a96995126a1c31b0e95590c4b16d44e7ee85b8d"
+      "file": "common-no-workspace.jpg",
+      "role": "common",
+      "route": "/manage/account",
+      "sha256": "bc019c761eb59377c620f6d586833972ece5521a7d957cfdccab8096de46af09"
     },
     {
       "file": "common-dashboard.jpg",
       "role": "coach",
       "route": "/dashboard",
-      "sha256": "148719590802dd20aef25526ab152c52f2b5fa1d05dee83a925de630e80f268f"
+      "sha256": "946c93b2d68ebd26542eac1a1fed5fcb688977f16bded8ff284cabc3755c38f2"
+    },
+    {
+      "file": "common-account.jpg",
+      "role": "coach",
+      "route": "/manage/account",
+      "sha256": "96eb1479333c6129b35f637bbf65894ce5e33597d38897f8454a1bcec94b2a2f"
+    },
+    {
+      "file": "common-workspaces.jpg",
+      "role": "coach",
+      "route": "/workspaces",
+      "sha256": "bbc56ce7c5fc98d1f46f303271dde9f3cf40eedc8ef36f939864abe8051f77b1"
     },
     {
       "file": "common-courses.jpg",
       "role": "coach",
       "route": "/courses",
-      "sha256": "fdb26bfd489523134b2dabc4f6a22daf802971836448ab6ac19b4b9320e5348a"
+      "sha256": "eb95e4dc1cca555f720264ecaffd1bd6b4ddd0d184f81fa51c114ceb21c43ae9"
     },
     {
       "file": "common-course-registration.jpg",
       "role": "coach",
       "route": "/courses/new",
-      "sha256": "e7a91f6cefc5d2877a4c252587e4bf517e40cfa6c4489d54047d2541e9777c09"
+      "sha256": "ca46bfafed252aefb7734ce2f409df75d57d2d2f70fd97f32026f0dc8bf4bf87"
     },
     {
       "file": "common-schedule-list.jpg",
       "role": "coach",
       "route": "/classes",
-      "sha256": "01aded291cd152f92cf1b493a1aaf6bc99116c51b156cb75215782b65746a812"
+      "sha256": "3da51552d69680f6bf316345ac54b59f42ac3e82c22a4fcefe9703e5c1dd1008"
     },
     {
       "file": "common-calendar.jpg",
       "role": "coach",
       "route": "/classes",
-      "sha256": "ba0dab235b46869ae0b96735a4a5574f399fc4bcc27cac27eb71cdf6866369c0"
+      "sha256": "3ac060be081ba1395e1d6b45418ef0cdb0058f869e7c3cf8706cc3ff1ee4ab21"
     },
     {
       "file": "coach-report-list.jpg",
       "role": "coach",
       "route": "/reports",
-      "sha256": "c05ceba14cf1d9deab82625f0903c8fa14bfc725691318ce642d1947fc83130c"
+      "sha256": "88183b1786e38aafd7248d0297375fdb7dfc618545f68de2e1aa27e8365883f9"
     },
     {
       "file": "coach-report-view.jpg",
       "role": "coach",
       "route": "/reports/:id",
-      "sha256": "b0ac948afcd48414414d1025d26c78c04e11806479411b36e3b0d1f42810d058"
-    },
-    {
-      "file": "common-schedule-filters.jpg",
-      "role": "coach",
-      "route": "/classes",
-      "sha256": "93650b37bac67361d124171e17526d35e94185a56f3789cfc00ea97e082b8ae2"
-    },
-    {
-      "file": "common-class-registration.jpg",
-      "role": "coach",
-      "route": "/classes/new",
-      "sha256": "95b846f9bac1b63553eeb5dfa730e6e6a27d692be9fd4e167f46cd40d7bc66a2"
+      "sha256": "23e2958c5f250388b3592e0b27988519c3339931a83a1740bdb4046e149f32be"
     },
     {
       "file": "coach-report-photos.jpg",
       "role": "coach",
       "route": "/reports/:id",
-      "sha256": "0b1d88691a360eaf80874049075b28351d23a7597776e1caae84cdb6c28932e1"
+      "sha256": "0c2836d216df50b3c2c0f16b8190638c43d876547b3ede0e49fa81b213eaa95a"
+    },
+    {
+      "file": "common-schedule-filters.jpg",
+      "role": "coach",
+      "route": "/classes",
+      "sha256": "679fedd6778a008f80a3904b5ad88b9cba576f9c993b4cc2fbc2fb297c934dc3"
+    },
+    {
+      "file": "common-class-registration.jpg",
+      "role": "coach",
+      "route": "/classes/new",
+      "sha256": "4e5df4396a3c1e36ce856d2d611e39488a671719d319c67c7d1f3dfd6c391b97"
+    },
+    {
+      "file": "coach-schedule-repeat.jpg",
+      "role": "coach",
+      "route": "/classes/new",
+      "sha256": "6a5159858b33a61889102543dd6509f24c3bb12f8bd1a8436395a4f55391bc58"
+    },
+    {
+      "file": "common-workspace-switch.jpg",
+      "role": "coach",
+      "route": "/dashboard",
+      "sha256": "44fac316afc7cab0d0b1f4c0dd9bf8d53c725d4df59386f327bcb114f1ecdd10"
+    },
+    {
+      "file": "coach-participants.jpg",
+      "role": "coach",
+      "route": "/workspaces/:id",
+      "sha256": "de4ce40cff154d7410352df4dc56f624eeafd91915a813daf88b86bdcb08c917"
+    },
+    {
+      "file": "common-logout.jpg",
+      "role": "coach",
+      "route": "/manage/account",
+      "sha256": "1d2805aafb4734058da802aa669b97ed322adfecaa9cb8ddb054c80d442edd6b"
+    },
+    {
+      "file": "admin-manage.jpg",
+      "role": "admin",
+      "route": "/manage",
+      "sha256": "d583e1f7405ca49019c7797420bd09d1b99a660bf66993e17255b1f02d4a6bf6"
+    },
+    {
+      "file": "admin-reports.jpg",
+      "role": "admin",
+      "route": "/admin-reports",
+      "sha256": "49157c72701ba2d4604e76c675fc0fbb61aa1014a6e48fe9963ee73d158b0c67"
+    },
+    {
+      "file": "admin-templates.jpg",
+      "role": "admin",
+      "route": "/templates",
+      "sha256": "a61b474d253c6efe7f8a4d21b00885227d37b6c45d701a410feb4b2d66a724d0"
+    },
+    {
+      "file": "admin-exports.jpg",
+      "role": "admin",
+      "route": "/exports",
+      "sha256": "b13bd0d40a13d0ab8372bd8e0957ee26f02dd3547fd8714d710299617a64b607"
+    },
+    {
+      "file": "admin-template-editor.jpg",
+      "role": "admin",
+      "route": "/templates/new",
+      "sha256": "15e1b0f57b32017ae1e57fc6c9ebda98a24d0debfef2ea63af215f7af855a288"
+    },
+    {
+      "file": "admin-workspace-rename.jpg",
+      "role": "admin",
+      "route": "/workspaces/:id",
+      "sha256": "3ebc7906304d09b549d40ecf9e20a78d8d5ef2a6d91a2470fcfa7450e7f04259"
+    },
+    {
+      "file": "admin-members.jpg",
+      "role": "admin",
+      "route": "/workspaces/:id",
+      "sha256": "2116185e5d04c312e8c546f5c95ac6ce12ed13bf9b08beda3db177a602d8a23c"
+    },
+    {
+      "file": "admin-invitations.jpg",
+      "role": "admin",
+      "route": "/workspaces/:id",
+      "sha256": "2116185e5d04c312e8c546f5c95ac6ce12ed13bf9b08beda3db177a602d8a23c"
+    },
+    {
+      "file": "admin-role-help.jpg",
+      "role": "admin",
+      "route": "/workspaces/:id",
+      "sha256": "6c341790e499d01b7f9a2643977ef003ea7c65a08cf9ddbb9ad9b95df6e10397"
+    },
+    {
+      "file": "admin-workspace-delete.jpg",
+      "role": "admin",
+      "route": "/workspaces/:id",
+      "sha256": "9a888b9856e9970840cd5421a8ef81e5bfe2052d44d0b76222e1ceb4c3f5960a"
     }
   ]
 }
