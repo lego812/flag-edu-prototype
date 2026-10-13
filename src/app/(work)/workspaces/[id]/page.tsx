@@ -61,7 +61,7 @@ export default async function WorkspaceDetailPage({
         ) : (
           <ul className="divide-y divide-neutral-100">
             {members
-              ?.filter((m: { status: string }) => m.status !== "inactive")
+              ?.filter((m: { status: string }) => m.status !== "removed")
               .map(
                 (m: {
                   user_id: string;
@@ -87,9 +87,10 @@ export default async function WorkspaceDetailPage({
                         ? "참여 중"
                         : m.status === "pending"
                           ? "대기"
-                          : "참여 해제"}
+                          : "비활성"}
                     </span>
-                    {m.status === "active" &&
+                    {(m.status === "active" ||
+                      (m.status === "inactive" && target.role === "admin")) &&
                       (m.user_id === profile.id || target.role === "admin") && (
                         <RemoveParticipantForm
                           workspaceId={id}

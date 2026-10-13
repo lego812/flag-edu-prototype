@@ -1,11 +1,18 @@
 "use client";
 import { SubmitButton } from "@/components/submit-button";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { FieldInput } from "./field-input";
 import type { Field, Report } from "./model";
 import { saveReportAction } from "./actions";
 import { useReportMutation } from "./mutation-context";
+import { useNavigationGuard } from "@/components/navigation-guard";
 export function ReportEditor({
   report,
   fields,
@@ -21,7 +28,8 @@ export function ReportEditor({
   );
   const [state, action, pending] = useActionState(
     async (previous: import("./model").ActionState, form: FormData) => {
-      if (mutation && !mutation.start()) return { error: "사진 또는 답변 저장이 끝난 뒤 다시 시도해 주세요." };
+      if (mutation && !mutation.start())
+        return { error: "사진 또는 답변 저장이 끝난 뒤 다시 시도해 주세요." };
       setDraft(
         Object.fromEntries(
           fields
@@ -49,6 +57,15 @@ export function ReportEditor({
     {},
   );
   const dirty = useRef(false);
+  const { register } = useNavigationGuard();
+  useLayoutEffect(
+    () =>
+      register(() => ({
+        dirty: dirty.current,
+        busy: pending || Boolean(mutation?.busy),
+      })),
+    [register, pending, mutation?.busy],
+  );
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (dirty.current) {
@@ -58,9 +75,11 @@ export function ReportEditor({
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, []);
+  useLayoutEffect(() => {
+    if (state.success) dirty.current = false;
+  }, [state]);
   useEffect(() => {
     if (state.success) {
-      dirty.current = false;
       if (state.redirectTo) router.push(state.redirectTo);
     }
   }, [state, router]);
@@ -72,8 +91,15 @@ export function ReportEditor({
       }}
       className="max-w-2xl space-y-8 py-4"
     >
-      <input type="hidden" name="version" value={mutation?.version ?? report.updated_at} />
-      <fieldset disabled={pending || mutation?.busy || immutable} className="space-y-10">
+      <input
+        type="hidden"
+        name="version"
+        value={mutation?.version ?? report.updated_at}
+      />
+      <fieldset
+        disabled={pending || mutation?.busy || immutable}
+        className="space-y-10"
+      >
         {fields
           .filter((f) => f.field_type !== "photo")
           .map((f) => (
@@ -87,10 +113,16 @@ export function ReportEditor({
             />
           ))}
         <div className="flex flex-wrap gap-3">
-          <SubmitButton pendingLabel="저장 중…" className="btn-secondary" name="intent" value="save">
+          <SubmitButton
+            pendingLabel="저장 중…"
+            className="btn-secondary"
+            name="intent"
+            value="save"
+          >
             임시저장
           </SubmitButton>
-          <SubmitButton pendingLabel="제출 중…"
+          <SubmitButton
+            pendingLabel="제출 중…"
             className="btn"
             name="intent"
             value="submit"

@@ -32,6 +32,7 @@ it("removes scoped files via Storage before finalizing database deletion", async
     purged: 1,
     filesRemoved: 2,
     failed: 0,
+    deferred: 0,
   });
   expect(f.remove).toHaveBeenCalledWith(["expired/report/photo.jpg"]);
   expect(f.rpc.mock.calls.map(([name]) => name)).toEqual([
@@ -51,6 +52,7 @@ it("keeps records for retry when Storage fails and never finalizes", async () =>
     purged: 0,
     filesRemoved: 0,
     failed: 1,
+    deferred: 0,
   });
   expect(
     f.rpc.mock.calls.some(([name]) => name === "finish_workspace_purge"),
@@ -72,4 +74,31 @@ it("rechecks expiration after enumeration and stops if eligibility changed", asy
   }));
   expect((await purgeExpiredWorkspaces(f.client)).purged).toBe(0);
   expect(f.rpc).toHaveBeenCalledTimes(2);
+});
+
+it("reports a deferred purge when its time budget expires between file batches, keeping database records", async () => {
+  let now = 0;
+  const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+  try {
+    const f = fixture([
+      { bucket_id: "report-exports", name: "expired/report/export.pdf" },
+      { bucket_id: "report-images", name: "expired/report/photo.jpg" },
+    ]);
+    f.remove.mockImplementation(async () => {
+      now = 36_000;
+      return { error: null };
+    });
+    expect(await purgeExpiredWorkspaces(f.client)).toEqual({
+      purged: 0,
+      filesRemoved: 1,
+      failed: 0,
+      deferred: 1,
+    });
+    expect(f.remove).toHaveBeenCalledTimes(1);
+    expect(
+      f.rpc.mock.calls.some(([name]) => name === "finish_workspace_purge"),
+    ).toBe(false);
+  } finally {
+    clock.mockRestore();
+  }
 });

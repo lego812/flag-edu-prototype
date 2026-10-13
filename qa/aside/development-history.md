@@ -181,3 +181,16 @@
 `UI-20261013-remove-navigation-badge` (R01, 1-f): 사용자는 클릭 후 우측 상단에 뜨는 이동 중 문구와 스피너 제거를 요청했다. 링크/조회 transition portal의 우측 배지를 화면에 표시하지 않는 sr-only 상태 안내로 바꾸고 미사용 배지 CSS를 제거했다. 클릭한 링크/제출 버튼 처리 표시, 상단 진행 막대와 route skeleton은 유지한다. 기존 navigation 테스트에 화면 문구 부재와 접근성 상태 유지 기대를 반영했다.
 
 검증: 관련 3파일 3/3 PASS, lint·TypeScript PASS. 기준/manual/coverage v31 갱신, 기존 시나리오 수160개 유지. 구현 commit/PR 및 운영 결과는 Git 이력과 외부 artifact로 추적한다.
+
+
+## 2026-10-13 계정·보고서·참여 상태·운영 보완
+
+`APP-20261013-operational-safeguards` (R01/R02/R04/R09/R10): 사용자는 권장 보완을 승인하고 Google 신규 가입이 정상이라고 확인했다. 미저장 보고서의 메뉴·앱 뒤로가기·workspace 전환 확인, 무소속 계정 관리, 공통 버튼, private 오류 로그와 작업 실패 분리/요청 timeout/재시도 정렬을 구현했다. 내보내기는 removed(숨김), 비활성은 inactive(관리자 표시·재활성화)로 확정했다. 사용자 선택에 따라 기존 inactive는 removed로 이전한다. 일반 권한 요청으로 removed 복원 불가, inactive 초대 수락 우회 차단, 비활성 내보내기를 추가하고 마지막 관리자/본인 정지 보호와 계정·보고서 이력을 보존한다. enum·상태·로그 migration은 CLI help/new로 별도 생성했다.
+
+검증 과정: 기존 제거 regression의 관리자 directory 2명 기대를 새 removed 숨김에 맞춰 1명으로 수정했다. account route 이동 후 남은 Next 생성 타입을 정리하고 typegen/build로 재생성했다. 테스트의 save payload 표시와 transition 종료 타이밍 차이를 발견해 guard 등록/성공 dirty 해제를 layout effect로 paint 전에 맞추고 pending 종료까지 확인했다. 단순 테스트 대기만으로 실제 guard 상태를 우회하지 않았다. 초기 전체 78파일392/392, 이후 메뉴/legacy 이전 추가 전체394/394와 lint/TypeScript 포함 Webpack build PASS. 제한시간 내 파일 batch가 남으면 DB 정리를 실행하지 않고 deferred로 보고하는 회귀를 추가해 관련5/5를 확인했다. 최종 전체 결과는 후속 기록으로 남긴다.
+
+실제 Chromium: 최초 loopback proxy 경로로 로컬 화면 접근이 실패하여 로컬 요청만 직접 연결하고 서버의 외부 요청은 기존 proxy/CA로 처리했다. 무소속 tagged QA의 계정/로그아웃 취소/버튼 PASS. 실제 QA 보고서가 모두 취소 상태라 데이터를 수정하지 않고 실제 ReportEditor와 Next Link를 연결한 disposable local preview로 메뉴 취소·앱 뒤로가기 Escape·전환 취소·확정 이동 PASS를 확인했다. preview route와 생성 타입은 제거 후 production build PASS, 생성한 본인 QA 세션만 scope=local로 종료했다. 이미지 로드/브라우저 자체 back·모바일 swipe/Google auth E2E로 확대 해석하지 않는다. 사용자 Google 정상 확인은 별도 증거다.
+
+기준/manual/workflow/coverage v32 갱신, 기존160개 시나리오 유지. 운영 사전 조회에서 이전할 inactive WM1개, 만료 workspace0개를 확인했다. 적용·rollback/HTTP/운영 배포는 외부 artifact로 추적하며 운영 실제 워크스페이스/파일을 삭제해 시험하지 않는다. 운영 작업 정보 조회 방법과 실패 분리/복원 정책은 docs/account-workspace-safeguards-rollout.md에 기록했다.
+
+최종 전체 검증: 78파일395/395 PASS, lint·TypeScript 포함 Webpack production build PASS. 로컬 preview 제거·본인 QA session 종료 완료. 운영 DB 적용/반영 결과는 외부 artifact로 기록한다.

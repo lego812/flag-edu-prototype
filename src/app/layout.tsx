@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Geist } from "next/font/google";
 import { PwaRegistration } from "@/components/pwa-registration";
 import "./globals.css";
+import { NavigationGuardProvider } from "@/components/navigation-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        {children}
+        <NavigationGuardProvider>{children}</NavigationGuardProvider>
         <PwaRegistration />
       </body>
     </html>

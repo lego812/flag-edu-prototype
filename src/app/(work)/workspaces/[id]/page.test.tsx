@@ -120,7 +120,7 @@ it.each(["admin", "coach"])(
           user_id: member,
           name: "참여 해제된 회원",
           role: "coach",
-          status: "inactive",
+          status: "removed",
         },
         {
           user_id: "10000000-0000-4000-8000-000000000003",
@@ -137,7 +137,9 @@ it.each(["admin", "coach"])(
     expect(
       screen.queryByRole("button", { name: "참여 해제된 회원 내보내기" }),
     ).not.toBeInTheDocument();
-    expect(screen.queryAllByText("권한 편집")).toHaveLength(role === "admin" ? 1 : 0);
+    expect(screen.queryAllByText("권한 편집")).toHaveLength(
+      role === "admin" ? 1 : 0,
+    );
     expect(screen.getByText("본인")).toBeInTheDocument();
     expect(screen.getByText("대기 회원")).toBeInTheDocument();
   },
@@ -167,4 +169,27 @@ it("selected administrator sees invitations inside participants rather than a se
     screen.queryByRole("link", { name: "참여자 초대·보낸 초대 확인" }),
   ).not.toBeInTheDocument();
   expect(panel.querySelector('input[name="workspaceId"]')).toHaveValue(id);
+});
+
+it("lets administrators see and reactivate suspended participants while hiding removed memberships", async () => {
+  m.current.mockResolvedValue(current("admin"));
+  m.rpc.mockResolvedValue({
+    data: [
+      { user_id: self, name: "본인", role: "admin", status: "active" },
+      {
+        user_id: member,
+        name: "일시 비활성 회원",
+        role: "coach",
+        status: "inactive",
+      },
+    ],
+    error: null,
+  });
+  render(await WorkspaceDetailPage({ params: Promise.resolve({ id }) }));
+  expect(screen.getByText("일시 비활성 회원")).toBeInTheDocument();
+  expect(screen.getByText("코치 · 비활성")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "일시 비활성 회원 내보내기" }),
+  ).toBeInTheDocument();
+  expect(screen.getAllByText("권한 편집")).toHaveLength(2);
 });

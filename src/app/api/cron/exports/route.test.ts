@@ -30,6 +30,7 @@ describe("expired export cron route", () => {
       purged: 0,
       filesRemoved: 0,
       failed: 0,
+      deferred: 0,
     });
   });
 
@@ -51,7 +52,9 @@ describe("expired export cron route", () => {
     await expect(response.json()).resolves.toEqual({
       removed: 2,
       completed: 3,
-      retention: { purged: 0, filesRemoved: 0, failed: 0 },
+      retention: { purged: 0, filesRemoved: 0, failed: 0, deferred: 0 },
+      runId: expect.any(String),
+      taskFailures: 0,
     });
     expect(mocks.cleanup).toHaveBeenCalledWith({ rpc: mocks.rpc });
     expect(mocks.rpc).toHaveBeenCalledWith("sync_completed_class_sessions", {
@@ -79,6 +82,7 @@ describe("expired export cron route", () => {
       purged: 0,
       filesRemoved: 0,
       failed: 1,
+      deferred: 0,
     });
     const response = await GET(
       new Request("http://localhost/api/cron/exports", {
@@ -86,5 +90,24 @@ describe("expired export cron route", () => {
       }),
     );
     expect(response.status).toBe(500);
+  });
+  it("runs retention and persists failure metadata even when export cleanup fails", async () => {
+    mocks.cleanup.mockRejectedValue(new Error("storage unavailable"));
+    mocks.rpc.mockImplementation(async (name: string) =>
+      name === "record_maintenance_failure"
+        ? { error: null }
+        : { data: 3, error: null },
+    );
+    const response = await GET(
+      new Request("http://localhost/api/cron/exports", {
+        headers: { authorization: "Bearer test-cron-secret" },
+      }),
+    );
+    expect(response.status).toBe(500);
+    expect(mocks.retention).toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "record_maintenance_failure",
+      expect.objectContaining({ p_stage: "exports_cleanup" }),
+    );
   });
 });
