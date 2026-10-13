@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,7 +10,9 @@ export type WorkspaceSummary = {
   role: "admin" | "coach";
 };
 
-export async function requireAccount() {
+// React cache is scoped to a server render, never shared between requests/users.
+// Keep authorization at every entry point; actions/handlers must not trust a layout.
+export const requireAccount = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -51,9 +54,9 @@ export async function requireAccount() {
   }
 
   return { supabase, user, profile: profile! };
-}
+});
 
-export async function requireAccountWithWorkspaces() {
+export const requireAccountWithWorkspaces = cache(async () => {
   const { supabase, user, profile } = await requireAccount();
 
   const { data: memberships, error: membershipError } = await supabase
@@ -82,9 +85,9 @@ export async function requireAccountWithWorkspaces() {
 
   if (membershipError) redirect("/access-denied");
   return { supabase, user, profile, workspace, workspaces };
-}
+});
 
-export async function requireCurrentProfile() {
+export const requireCurrentProfile = cache(async () => {
   const { supabase, user, profile, workspace, workspaces } =
     await requireAccountWithWorkspaces();
   if (profile.status !== "active" || !workspace) redirect("/welcome");
@@ -100,4 +103,4 @@ export async function requireCurrentProfile() {
     workspace,
     workspaces,
   };
-}
+});

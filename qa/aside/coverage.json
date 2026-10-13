@@ -81,7 +81,8 @@
         "src/features/auth/consent-action.test.ts",
         "src/features/auth/consent-form.test.tsx",
         "src/features/auth/consent-db.test.ts",
-        "src/features/auth/current-user.test.ts"
+        "src/features/auth/current-user.test.ts",
+        "src/features/auth/current-user-cache.test.ts"
       ],
       "gaps": [
         "Google 운영 공급자 설정 후 실제 동의·취소·기존 계정 연결 및 앱 내 수락 브라우저 E2E"

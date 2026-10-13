@@ -670,3 +670,12 @@ TypeScript를 포함한 Webpack 운영 빌드 최종 종료 코드 0.
 - 변경: vercel.json의 regions를 icn1 단일 지역으로 지정한다. DB·인증·cron 주기는 유지한다. Next 16.3.8에서 deprecated인 preferredRegion export는 사용하지 않는다.
 - 검증: JSON 파싱 및 diff 검사 통과. 기능 코드 변경이 없어 새 단위 테스트는 추가하지 않는다. 원격 Vercel build와 운영 배포의 실행 지역·HTTP 검증 결과는 외부 artifact로 기록한다. 기존 2회 HTTP 측정은 모바일 이동 시간이나 p95로 간주하지 않는다.
 - 추적: perf/01-seoul-region 브랜치와 이 항목을 포함한 Git 이력. 사용자가 네 항목 각각 검증·main 병합 후 다음 브랜치 생성을 승인했다.
+
+
+### PERF-20261013-02 — 요청 안의 인증 중복 조회 축소
+
+- 원인: 레이아웃과 화면에서 공통 인증/동의/프로필/소속 함수를 각각 호출했다. 보고서 목록·작성자 필터·선택 수업 조회도 불필요하게 순차 실행했다.
+- 변경: 세 인증 함수를 React cache로 서버 렌더 범위에서 합치고, 인증 이후 보고서 독립 조회를 Promise.all로 실행한다. getUser·DB 권한 확인과 Proxy 검증은 유지한다. 전역 사용자 캐시나 요청 간 인증 TTL은 도입하지 않는다.
+- 검증: React 실제 server cache와 요청별 테스트 dispatcher로 동시 호출 1회·다음 요청 로그아웃/소속 제거 재확인·렌더 외 비영속성 4개 회귀 추가. 전체 79파일399/399, lint, TypeScript 포함 Webpack build PASS. 실제 브라우저 요청 계측과 테스트 dispatcher 모형은 구분한다.
+- 선행 결과: PR #21은 main 2f0a95e로 병합·운영 배포 성공. 5개 화면 각3회 HTTP 응답에서 icn1 경로 확인. 반복 요청 dashboard 831~1062ms, reports 734~773ms. 프록시를 거친 HTTP 표본으로 실기기 UX/p95를 의미하지 않는다.
+- 추적: perf/02-request-deduplication 및 Git 이력. 권한 기준은 유지하며 R02 자동화 매핑만 확장한다.
