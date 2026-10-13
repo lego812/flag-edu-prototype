@@ -194,3 +194,10 @@
 기준/manual/workflow/coverage v32 갱신, 기존160개 시나리오 유지. 운영 사전 조회에서 이전할 inactive WM1개, 만료 workspace0개를 확인했다. 적용·rollback/HTTP/운영 배포는 외부 artifact로 추적하며 운영 실제 워크스페이스/파일을 삭제해 시험하지 않는다. 운영 작업 정보 조회 방법과 실패 분리/복원 정책은 docs/account-workspace-safeguards-rollout.md에 기록했다.
 
 최종 전체 검증: 78파일395/395 PASS, lint·TypeScript 포함 Webpack production build PASS. 로컬 preview 제거·본인 QA session 종료 완료. 운영 DB 적용/반영 결과는 외부 artifact로 기록한다.
+
+### 2026-10-13 권한별 사용자 가이드
+
+- 사용자 요청 순서(개요·용어 → 공통 가입·로그인 → 코치 → 관리자)로 README를 재구성하고 기존 개발·운영 설명은 `docs/development.md`로 이동했다.
+- 운영 `f4faf04d3bbf65a1e900d7534a573d311e060eae`의 전용 QA 계정 화면 29장을 문서용으로 익명화했다. 실제 Google 인증, 가입 동의 제출, 보고서 저장·초대·권한 변경·삭제는 캡처 범위에 포함하지 않았다.
+- 같은 원문을 A4 PDF 23쪽으로 내보내는 생성기를 추가했다. 한글 폰트·이미지 포함, 클릭 가능한 목차와 페이지 번호를 제공한다.
+- 문서 이미지 무결성·상대경로·목차 검사 2개와 lint를 확인했다. PDF의 23쪽·29개 이미지·4개 내부 목차 링크, 한글 추출·페이지 넘침을 별도로 검수했다. 앱 기능 회귀 395개는 직전 PR #19의 결과이며 이번 문서 변경에서 재실행한 것으로 간주하지 않는다.
