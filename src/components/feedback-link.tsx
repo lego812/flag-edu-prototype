@@ -6,7 +6,6 @@ import type { ComponentProps } from "react";
 import { useRef, useState } from "react";
 import { useNavigationGuard } from "./navigation-guard";
 import { canPrefetchList } from "./navigation-prefetch";
-import { LoadingSpinner } from "./loading-indicator";
 
 function LinkFeedback() {
   const { pending } = useLinkStatus();
@@ -16,10 +15,8 @@ function LinkFeedback() {
       <span
         data-link-pending="true"
         aria-hidden="true"
-        className="link-pending"
-      >
-        <LoadingSpinner />
-      </span>
+        hidden
+      />
       {createPortal(
         <div
           role="status"

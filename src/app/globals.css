@@ -96,17 +96,6 @@ a[href]:active {
   box-shadow: inset 0 0 0 2px #a3a3a3;
   pointer-events: none;
 }
-.link-pending {
-  position: absolute;
-  top: 0.3rem;
-  right: 0.3rem;
-  display: flex;
-  padding: 0.25rem;
-  border-radius: 9999px;
-  background: white;
-  color: #191919;
-  box-shadow: 0 1px 4px #0002;
-}
 .loading-spinner {
   display: inline-block;
   width: 1rem;
