@@ -17,6 +17,8 @@ it("shows and clears navigation feedback while retaining link names and attribut
   ui.rerender(<FeedbackLink href="/classes?view=list" className="btn">수업 일정</FeedbackLink>);
   expect(screen.getByRole("link", { name: "수업 일정" })).toBeInTheDocument();
   expect(screen.getByRole("status", { name: "페이지 이동 중" })).toBeInTheDocument();
+  expect(screen.getByText("페이지 이동 중")).toHaveClass("sr-only");
+  expect(screen.queryByText("이동 중…")).not.toBeInTheDocument();
   state.pending = false;
   ui.rerender(<FeedbackLink href="/classes?view=list">수업 일정</FeedbackLink>);
   expect(screen.queryByRole("status")).not.toBeInTheDocument();

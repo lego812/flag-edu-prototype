@@ -14,7 +14,7 @@ function LinkFeedback() {
       {createPortal(
         <div role="status" aria-label="페이지 이동 중" className="navigation-feedback">
           <span aria-hidden="true" className="navigation-progress" />
-          <span className="navigation-message"><LoadingSpinner />이동 중…</span>
+          <span className="sr-only">페이지 이동 중</span>
         </div>,
         document.body,
       )}
