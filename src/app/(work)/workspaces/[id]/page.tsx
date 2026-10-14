@@ -51,6 +51,17 @@ export default async function WorkspaceDetailPage({
           name={target.name}
         />
       )}
+      {target.role === "admin" && (
+        <section className="surface space-y-3 p-6">
+          <h2 className="font-bold">보고서 양식</h2>
+          <p className="text-sm text-neutral-600">이 워크스페이스의 보고서 작성 항목과 필수 여부, 사진 수를 설정합니다.</p>
+          {target.id === workspace.id ? (
+            <Link href={`/workspaces/${id}/templates`} className="btn">보고서 양식 관리</Link>
+          ) : (
+            <p className="text-sm text-neutral-600">상단에서 이 워크스페이스로 전환하면 양식을 만들고 설정할 수 있습니다.</p>
+          )}
+        </section>
+      )}
       <section id="participants" className="surface p-6">
         <div className="mb-4 flex items-center gap-1">
           <h2 className="font-bold">참여자·권한</h2>

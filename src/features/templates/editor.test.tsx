@@ -6,7 +6,7 @@ vi.mock("./actions", () => ({ saveTemplateAction: vi.fn() }));
 
 describe("template select option editor", () => {
   it("adds and removes options as distinct UI rows", () => {
-    render(<TemplateEditor />);
+    render(<TemplateEditor workspaceId="20000000-0000-4000-8000-000000000001" />);
     fireEvent.click(screen.getByRole("button", { name: "항목 추가" }));
     fireEvent.change(screen.getByLabelText("입력 유형"), {
       target: { value: "multi_select" },

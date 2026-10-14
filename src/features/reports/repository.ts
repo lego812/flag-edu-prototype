@@ -14,12 +14,13 @@ function sortReportAttachments(report: Report) {
   report.report_attachments.sort(compareAttachmentsByUpload);
   return report;
 }
-export async function getTemplate(client: SupabaseClient, id: string) {
-  const { data, error } = await client
+export async function getTemplate(client: SupabaseClient, id: string, workspaceId?: string) {
+  let query = client
     .from("template_versions")
     .select("*,template_fields(*,field_options(*))")
-    .eq("id", id)
-    .single<Template>();
+    .eq("id", id);
+  if (workspaceId) query = query.eq("organization_id", workspaceId).is("hidden_at", null);
+  const { data, error } = await query.single<Template>();
   if (error || !data) throw new Error("템플릿을 불러오지 못했습니다.");
   data.template_fields.sort((a, b) => a.sort_order - b.sort_order);
   data.template_fields.forEach((f) =>

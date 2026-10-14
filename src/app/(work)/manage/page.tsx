@@ -32,9 +32,9 @@ export default async function ManagePage() {
           description: "현재 워크스페이스의 보고서를 조회합니다.",
         },
         {
-          href: "/templates",
+          href: `/workspaces/${workspace.id}/templates`,
           title: "보고서 양식",
-          description: "작성 항목과 양식을 관리합니다.",
+          description: "현재 워크스페이스의 양식을 만들고 게시합니다.",
         },
         {
           href: "/exports",
