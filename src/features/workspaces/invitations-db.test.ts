@@ -1280,3 +1280,52 @@ it("preserves existing hidden memberships as removed during rollout without dele
     { status: "removed", id: "10000000-0000-4000-8000-000000000007" },
   ]);
 });
+
+it("scopes template publishing/deletion to the selected workspace and preserves report history", async () => {
+  const owner = "10000000-0000-4000-8000-000000000081";
+  const a = "20000000-0000-4000-8000-000000000081";
+  const b = "20000000-0000-4000-8000-000000000082";
+  const course = "30000000-0000-4000-8000-000000000081";
+  const session = "40000000-0000-4000-8000-000000000081";
+  await db.exec(`reset role;
+    insert into auth.users(id,email,email_confirmed_at) values('${owner}','template-admin@fixture.test',now());
+    insert into private.signup_existing_accounts(user_id) values('${owner}');
+    insert into public.organizations(id,name) values('${a}','Template A'),('${b}','Template B');
+    insert into public.profiles(id,organization_id,name,role,status) values('${owner}','${a}','Template Admin','admin','active');
+    insert into public.workspace_memberships(user_id,organization_id,role,status) values('${owner}','${a}','admin','active'),('${owner}','${b}','admin','active');`);
+  await user(owner);
+  const fields = [{ label: "내용", field_type: "long_text", required: true, options: [] }];
+  async function save(workspace: string, id: string | null = null, version: string | null = null) {
+    return (await db.query<{ id: string }>(
+      "select public.save_workspace_template($1,$2,$3,$4,true,'수업 보고서') id",
+      [workspace, id, version, fields],
+    )).rows[0].id;
+  }
+  const first = await save(a);
+  const firstVersion = (await db.query<{ version: string }>("select updated_at::text version from public.template_versions where id=$1", [first])).rows[0].version;
+  await db.exec(`reset role;
+    insert into public.courses(id,organization_id,title,location,created_by,updated_by) values('${course}','${a}','Class','Room','${owner}','${owner}');
+    insert into public.class_sessions(id,organization_id,course_id,title,location,start_at,end_at,created_by,updated_by) values('${session}','${a}','${course}','Class','Room','2050-01-01 00:00:00Z','2050-01-01 01:00:00Z','${owner}','${owner}');
+    insert into public.reports(organization_id,class_session_id,author_id,template_version_id) values('${a}','${session}','${owner}','${first}');`);
+  await user(owner);
+  await db.query("select public.switch_workspace($1)", [b]);
+  const second = await save(b);
+  await expect(save(a)).rejects.toThrow(/administrator/);
+  await expect(save(b, first, firstVersion)).rejects.toThrow(/not found/);
+  await expect(db.query("select public.deactivate_workspace_template($1,$2)", [a, first])).rejects.toThrow(/administrator/);
+  await expect(db.query("select public.deactivate_workspace_template($1,$2)", [b, first])).rejects.toThrow(/not found/);
+  expect((await db.query("select id from public.template_versions")).rows).toEqual([{ id: second }]);
+  await db.query("select public.switch_workspace($1)", [a]);
+  const replacement = await save(a, first, firstVersion);
+  expect(replacement).not.toBe(first);
+  expect((await db.query("select template_version_id from public.reports where class_session_id=$1", [session])).rows).toEqual([{ template_version_id: first }]);
+  await db.query("select public.deactivate_workspace_template($1,$2)", [a, replacement]);
+  expect((await db.query("select id from public.template_versions where status='active'")).rows).toHaveLength(0);
+  expect((await db.query("select template_version_id from public.reports where class_session_id=$1", [session])).rows).toEqual([{ template_version_id: first }]);
+  await db.query("select public.switch_workspace($1)", [b]);
+  expect((await db.query("select id from public.template_versions where status='active'")).rows).toEqual([{ id: second }]);
+  await db.exec(`reset role;update public.workspace_memberships set role='coach' where user_id='${owner}' and organization_id='${b}';`);
+  await user(owner);
+  await expect(save(b)).rejects.toThrow(/administrator/);
+  await expect(db.query("select public.deactivate_workspace_template($1,$2)", [b, second])).rejects.toThrow(/administrator/);
+});

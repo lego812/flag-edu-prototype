@@ -4,7 +4,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { useActionState, useState } from "react";
 import { deactivateTemplateAction } from "./actions";
 
-export function TemplateDeleteButton({ id, name }: { id: string; name: string }) {
+export function TemplateDeleteButton({ id, name, workspaceId }: { id: string; name: string; workspaceId: string }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(
     deactivateTemplateAction.bind(null, id),
@@ -19,6 +19,7 @@ export function TemplateDeleteButton({ id, name }: { id: string; name: string })
             <h2 id={`delete-template-${id}`} className="text-xl font-bold">보고서 양식을 삭제할까요?</h2>
             <p className="mt-2 text-sm text-neutral-600">‘{name}’은 목록에서 숨겨지고 새 보고서에 사용되지 않습니다. 기존 보고서는 그대로 유지됩니다.</p>
             <form action={action} className="mt-6 space-y-3">
+              <input type="hidden" name="workspaceId" value={workspaceId} />
               <input type="hidden" name="confirm" value="yes" />
               <div className="flex justify-end gap-2">
                 <button type="button" className="btn-secondary" disabled={pending} onClick={() => setOpen(false)}>취소</button>

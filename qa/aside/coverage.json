@@ -1,5 +1,5 @@
 {
-  "version": 36,
+  "version": 37,
   "requirements": [
     {
       "id": "R01",
@@ -251,7 +251,10 @@
       ],
       "automated": [
         "src/features/templates/editor.test.tsx",
-        "src/features/reports/workflows.test.ts"
+        "src/features/reports/workflows.test.ts",
+        "src/features/templates/actions.test.ts",
+        "src/features/templates/workspace.test.ts",
+        "src/features/workspaces/invitations-db.test.ts"
       ],
       "gaps": []
     },

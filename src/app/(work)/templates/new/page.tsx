@@ -1,13 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireCurrentProfile } from "@/features/auth/current-user";
-import { TemplateEditor } from "@/features/templates/editor";
-export default async function NewTemplatePage() {
+export default async function LegacyTemplatePage() {
   const { profile } = await requireCurrentProfile();
   if (profile.role !== "admin") redirect("/dashboard");
-  return (
-    <>
-      <h1 className="text-2xl font-bold">새 템플릿</h1>
-      <TemplateEditor />
-    </>
-  );
+  redirect(`/workspaces/${profile.organization_id}/templates/new`);
 }

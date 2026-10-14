@@ -27,7 +27,7 @@ const blank = (): Editable => ({
   max_files: 3,
   options: [],
 });
-export function TemplateEditor({ template }: { template?: Template }) {
+export function TemplateEditor({ template, workspaceId }: { template?: Template; workspaceId: string }) {
   const [fields, setFields] = useState<Editable[]>(
     () =>
       template?.template_fields.map((f) => ({
@@ -62,6 +62,7 @@ export function TemplateEditor({ template }: { template?: Template }) {
   }));
   return (
     <form action={action} className="max-w-2xl space-y-6">
+      <input type="hidden" name="workspaceId" value={workspaceId} />
       <input
         type="hidden"
         name="id"
@@ -266,14 +267,14 @@ export function TemplateEditor({ template }: { template?: Template }) {
         )}
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="confirm" value="yes" />
-          게시하면 새 보고서에 이 양식을 사용합니다.
+          게시하면 이 워크스페이스의 새 보고서에 이 양식을 사용합니다.
         </label>
         <div className="flex gap-3">
           <SubmitButton pendingLabel="저장 중…" className="btn-secondary" name="intent" value="save">
             임시 저장
           </SubmitButton>
           <SubmitButton pendingLabel="저장 중…" className="btn" name="intent" value="publish">
-            수정 완료
+            게시하고 사용
           </SubmitButton>
         </div>
       </fieldset>

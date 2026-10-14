@@ -8,7 +8,7 @@ import ManagePage from "./page";
 it("keeps account and workspace access for coaches without administrator report controls", async () => {
   m.current.mockResolvedValue({
     profile: { role: "coach" },
-    workspace: { name: "테스트" },
+    workspace: { id: "workspace-id", name: "테스트" },
   });
   render(await ManagePage());
   expect(screen.getByRole("link", { name: /계정 관리/ })).toHaveAttribute(
@@ -24,7 +24,7 @@ it("keeps account and workspace access for coaches without administrator report 
 it("preserves administrator report management links", async () => {
   m.current.mockResolvedValue({
     profile: { role: "admin" },
-    workspace: { name: "테스트" },
+    workspace: { id: "workspace-id", name: "테스트" },
   });
   render(await ManagePage());
   expect(screen.getByRole("link", { name: /계정 관리/ })).toHaveAttribute(
@@ -37,7 +37,7 @@ it("preserves administrator report management links", async () => {
   );
   expect(screen.getByRole("link", { name: /보고서 양식/ })).toHaveAttribute(
     "href",
-    "/templates",
+    "/workspaces/workspace-id/templates",
   );
   expect(screen.getByRole("link", { name: /보고서 다운로드/ })).toHaveAttribute(
     "href",
