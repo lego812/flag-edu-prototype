@@ -46,6 +46,18 @@ export default async function ManagePage() {
       ],
     },
   ];
+  groups.push({
+    title: "고객지원",
+    items: [
+      {
+        href: "/manage/support",
+        title: "고객센터",
+        description: isMaster
+          ? "전체 회원의 문의글을 조회합니다."
+          : "내가 쓴 문의글을 확인하고 등록·편집합니다.",
+      },
+    ],
+  });
   if (isMaster)
     groups.push({
       title: "서비스 관리 · master",

@@ -47,6 +47,10 @@ it("keeps account information, logout and privacy contact available without any 
     workspaces: [],
   });
   render(await AccountPage());
+  expect(screen.getByRole("link", { name: "고객센터" })).toHaveAttribute(
+    "href",
+    "/manage/support",
+  );
   expect(screen.getByText("own@example.test")).toBeInTheDocument();
   expect(
     screen.getByText("참여 중인 워크스페이스가 없습니다."),
@@ -69,6 +73,10 @@ it("offers service navigation to a master with no workspace", async () => {
     workspaces: [],
   });
   render(await AccountPage());
+  expect(screen.getByRole("link", { name: "고객센터" })).toHaveAttribute(
+    "href",
+    "/manage/support",
+  );
   expect(screen.getByRole("link", { name: "사용자 관리" })).toHaveAttribute(
     "href",
     "/manage/users",

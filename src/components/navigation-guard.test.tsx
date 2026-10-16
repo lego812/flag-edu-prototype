@@ -9,6 +9,8 @@ import {
 import FeedbackLink from "./feedback-link";
 import { BackButton } from "./back-button";
 import { ReportEditor } from "@/features/reports/editor";
+import { InquiryForm } from "@/features/support/form";
+vi.mock("@/features/support/actions", () => ({ saveInquiryAction: vi.fn() }));
 import type { Report, Field } from "@/features/reports/model";
 const m = vi.hoisted(() => ({
   push: vi.fn(),
@@ -211,4 +213,28 @@ it("guards menu links and the app back button with the same confirmation", () =>
   expect(m.back).not.toHaveBeenCalled();
   expect(m.push).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "계속 작성" }));
+});
+
+it("protects unsaved support inquiries with inquiry-specific confirmation", () => {
+  const proceed = vi.fn();
+  render(
+    <NavigationGuardProvider>
+      <InquiryForm id="20000000-0000-4000-8000-000000000100" />
+      <Leave proceed={proceed} />
+    </NavigationGuardProvider>,
+  );
+  fireEvent.change(screen.getByLabelText(/내용/), {
+    target: { value: "작성 중인 문의" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "다른 화면" }));
+  expect(
+    screen.getByRole("dialog", { name: "문의글 이동 확인" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/저장하지 않은 문의글 내용/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "계속 작성" }));
+  expect(screen.getByLabelText(/내용/)).toHaveValue("작성 중인 문의");
+  expect(proceed).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "다른 화면" }));
+  fireEvent.click(screen.getByRole("button", { name: "저장하지 않고 이동" }));
+  expect(proceed).toHaveBeenCalledTimes(1);
 });
