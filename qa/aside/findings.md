@@ -793,3 +793,14 @@ QA-20261013-photo-reliability 정리: 운영 검사 fixture의 사진29개·보�
 - 문서: README 권한표/조회 경로와 QA 기준·시나리오·coverage v39 갱신. PDF23쪽·넘침0, 한글 텍스트에 새 안내 포함 확인. 스크린샷은 기존 캡처이며 새 조회 범위 버튼은 텍스트로 안내했다.
 - 운영 상태: 운영 DB 정책과 보안 advisor는 조회만 했다. 기존 INFO3·anon definer2·authenticated definer36·유출 비밀번호 보호1 경고가 있었으며 이번 변경을 적용한 결과가 아니다. 보안 경고 참고: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
 - 추적: feat/coach-workspace-report-reading 및 이 항목을 포함한 Git 이력/PR. 이 단계에서는 main 병합·운영 DB 적용·운영 배포와 실기기/E2E 검증을 하지 않았다. 배포 순서는 마이그레이션 적용 → 앱 배포 → 실제 코치 조회 검증이다.
+
+### FEAT-20261016-master-readonly — master 전용 사용자·전체 워크스페이스 조회
+
+- 원인/기준: 서비스 전체 사용자와 미가입 공간 조회 수단이 없었다. 사용자는 지정 계정만 master로 설정하고 사용자 관리·전체 공간 접근을 모두 조회 전용으로 확정했다.
+- 변경: private singleton 테이블에 기존 검증 계정을 연결하고 매 요청의 auth.uid·현재 인증 이메일·가입 동의를 검증한다. 수정 가능한 사용자 metadata로 권한을 판정하지 않는다. 공개 RPC는 SECURITY INVOKER, private 조회 함수는 고정 search_path와 자체 master 검사를 사용한다. 사용자 데이터는 필요한 필드만 반환하고 목록은 20건, 검색은 100자로 제한한다. 사용자별 실제 동의·기존 면제·미완료를 구분한다.
+- 공간 접근: 별도 읽기 화면과 명시적 대상 ID 조회로 기존 선택 공간/멤버십/관리자·코치 권한을 변경하지 않는다. 수업·일정·참여자·양식 및 보고서 답변/사진을 조회한다. removed 참여자·삭제 공간을 제외한다. Storage SELECT만 추가하며 실제 보고서에 연결된 사진만 허용한다. 서명 URL은 기존 읽기 화면과 같은 600초 유효기간을 사용한다.
+- 회귀: 최신 전체 마이그레이션을 실행한 격리 PostgreSQL(PGlite)의 실제 authenticated/anon 역할로 지정 계정·metadata 위조·비인증·내부 테이블 접근 차단·이메일 변경/검증 해제·다른 ID로 권한 양도 불가를 확인했다. 무소속 master/프로필 미등록 사용자, 동의 상태·집계·검색·페이지 제한, 모든 조회 탭·답변·사진, 대상 공간 불일치, 삭제 공간·참여 종료 숨김, 초대/회원 변경/삭제/보고서/Storage 쓰기 거절을 검사했다. UI 진입점별 master 검사·메뉴 노출·무소속 진입·읽기 전용 표시도 확인했다.
+- 최종 결과: 전체90파일469개 PASS, lint PASS, TypeScript 포함 Webpack production build PASS. 첫 전체 실행에서 QA 번호가 기존 Android R11과 중복된 문서 검사1건이 실패하여 R12/12-a로 바로잡고 계획 케이스 수165로 갱신했다. 관련35개 및 최종 전체 검사를 재실행했다. 이 실패는 앱 권한/기능 실패가 아니었다.
+- 문서: README에 master 경로/범위를 추가하고 PDF24쪽·넘침0으로 갱신했다. 새 화면 캡처는 포함하지 않으며 기존 가이드 캡처와 구분한다.
+- 추적: feat/master-user-dashboard 및 이 항목을 포함한 Git 이력/PR. 운영 마이그레이션/권한 부여/main 병합/배포/실사용 master 인증 검증은 아직 실행하지 않았다. 배포 순서는 마이그레이션 적용 및 지정 계정 singleton 확인 → main 병합/배포 → 조회·거절 검증이다. 실제 운영자의 계정/세션을 변경하거나 대신 로그인해 검증하지 않았다.
+- 브라우저 확인: 로컬 production 빌드의 새 경로4개를 Chromium으로 열어 비로그인 시 로그인 이동/비공개 데이터 미표시를 확인했다. 초기 HTTP 상태307만 기대한 스크립트는 Next.js 스트리밍 redirect의200 응답 때문에 실패했고, 브라우저의 최종 URL/화면으로 재검증했다. 이를 운영 master 로그인 E2E 결과로 간주하지 않는다.

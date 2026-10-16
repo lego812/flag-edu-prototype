@@ -1,7 +1,9 @@
 import Link from "@/components/feedback-link";
 import { requireCurrentProfile } from "@/features/auth/current-user";
+import { masterAccount } from "@/features/master/access";
 export default async function ManagePage() {
   const { profile, workspace } = await requireCurrentProfile();
+  const { isMaster } = await masterAccount();
   const groups = [
     {
       title: "계정",
@@ -44,6 +46,22 @@ export default async function ManagePage() {
       ],
     },
   ];
+  if (isMaster)
+    groups.push({
+      title: "서비스 관리 · master",
+      items: [
+        {
+          href: "/manage/users",
+          title: "사용자 관리",
+          description: "전체 사용자의 가입 정보와 소속을 조회합니다.",
+        },
+        {
+          href: "/manage/all-workspaces",
+          title: "전체 워크스페이스",
+          description: "모든 워크스페이스의 수업·보고서·참여자를 조회합니다.",
+        },
+      ],
+    });
   return (
     <div className="space-y-8">
       <header>

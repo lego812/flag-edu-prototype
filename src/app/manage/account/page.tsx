@@ -1,3 +1,4 @@
+import { masterAccount } from "@/features/master/access";
 import { requireAccountWithWorkspaces } from "@/features/auth/current-user";
 import { LogoutButton } from "@/features/auth/logout-button";
 import { AppHeader } from "@/components/app-header";
@@ -19,6 +20,7 @@ export default async function AccountPage() {
     ]
       .filter(Boolean)
       .join(", ") || "확인할 수 없음";
+  const { isMaster } = await masterAccount();
   return (
     <>
       {workspace && profile.status === "active" ? (
@@ -38,6 +40,20 @@ export default async function AccountPage() {
       )}
       <main className="mx-auto w-full max-w-5xl space-y-8 px-5 py-8">
         <h1 className="text-3xl font-bold">계정 관리</h1>
+        {isMaster && (
+          <section className="surface space-y-3 p-6">
+            <h2 className="font-bold">서비스 관리 · master</h2>
+            <div className="flex flex-wrap gap-5 text-sm">
+              <Link href="/manage/users" className="underline">
+                사용자 관리
+              </Link>
+              <Link href="/manage/all-workspaces" className="underline">
+                전체 워크스페이스 조회
+              </Link>
+            </div>
+          </section>
+        )}
+
         <section className="surface p-6">
           <h2 className="mb-5 text-lg font-bold">계정 정보</h2>
           <dl className="grid gap-4 text-sm">
