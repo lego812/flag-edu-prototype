@@ -14,6 +14,10 @@ it("keeps account and workspace access for coaches without administrator report 
     workspace: { id: "workspace-id", name: "테스트" },
   });
   render(await ManagePage());
+  expect(screen.getByRole("link", { name: /고객센터/ })).toHaveAttribute(
+    "href",
+    "/manage/support",
+  );
   expect(screen.getByRole("link", { name: /계정 관리/ })).toHaveAttribute(
     "href",
     "/manage/account",
@@ -36,6 +40,10 @@ it("preserves administrator report management links", async () => {
     workspace: { id: "workspace-id", name: "테스트" },
   });
   render(await ManagePage());
+  expect(screen.getByRole("link", { name: /고객센터/ })).toHaveAttribute(
+    "href",
+    "/manage/support",
+  );
   expect(screen.getByRole("link", { name: /계정 관리/ })).toHaveAttribute(
     "href",
     "/manage/account",
@@ -61,6 +69,10 @@ it("adds read-only service links only for a master without promoting the workspa
     workspace: { id: "workspace-id", name: "테스트" },
   });
   render(await ManagePage());
+  expect(screen.getByRole("link", { name: /고객센터/ })).toHaveAttribute(
+    "href",
+    "/manage/support",
+  );
   expect(screen.getByRole("link", { name: /사용자 관리/ })).toHaveAttribute(
     "href",
     "/manage/users",

@@ -99,6 +99,9 @@ export default async function AccountPage() {
         </section>
         <section className="surface p-6">
           <h2 className="mb-3 font-bold">계정 문의</h2>
+          <Link href="/manage/support" className="mb-4 inline-block underline">
+            고객센터
+          </Link>
           <p className="text-sm leading-6">
             회원 탈퇴와 개인정보 관련 요청은{" "}
             <a href={`mailto:${PRIVACY_CONTACT}`} className="underline">

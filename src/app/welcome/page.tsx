@@ -83,7 +83,7 @@ export default async function WelcomePage() {
           error={!!invitationError}
         />
       </section>
-      <div className="flex items-center gap-5">
+      <div className="flex flex-wrap items-center gap-5">
         <Link href="/manage/account" className="text-sm underline">
           계정 관리
         </Link>
@@ -92,6 +92,9 @@ export default async function WelcomePage() {
             홈으로
           </Link>
         )}
+        <Link href="/manage/support" className="text-sm underline">
+          고객센터
+        </Link>
         <LogoutButton />
       </div>
     </main>

@@ -12,7 +12,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-type GuardState = { dirty: boolean; busy: boolean };
+type GuardState = {
+  dirty: boolean;
+  busy: boolean;
+  label?: "보고서" | "문의글";
+};
 type Guard = () => GuardState;
 const NavigationGuard = createContext<{
   register: (guard: Guard) => () => void;
@@ -35,6 +39,7 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const [busy, setBusy] = useState(false);
+  const [label, setLabel] = useState("보고서");
   const register = useCallback((guard: Guard) => {
     guards.current.add(guard);
     return () => {
@@ -50,6 +55,9 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
         ? document.activeElement
         : null;
     setBusy(states.some((state) => state.busy));
+    setLabel(
+      states.find((state) => state.dirty || state.busy)?.label ?? "보고서",
+    );
     if (!dialog.current?.open) dialog.current?.showModal();
     return false;
   }, []);
@@ -69,7 +77,7 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
       {children}
       <dialog
         ref={dialog}
-        aria-label="보고서 이동 확인"
+        aria-label={`${label} 이동 확인`}
         className="m-auto w-[calc(100%_-_2.5rem)] max-w-md rounded-xl bg-white p-6 backdrop:bg-black/40"
         onClose={() => {
           continuation.current = null;
@@ -84,8 +92,8 @@ export function NavigationGuardProvider({ children }: { children: ReactNode }) {
         </h2>
         <p className="mt-4 text-sm leading-7 text-neutral-600">
           {busy
-            ? "사진 또는 보고서 저장이 끝난 뒤 다시 이동해 주세요."
-            : "이동하면 아직 저장하지 않은 보고서 내용이 사라집니다. 이동하시겠습니까?"}
+            ? `${label === "보고서" ? "사진 또는 보고서" : label} 저장이 끝난 뒤 다시 이동해 주세요.`
+            : `이동하면 아직 저장하지 않은 ${label} 내용이 사라집니다. 이동하시겠습니까?`}
         </p>
         <div className="mt-6 flex justify-end gap-3">
           <button

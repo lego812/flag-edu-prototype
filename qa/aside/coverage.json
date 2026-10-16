@@ -1,5 +1,5 @@
 {
-  "version": 40,
+  "version": 41,
   "requirements": [
     {
       "id": "R01",
@@ -408,6 +408,29 @@
       ],
       "gaps": [
         "운영 마이그레이션 적용 후 실제 master 로그인·모바일 화면 검증"
+      ]
+    },
+    {
+      "id": "R13",
+      "name": "고객센터 문의",
+      "cases": [
+        "13-a-A",
+        "13-a-B",
+        "13-a-C",
+        "13-a-D",
+        "13-a-E"
+      ],
+      "automated": [
+        "src/features/support/support-db.test.ts",
+        "src/features/support/actions.test.ts",
+        "src/features/support/pages.test.tsx",
+        "src/features/support/repository.test.ts",
+        "src/features/support/form.test.tsx",
+        "src/components/navigation-guard.test.tsx",
+        "src/app/(work)/manage/page.test.tsx"
+      ],
+      "gaps": [
+        "운영 적용 후 고객센터 등록·편집 E2E 및 실기기 확인"
       ]
     }
   ],

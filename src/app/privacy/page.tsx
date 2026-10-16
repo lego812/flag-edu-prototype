@@ -75,6 +75,16 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section className="space-y-3">
+        <h2 className="text-lg font-bold">고객센터 문의</h2>
+        <p>
+          고객센터에 직접 등록한 문의 제목·내용·작성 및 수정 시각을 계정에
+          연결하여 문의 확인과 이용 지원을 위해 처리합니다. 작성자 본인과
+          운영자(master)만 조회하며, 운영자는 작성자의 이름과 이메일을 함께
+          확인합니다. 문의글은 워크스페이스와 별도로 계정에 보관하고, 회원
+          탈퇴에 따른 계정 삭제 시 함께 삭제합니다.
+        </p>
+      </section>
+      <section className="space-y-3">
         <h2 className="text-lg font-bold">3. 보관과 파기</h2>
         <p>
           워크스페이스의 업무 기록은 서비스 제공 기간 동안 보관합니다.
