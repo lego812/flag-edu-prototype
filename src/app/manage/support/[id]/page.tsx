@@ -1,4 +1,5 @@
 import Link from "@/components/feedback-link";
+import InquiryUnavailable from "@/features/support/unavailable";
 import { getInquiry } from "@/features/support/repository";
 import { inquiryTime } from "@/features/support/model";
 export default async function InquiryPage({
@@ -6,7 +7,9 @@ export default async function InquiryPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { inquiry, isMaster, user } = await getInquiry((await params).id);
+  const result = await getInquiry((await params).id);
+  if (!result) return <InquiryUnavailable />;
+  const { inquiry, isMaster, user } = result;
   return (
     <>
       <Link href="/manage/support" className="text-sm underline">

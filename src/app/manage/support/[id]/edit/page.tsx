@@ -1,5 +1,5 @@
 import Link from "@/components/feedback-link";
-import { notFound } from "next/navigation";
+import InquiryUnavailable from "@/features/support/unavailable";
 import { getInquiry } from "@/features/support/repository";
 import { InquiryForm } from "@/features/support/form";
 export default async function EditInquiryPage({
@@ -7,8 +7,10 @@ export default async function EditInquiryPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { inquiry, isMaster, user } = await getInquiry((await params).id);
-  if (isMaster || inquiry.author_id !== user.id) notFound();
+  const result = await getInquiry((await params).id);
+  if (!result) return <InquiryUnavailable />;
+  const { inquiry, isMaster, user } = result;
+  if (isMaster || inquiry.author_id !== user.id) return <InquiryUnavailable />;
   return (
     <>
       <Link

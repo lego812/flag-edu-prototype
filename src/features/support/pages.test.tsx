@@ -5,9 +5,6 @@ vi.mock("@/features/master/access", () => ({ masterAccount: m.account }));
 vi.mock("@/features/support/repository", () => ({ getInquiry: m.get }));
 vi.mock("@/features/support/actions", () => ({ saveInquiryAction: m.save }));
 vi.mock("next/navigation", () => ({
-  notFound: () => {
-    throw new Error("NOT_FOUND");
-  },
   useRouter: () => ({ replace: m.replace }),
   usePathname: () => "/manage/support",
 }));
@@ -61,11 +58,15 @@ it("shows all inquiries with authors for master and hides write controls", async
   expect(
     screen.queryByRole("link", { name: "문의 등록" }),
   ).not.toBeInTheDocument();
-  await expect(NewPage()).rejects.toThrow("NOT_FOUND");
+  cleanup();
+  render(await NewPage());
+  expect(screen.queryByRole("button", { name: "문의 등록" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "문의글을 찾을 수 없습니다" })).toBeInTheDocument();
   m.get.mockResolvedValue({ inquiry, isMaster: true, user: { id: "master" } });
-  await expect(EditPage({ params: Promise.resolve({ id }) })).rejects.toThrow(
-    "NOT_FOUND",
-  );
+  cleanup();
+  render(await EditPage({ params: Promise.resolve({ id }) }));
+  expect(screen.getByRole("heading", { name: "문의글을 찾을 수 없습니다" })).toBeInTheDocument();
+  expect(screen.queryByLabelText(/내용/)).not.toBeInTheDocument();
 });
 it("allows only the owner to enter the editor, with existing content and version", async () => {
   render(await EditPage({ params: Promise.resolve({ id }) }));
@@ -75,9 +76,10 @@ it("allows only the owner to enter the editor, with existing content and version
     inquiry.updated_at,
   );
   m.get.mockResolvedValue({ inquiry, isMaster: false, user: { id: "peer" } });
-  await expect(EditPage({ params: Promise.resolve({ id }) })).rejects.toThrow(
-    "NOT_FOUND",
-  );
+  cleanup();
+  render(await EditPage({ params: Promise.resolve({ id }) }));
+  expect(screen.getByRole("heading", { name: "문의글을 찾을 수 없습니다" })).toBeInTheDocument();
+  expect(screen.queryByLabelText(/내용/)).not.toBeInTheDocument();
 });
 it("renders plain text and never shows master edit controls", async () => {
   m.get.mockResolvedValue({
@@ -123,4 +125,16 @@ it("retains unsaved input and its original version across a server refresh", asy
   view.rerender(await EditPage({ params: Promise.resolve({ id }) }));
   expect(screen.getByLabelText(/내용/)).toHaveValue("내 미저장 내용");
   expect(document.querySelector("input[name=version]")).toHaveValue(inquiry.updated_at);
+});
+
+it("renders an unavailable view without content or an editor for masked inquiries", async () => {
+  m.get.mockResolvedValue(null);
+  for (const Page of [InquiryPage, EditPage]) {
+    render(await Page({ params: Promise.resolve({ id }) }));
+    expect(screen.getByRole("heading", { name: "문의글을 찾을 수 없습니다" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "고객센터 목록" })).toHaveAttribute("href", "/manage/support");
+    expect(screen.queryByText(inquiry.body)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/내용/)).not.toBeInTheDocument();
+    cleanup();
+  }
 });
