@@ -8,7 +8,29 @@ export const REPORT_SELECT =
   "*, class_sessions!inner(title,location,start_at,end_at,status,has_time), profiles!reports_author_id_fkey(name), report_answers(field_id,value), report_attachments(id,field_id,storage_path,original_filename,file_size,created_at)";
 
 export const REPORT_SUMMARY_SELECT =
-  "id,created_at,class_sessions!inner(title),profiles!reports_author_id_fkey(name)";
+  "id,author_id,created_at,class_sessions!inner(title),profiles!reports_author_id_fkey(name)";
+
+export async function listReportAuthors(client: SupabaseClient, ids?: string[]) {
+  const { data, error } = await client.rpc("list_report_authors", {
+    p_author_ids: ids ?? null,
+  });
+  // The RPC returns TABLE(id uuid, name text); this client has no generated schema.
+  return { data: data as { id: string; name: string }[] | null, error };
+}
+
+// A coach cannot select another member's private profile. Resolve only the
+// display names missing from the embedded join, in one bounded batch.
+async function resolveAuthorNames(
+  client: SupabaseClient,
+  reports: Pick<Report, "author_id" | "profiles">[],
+) {
+  const missing = reports.filter((report) => !report.profiles);
+  if (!missing.length) return;
+  const { data, error } = await listReportAuthors(client, [...new Set(missing.map(r => r.author_id))]);
+  if (error) throw new Error("보고서 작성자 조회 실패");
+  const names = new Map(data?.map(author => [author.id, author.name]));
+  for (const report of missing) report.profiles = { name: names.get(report.author_id) ?? "알 수 없는 작성자" };
+}
 
 function sortReportAttachments(report: Report) {
   report.report_attachments.sort(compareAttachmentsByUpload);
@@ -34,7 +56,10 @@ export async function getReport(client: SupabaseClient, id: string) {
     .select(REPORT_SELECT)
     .eq("id", id)
     .maybeSingle<Report>();
-  if (result.data) sortReportAttachments(result.data);
+  if (result.data) {
+    sortReportAttachments(result.data);
+    await resolveAuthorNames(client, [result.data]);
+  }
   return result;
 }
 export type ReportFilters = {
@@ -84,6 +109,7 @@ export async function listReports(
   const result = await reportListQuery(client, org, f, author, limit, REPORT_SELECT)
     .returns<Report[]>();
   result.data?.forEach(sortReportAttachments);
+  if (result.data) await resolveAuthorNames(client, result.data);
   return result;
 }
 
@@ -118,6 +144,8 @@ export async function listReportSummaries(
   author?: string,
 ) {
   await client.rpc("sync_completed_class_sessions", { p_organization_id: org });
-  return reportListQuery(client, org, f, author, 20, REPORT_SUMMARY_SELECT)
+  const result = await reportListQuery(client, org, f, author, 20, REPORT_SUMMARY_SELECT)
     .returns<ReportSummary[]>();
+  if (result.data) await resolveAuthorNames(client, result.data);
+  return result;
 }

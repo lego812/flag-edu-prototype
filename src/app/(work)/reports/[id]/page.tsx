@@ -38,7 +38,7 @@ export default async function ReportPage({
   return (
     <ReportMutationProvider version={report.updated_at}>
       <Link
-        href={profile.role === "admin" ? "/admin-reports" : "/reports"}
+        href={profile.role === "admin" ? "/admin-reports" : mine ? "/reports" : "/reports?scope=workspace"}
         className="mx-auto block w-full max-w-3xl text-sm text-neutral-600 underline underline-offset-4"
       >
         보고서 목록
@@ -64,6 +64,9 @@ export default async function ReportPage({
             name={report.profiles.name}
             createdAt={report.created_at}
           />
+          {!mine && profile.role !== "admin" && (
+            <p className="text-sm text-neutral-500">다른 사람이 작성한 보고서는 조회만 가능합니다.</p>
+          )}
           {report.class_sessions.status === "cancelled" && (
             <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
               취소된 수업입니다. 기존 기록은 유지되며 변경하거나 제출할 수 없습니다.

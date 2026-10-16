@@ -98,14 +98,12 @@ export default async function ClassDetailPage({
             </ActionButton>
           )}
         </div>
-        {profile.role === "admin" && (
-          <Link
-            className="mt-3 inline-block text-sm underline"
-            href={"/admin-reports?session=" + id}
-          >
-            이 수업의 전체 보고서
-          </Link>
-        )}
+        <Link
+          className="mt-3 inline-block text-sm underline"
+          href={(profile.role === "admin" ? "/admin-reports?session=" : "/reports?scope=workspace&session=") + id}
+        >
+          이 수업의 전체 보고서
+        </Link>
       </section>
     </div>
   );

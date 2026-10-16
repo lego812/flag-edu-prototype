@@ -1,5 +1,5 @@
 {
-  "version": 38,
+  "version": 39,
   "requirements": [
     {
       "id": "R01",
@@ -164,7 +164,9 @@
         "src/features/reports/editor.test.tsx",
         "src/features/reports/workflows.test.ts",
         "src/components/navigation-guard.test.tsx",
-        "src/features/reports/repository.test.ts"
+        "src/features/reports/repository.test.ts",
+        "src/features/reports/workspace-reading-db.test.ts",
+        "src/features/reports/actions.test.ts"
       ],
       "gaps": []
     },
@@ -229,7 +231,9 @@
         "src/app/(work)/reports/[id]/page.test.tsx",
         "src/features/members/repository.test.ts",
         "src/features/reports/workflows.test.ts",
-        "src/features/reports/repository.test.ts"
+        "src/features/reports/repository.test.ts",
+        "src/features/reports/workspace-reading-db.test.ts",
+        "src/features/reports/list.test.tsx"
       ],
       "gaps": [
         "검색 30건 초과·기간 경계·페이지 이동 E2E"
@@ -254,7 +258,8 @@
         "src/features/reports/workflows.test.ts",
         "src/features/templates/actions.test.ts",
         "src/features/templates/workspace.test.ts",
-        "src/features/workspaces/invitations-db.test.ts"
+        "src/features/workspaces/invitations-db.test.ts",
+        "src/features/reports/workspace-reading-db.test.ts"
       ],
       "gaps": []
     },
@@ -314,7 +319,9 @@
         "src/features/workspaces/inbox-actions.test.ts",
         "src/features/workspaces/participant-actions.test.ts",
         "src/app/(work)/workspaces/[id]/page.test.tsx",
-        "src/features/members/manage-action.test.ts"
+        "src/features/members/manage-action.test.ts",
+        "src/features/reports/workspace-reading-db.test.ts",
+        "src/features/reports/actions.test.ts"
       ],
       "gaps": []
     },
