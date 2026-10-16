@@ -1,14 +1,14 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, waitFor, act } from "@testing-library/react";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
-const m = vi.hoisted(() => ({ account: vi.fn(), rpc: vi.fn(), get: vi.fn() }));
+const m = vi.hoisted(() => ({ account: vi.fn(), rpc: vi.fn(), get: vi.fn(), save: vi.fn(), replace: vi.fn() }));
 vi.mock("@/features/master/access", () => ({ masterAccount: m.account }));
 vi.mock("@/features/support/repository", () => ({ getInquiry: m.get }));
-vi.mock("@/features/support/actions", () => ({ saveInquiryAction: vi.fn() }));
+vi.mock("@/features/support/actions", () => ({ saveInquiryAction: m.save }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("NOT_FOUND");
   },
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => ({ replace: m.replace }),
   usePathname: () => "/manage/support",
 }));
 import SupportPage from "@/app/manage/support/page";
@@ -102,4 +102,25 @@ it("separates empty results from a load failure", async () => {
   await expect(
     SupportPage({ searchParams: Promise.resolve({}) }),
   ).rejects.toThrow("문의글 목록을 불러오지 못했습니다");
+});
+
+it("keeps the pending save result when revalidation supplies the updated inquiry", async () => {
+  let finish!: (result: { savedId: string }) => void;
+  m.save.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  const view = render(await EditPage({ params: Promise.resolve({ id }) }));
+  fireEvent.change(screen.getByLabelText(/내용/), { target: { value: "수정한 내용" } });
+  fireEvent.click(screen.getByRole("button", { name: "수정 저장" }));
+  await waitFor(() => expect(m.save).toHaveBeenCalledTimes(1));
+  m.get.mockResolvedValue({ inquiry: { ...inquiry, body: "수정한 내용", updated_at: "2026-10-16T02:00:00Z" }, isMaster: false, user: { id: "own" } });
+  view.rerender(await EditPage({ params: Promise.resolve({ id }) }));
+  await act(async () => { finish({ savedId: id }); });
+  await waitFor(() => expect(m.replace).toHaveBeenCalledWith(`/manage/support/${id}`));
+});
+it("retains unsaved input and its original version across a server refresh", async () => {
+  const view = render(await EditPage({ params: Promise.resolve({ id }) }));
+  fireEvent.change(screen.getByLabelText(/내용/), { target: { value: "내 미저장 내용" } });
+  m.get.mockResolvedValue({ inquiry: { ...inquiry, body: "다른 탭 내용", updated_at: "2026-10-16T02:00:00Z" }, isMaster: false, user: { id: "own" } });
+  view.rerender(await EditPage({ params: Promise.resolve({ id }) }));
+  expect(screen.getByLabelText(/내용/)).toHaveValue("내 미저장 내용");
+  expect(document.querySelector("input[name=version]")).toHaveValue(inquiry.updated_at);
 });
