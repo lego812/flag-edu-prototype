@@ -1329,3 +1329,64 @@ it("scopes template publishing/deletion to the selected workspace and preserves 
   await expect(save(b)).rejects.toThrow(/administrator/);
   await expect(db.query("select public.deactivate_workspace_template($1,$2)", [b, second])).rejects.toThrow(/administrator/);
 });
+
+it("new workspaces have independent published defaults usable immediately and replaceable without losing reports", async () => {
+  const owner = "10000000-0000-4000-8000-000000000083";
+  await db.exec(`reset role;
+    insert into auth.users(id,email,email_confirmed_at) values('${owner}','default-template@fixture.test',now());
+    insert into auth.identities(user_id,provider) values('${owner}','google');
+    insert into private.signup_existing_accounts(user_id) values('${owner}');`);
+  await user(owner);
+  const a = (await db.query<{ id: string }>("select public.create_workspace('Default template A') id")).rows[0].id;
+  const first = (await db.query<{ id: string; status: string; name: string; published_at: string; updated_at: string }>(
+    "select id,status,name,published_at,updated_at::text from public.template_versions where organization_id=$1", [a],
+  )).rows;
+  expect(first).toHaveLength(1);
+  expect(first[0]).toMatchObject({ name: "기본 수업 보고서", status: "active" });
+  expect(first[0].published_at).toBeTruthy();
+  const fields = (await db.query<{ label: string; required: boolean; settings: unknown }>(
+    "select label,required,settings from public.template_fields where template_version_id=$1 order by sort_order", [first[0].id],
+  )).rows;
+  expect(fields.map(f => f.label)).toEqual(["참여 인원", "수업 내용", "특이사항", "다음 수업 계획", "활동 사진"]);
+  expect(fields.filter(f => f.required).map(f => f.label)).toEqual(["참여 인원", "수업 내용"]);
+  expect(fields[4].settings).toEqual({ max_files: 3 });
+  await expect(db.query("select private.install_default_report_template($1,$2)", [a, owner])).rejects.toThrow(/permission denied/);
+  await db.exec("reset role");
+  expect((await db.query<{ id: string | null }>("select private.install_default_report_template($1,$2) id", [a, owner])).rows[0].id).toBeNull();
+  const course = "30000000-0000-4000-8000-000000000083";
+  const session = "40000000-0000-4000-8000-000000000083";
+  await db.exec(`insert into public.courses(id,organization_id,title,location,created_by,updated_by) values('${course}','${a}','Class','Room','${owner}','${owner}');
+    insert into public.class_sessions(id,organization_id,course_id,title,location,start_at,end_at,created_by,updated_by) values('${session}','${a}','${course}','Class','Room','2050-01-01 00:00:00Z','2050-01-01 01:00:00Z','${owner}','${owner}');`);
+  await user(owner);
+  await db.query("select public.get_or_create_report($1)", [session]);
+  const b = (await db.query<{ id: string }>("select public.create_workspace('Default template B') id")).rows[0].id;
+  const second = (await db.query<{ id: string }>("select id from public.template_versions where organization_id=$1 and status='active'", [b])).rows[0].id;
+  expect(second).not.toBe(first[0].id);
+  await db.query("select public.switch_workspace($1)", [a]);
+  await db.query("select public.save_workspace_template($1,$2,$3,$4,true,'맞춤 보고서')", [
+    a, first[0].id, first[0].updated_at, [{ label: "맞춤 내용", field_type: "long_text", required: true, options: [] }],
+  ]);
+  expect((await db.query("select template_version_id from public.reports where class_session_id=$1", [session])).rows).toEqual([{ template_version_id: first[0].id }]);
+  await db.exec("reset role");
+  expect((await db.query<{ id: string | null }>("select private.install_default_report_template($1,$2) id", [a, owner])).rows[0].id).toBeNull();
+  expect((await db.query("select id from public.template_versions where organization_id=$1 and status='active'", [b])).rows).toEqual([{ id: second }]);
+  expect((await db.query("select name from public.template_versions where organization_id=$1 and status='active'", [a])).rows).toEqual([{ name: "맞춤 보고서" }]);
+});
+
+it("rolls back workspace, membership and selection if default template installation fails", async () => {
+  const owner = "10000000-0000-4000-8000-000000000083";
+  await db.exec("reset role");
+  const before = (await db.query("select organization_id from public.profiles where id=$1", [owner])).rows;
+  await db.exec(`create function public.qa_reject_default_template() returns trigger language plpgsql as $$begin raise exception 'Injected template failure'; end$$;
+    create trigger qa_reject_default before insert on public.template_versions for each row execute function public.qa_reject_default_template();`);
+  try {
+    await user(owner);
+    await expect(db.query("select public.create_workspace('Rollback default test')")).rejects.toThrow('Injected template failure');
+    await db.exec("reset role");
+    expect((await db.query("select id from public.organizations where name='Rollback default test'")).rows).toHaveLength(0);
+    expect((await db.query("select organization_id from public.profiles where id=$1", [owner])).rows).toEqual(before);
+    expect((await db.query("select count(*)::int n from public.workspace_memberships where user_id=$1", [owner])).rows[0]).toEqual({ n: 2 });
+  } finally {
+    await db.exec("reset role;drop trigger qa_reject_default on public.template_versions;drop function public.qa_reject_default_template()");
+  }
+});

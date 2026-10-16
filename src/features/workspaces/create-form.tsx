@@ -30,6 +30,7 @@ export function CreateWorkspaceForm() {
       </label>
       <p className="text-xs text-neutral-500">
         만든 사람은 새 워크스페이스의 관리자가 되며 바로 전환됩니다.
+        기본 보고서 양식이 함께 제공되어 바로 보고서를 작성할 수 있습니다.
       </p>
       <SubmitButton pendingLabel="만드는 중…" className="btn" pending={pending}>
         워크스페이스 만들기

@@ -772,3 +772,13 @@ QA-20261013-photo-reliability 정리: 운영 검사 fixture의 사진29개·보�
 - 검증: 전체 84파일436개 회귀, lint, TypeScript 포함 Webpack production build PASS. PostgreSQL(PGlite)에서 두 공간의 게시·조회 분리, 전환 전 생성/삭제 거절, 다른 공간 ID 편집/삭제 거절, 코치 거절, 게시 교체/삭제 후 기존 보고서 참조와 상대 공간 활성 양식 보존 확인. 첫 액션 테스트의 누락된 help_text fixture를 수정한 뒤 통과했다. 실제 다중 연결의 동시 경합 부하 시험과는 구분한다.
 - 문서: README/QA 기준·시나리오/coverage v37 갱신. PDF 23쪽·넘침0으로 재생성했고 기존 화면 캡처와 새 버튼명 차이를 명시했다. 초기 기본 sandbox의 Chromium 실행 실패는 네트워크 허용 환경에서 재실행했고, 21쪽 넘침8px는 안내 문장을 줄여 해결했다.
 - 운영: 새 RPC 마이그레이션 적용 성공 및 anon 실행 불가/authenticated 실행 가능 재조회 확인. 업무 데이터 변경은 없다. PR·커밋은 feat/workspace-report-templates 및 이 기록을 포함한 Git 이력으로 추적하며 main/배포 후 화면 검증은 별도 결과로 기록한다.
+
+### FEAT-20261016-default-template — 기본 보고서 양식 자동 제공
+
+- 원인: 새 워크스페이스는 양식 없이 생성되어 첫 보고서 작성이 실패했다. 문의 화면의 일정은 취소 상태가 아니었고 해당 공간에는 양식이 없었다.
+- 변경: create_workspace의 기존 가입 동의/관리자 생성/전환 흐름 안에서 기본 양식을 함께 생성·게시한다. 참여 인원/수업 내용은 필수, 특이사항/다음 수업 계획/활동 사진(3장)은 선택이다. private 초기화 함수는 SECURITY INVOKER이며 public/anon/authenticated 실행을 차단한다. 공간·관리자·양식 잠금과 기존 양식 존재 확인으로 중복·덮어쓰기를 막고 기존 숨김 이력도 유지한다. 양식 실패는 워크스페이스·멤버십·선택 변경까지 롤백한다.
+- 회귀: DB/가입 동의 41개 통과. 신규 공간별 독립 양식, 즉시 get_or_create_report 성공, 기본 양식 수정·교체 후 기존 보고서 참조 유지, 중복 초기화 무변경, 일반 계정의 내부 함수 접근 거절, 오류 주입 시 생성 전체 롤백을 확인했다. 신규 fixture의 Google identity 누락을 수정한 뒤 재실행했다.
+- 운영: 마이그레이션 적용 후 문의 대상 1개 공간에만 기본 양식 1개/항목5개를 게시했다. 동일 트랜잭션에서 전체 프로필(선택 포함)과 다른 공간 양식의 변경 없음을 비교했다. 대상 일정의 실제 authenticated 권한으로 보고서 생성 RPC를 검증한 뒤 롤백했다. 별도로 QA 계정의 신규 공간 생성/기본 양식 자동 게시를 운영 DB에서 확인하고 생성/선택을 모두 롤백했다. 다른 기존 공간 전체에 일괄 추가하지 않았다.
+- 문서: 생성 화면에 기본 양식 안내, README/QA 기준·시나리오/coverage v38 갱신, PDF 23쪽·넘침0 및 한글 텍스트 확인. 기존 이미지 캡처는 재촬영하지 않았다.
+- 보안 점검: 적용 전부터 존재하던 private RLS 안내와 공개/인증 RPC·유출 비밀번호 보호 경고를 비교한다. 이번 private 초기화 함수를 공개 API로 추가하지 않는다. 기존 경고의 검토는 별도 범위이며 새 기능 검증과 혼동하지 않는다. 참고: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
+- 추적: feat/default-workspace-template 및 이 항목을 포함한 Git 이력. main/배포와 전체 검사 결과는 PR에 기록한다.
