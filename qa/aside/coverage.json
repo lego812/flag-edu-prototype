@@ -1,5 +1,5 @@
 {
-  "version": 39,
+  "version": 40,
   "requirements": [
     {
       "id": "R01",
@@ -388,6 +388,26 @@
       "automated": [],
       "gaps": [
         "실제 Android 기기 설치·로그인·사진 선택·다운로드와 TWA 브라우저 도메인 검증 실행 필요"
+      ]
+    },
+    {
+      "id": "R12",
+      "name": "서비스 master 조회",
+      "cases": [
+        "12-a-A",
+        "12-a-B",
+        "12-a-C",
+        "12-a-D",
+        "12-a-E"
+      ],
+      "automated": [
+        "src/features/master/master-db.test.ts",
+        "src/features/master/access.test.ts",
+        "src/features/master/pages.test.tsx",
+        "src/app/(work)/manage/page.test.tsx"
+      ],
+      "gaps": [
+        "운영 마이그레이션 적용 후 실제 master 로그인·모바일 화면 검증"
       ]
     }
   ],

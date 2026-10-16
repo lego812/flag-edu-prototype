@@ -1,3 +1,4 @@
+import { masterAccount } from "@/features/master/access";
 import Link from "@/components/feedback-link";
 import { SubmitButton } from "@/components/submit-button";
 import { requireAccount } from "@/features/auth/current-user";
@@ -19,6 +20,7 @@ export default async function WelcomePage() {
   const { data: invitations, error: invitationError } = await supabase.rpc(
     "list_my_workspace_invitations",
   );
+  const { isMaster } = await masterAccount();
   return (
     <main className="mx-auto min-h-svh max-w-xl space-y-8 px-5 py-12">
       <header>
@@ -51,6 +53,20 @@ export default async function WelcomePage() {
               </SubmitButton>
             </form>
           ))}
+        </section>
+      )}
+
+      {isMaster && (
+        <section className="surface space-y-3 p-6">
+          <h2 className="font-bold">서비스 관리 · master</h2>
+          <div className="flex flex-wrap gap-5 text-sm">
+            <Link href="/manage/users" className="underline">
+              사용자 관리
+            </Link>
+            <Link href="/manage/all-workspaces" className="underline">
+              전체 워크스페이스 조회
+            </Link>
+          </div>
         </section>
       )}
       <section className="border-y border-neutral-200 py-6">

@@ -1,6 +1,9 @@
+vi.mock("@/features/master/access", () => ({
+  masterAccount: async () => ({ isMaster: m.master }),
+}));
 import { render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
-const m = vi.hoisted(() => ({ current: vi.fn() }));
+const m = vi.hoisted(() => ({ current: vi.fn(), master: false }));
 vi.mock("@/features/auth/current-user", () => ({
   requireAccountWithWorkspaces: m.current,
 }));
@@ -56,4 +59,22 @@ it("keeps account information, logout and privacy contact available without any 
   expect(
     screen.getByRole("link", { name: "davin990812@gmail.com" }),
   ).toHaveAttribute("href", "mailto:davin990812@gmail.com");
+});
+
+it("offers service navigation to a master with no workspace", async () => {
+  m.master = true;
+  m.current.mockResolvedValue({
+    user: { email: "master@example.test", identities: [] },
+    profile: { name: "운영자", status: "inactive" },
+    workspaces: [],
+  });
+  render(await AccountPage());
+  expect(screen.getByRole("link", { name: "사용자 관리" })).toHaveAttribute(
+    "href",
+    "/manage/users",
+  );
+  expect(
+    screen.getByRole("link", { name: "전체 워크스페이스 조회" }),
+  ).toHaveAttribute("href", "/manage/all-workspaces");
+  m.master = false;
 });
