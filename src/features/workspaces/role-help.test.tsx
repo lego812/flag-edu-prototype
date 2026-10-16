@@ -21,7 +21,7 @@ it("keeps guidance hidden until requested and restores focus after closing", () 
   expect(
     screen.getByRole("dialog", { name: "참여자 권한 안내" }),
   ).toHaveTextContent(
-    "관리자는 수업·보고서·양식과 참여자를 관리하고, 코치는 수업 조회와 본인 보고서 작성·수정을 할 수 있습니다.",
+    "관리자는 수업·보고서·양식과 참여자를 관리하고, 코치는 수업과 워크스페이스의 모든 보고서를 조회하고 본인 보고서를 작성·수정할 수 있습니다.",
   );
   fireEvent.click(screen.getByRole("button", { name: "닫기" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

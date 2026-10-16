@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { createClient } from "@supabase/supabase-js";
 import { expect, it, vi } from "vitest";
-import { listReports, listReportSummaries, type ReportFilters } from "./repository";
+import { getReport, listReports, listReportSummaries, type ReportFilters } from "./repository";
 import { classRepository } from "@/features/classes/repository";
 
 function fixture(data: unknown[] = []) {
@@ -44,7 +44,7 @@ it("loads small report cards while preserving tenant/coach restrictions and Seou
 });
 
 it("keeps full answer and ordered attachment data for exports and supports the admin author filter", async () => {
-  const report = { id: "report", report_answers: [{ field_id: "field", value: "Answer" }], report_attachments: [
+  const report = { id: "report", profiles: { name: "Coach" }, report_answers: [{ field_id: "field", value: "Answer" }], report_attachments: [
     { id: "b", storage_path: "b", created_at: "2026-10-02" },
     { id: "a", storage_path: "a", created_at: "2026-10-01" },
   ] };
@@ -71,4 +71,26 @@ it("limits class list fields without dropping completion sync, tenant/status fil
   expect(q.get("status")).toBe("eq.completed");
   expect(q.get("order")).toBe("start_at.asc,id.asc");
   expect(q.get("offset")).toBe("20");
+});
+
+it("resolves peer names for cards and details without opening private profiles", async () => {
+  const requests: { path: string; body: unknown }[] = [];
+  const report = { id: "report", author_id: "peer", profiles: null, report_attachments: [] };
+  const client = createClient("https://example.supabase.co", "key", {
+    auth: { persistSession: false }, global: { fetch: async (input, init) => {
+      const url = new URL(String(input));
+      requests.push({ path: url.pathname, body: init?.body ? JSON.parse(String(init.body)) : null });
+      const body = url.pathname.endsWith("list_report_authors") ? [{ id: "peer", name: "다른 코치" }]
+        : url.pathname.includes("/rpc/") ? null : [report];
+      return new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json" } });
+    } },
+  });
+  const list = await listReportSummaries(client, "org", { ...filters, author: "", page: 1 });
+  expect(list.data?.[0].profiles).toEqual({ name: "다른 코치" });
+  const detail = await getReport(client, "report");
+  expect(detail.data?.profiles).toEqual({ name: "다른 코치" });
+  expect(requests.filter(r => r.path.endsWith("list_report_authors"))).toEqual([
+    { path: "/rest/v1/rpc/list_report_authors", body: { p_author_ids: ["peer"] } },
+    { path: "/rest/v1/rpc/list_report_authors", body: { p_author_ids: ["peer"] } },
+  ]);
 });

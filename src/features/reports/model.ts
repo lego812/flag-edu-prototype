@@ -65,7 +65,7 @@ export type Report = {
   report_attachments: Attachment[];
 };
 // List cards must not require report answers or storage metadata.
-export type ReportSummary = Pick<Report, "id" | "created_at" | "profiles"> & {
+export type ReportSummary = Pick<Report, "id" | "author_id" | "created_at" | "profiles"> & {
   class_sessions: { title: string };
 };
 export type ActionState = {

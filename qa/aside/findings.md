@@ -782,3 +782,14 @@ QA-20261013-photo-reliability 정리: 운영 검사 fixture의 사진29개·보�
 - 문서: 생성 화면에 기본 양식 안내, README/QA 기준·시나리오/coverage v38 갱신, PDF 23쪽·넘침0 및 한글 텍스트 확인. 기존 이미지 캡처는 재촬영하지 않았다.
 - 보안 점검: 적용 전부터 존재하던 private RLS 안내와 공개/인증 RPC·유출 비밀번호 보호 경고를 비교한다. 이번 private 초기화 함수를 공개 API로 추가하지 않는다. 기존 경고의 검토는 별도 범위이며 새 기능 검증과 혼동하지 않는다. 참고: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
 - 추적: feat/default-workspace-template 및 이 항목을 포함한 Git 이력. main/배포와 전체 검사 결과는 PR에 기록한다.
+
+### FEAT-20261016-coach-workspace-report-reading — 코치의 워크스페이스 보고서 조회
+
+- 원인: 예시 보고서를 참고하도록 안내했지만 코치의 SELECT 정책과 내 보고서 목록이 작성자 본인으로 제한되어 있었다.
+- 변경: 내 보고서 기본 범위는 유지하고 워크스페이스 보고서 보기·작성자 필터·일정별 전체 보고서 링크를 제공한다. 같은 공간의 코치/관리자 작성 임시저장·제출·취소 수업 보고서, 답변, 사진, 과거 양식을 조회한다. 타인 보고서는 상세/직접 edit URL에서도 읽기 전용이다.
+- 권한: SELECT 정책만 확장한다. 답변 저장/제출·사진 추가/삭제 RPC 및 테이블/Storage 쓰기의 작성자·관리자 검사는 유지한다. 다른 공간, 비활성/참여 종료, 삭제된 공간의 읽기는 차단한다. 프로필 RLS는 확장하지 않고 private의 제한된 이름 조회 함수와 public SECURITY INVOKER RPC로 보고서 작성자 ID/이름만 반환한다. 선택 공간 변경·참여 종료 뒤에도 기록의 작성자 이름을 유지한다. 신규 함수는 anon/PUBLIC 실행을 취소했다.
+- 검증: 전체 86파일450개 PASS 후 저장 액션 직접 호출 차단 2개를 추가했다. 최종 관련4파일17개 PASS(전체의15개 재검증+신규2개). 최신 전체 마이그레이션을 적용한 격리 PostgreSQL(PGlite)의 실제 authenticated 역할로 공유 읽기·타인 쓰기 차단·과거/미사용 양식·공간 전환/삭제·계정 상태·작성자 이름 범위를 확인했다. 실사용자의 계정·보고서·사진은 수정하지 않았다. 초기 신규 fixture의 Google identity/파일 UUID 누락을 수정했다. 빌드에서 드러난 비타입 Supabase RPC 반환형 추론 문제는 SQL TABLE 반환 계약에 맞춰 명시했다.
+- 최종 정적 검증: lint와 TypeScript 포함 Webpack production build PASS.
+- 문서: README 권한표/조회 경로와 QA 기준·시나리오·coverage v39 갱신. PDF23쪽·넘침0, 한글 텍스트에 새 안내 포함 확인. 스크린샷은 기존 캡처이며 새 조회 범위 버튼은 텍스트로 안내했다.
+- 운영 상태: 운영 DB 정책과 보안 advisor는 조회만 했다. 기존 INFO3·anon definer2·authenticated definer36·유출 비밀번호 보호1 경고가 있었으며 이번 변경을 적용한 결과가 아니다. 보안 경고 참고: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
+- 추적: feat/coach-workspace-report-reading 및 이 항목을 포함한 Git 이력/PR. 이 단계에서는 main 병합·운영 DB 적용·운영 배포와 실기기/E2E 검증을 하지 않았다. 배포 순서는 마이그레이션 적용 → 앱 배포 → 실제 코치 조회 검증이다.

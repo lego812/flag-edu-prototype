@@ -41,8 +41,8 @@ export function WorkspaceRoleHelp() {
           id={descriptionId}
           className="mt-4 text-sm leading-7 text-neutral-600"
         >
-          관리자는 수업·보고서·양식과 참여자를 관리하고, 코치는 수업 조회와 본인
-          보고서 작성·수정을 할 수 있습니다.
+          관리자는 수업·보고서·양식과 참여자를 관리하고, 코치는 수업과 워크스페이스의
+          모든 보고서를 조회하고 본인 보고서를 작성·수정할 수 있습니다.
         </p>
         <div className="mt-6 flex justify-end">
           <button

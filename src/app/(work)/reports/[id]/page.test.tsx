@@ -97,6 +97,11 @@ describe("report read/edit mode", () => {
       }),
     );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("수업 기록")).toBeInTheDocument();
+    expect(screen.getByText("사진 조회")).toBeInTheDocument();
+    expect(screen.queryByText("사진 편집")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "수정" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "보고서 목록" })).toHaveAttribute("href", "/reports?scope=workspace");
   });
   it("keeps a cancelled report read-only even for its author", async () => {
     mocks.report.mockResolvedValue({
