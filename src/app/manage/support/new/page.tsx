@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { notFound } from "next/navigation";
+import InquiryUnavailable from "@/features/support/unavailable";
 import Link from "@/components/feedback-link";
 import { masterAccount } from "@/features/master/access";
 import { InquiryForm } from "@/features/support/form";
 export default async function NewInquiryPage() {
   const { isMaster } = await masterAccount();
-  if (isMaster) notFound();
+  if (isMaster) return <InquiryUnavailable />;
   return (
     <>
       <Link href="/manage/support" className="text-sm underline">

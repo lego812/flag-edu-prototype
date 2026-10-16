@@ -1,7 +1,7 @@
 import Link from "@/components/feedback-link";
 import { requireAccountWithWorkspaces } from "@/features/auth/current-user";
 import { AppHeader } from "@/components/app-header";
-export const metadata = { title: "고객센터" };
+export const metadata = { title: "고객센터", robots: { index: false, follow: false } };
 export default async function SupportLayout({
   children,
 }: {

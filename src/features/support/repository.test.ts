@@ -3,11 +3,6 @@ import { beforeEach, expect, it, vi } from "vitest";
 const m = vi.hoisted(() => ({ account: vi.fn(), rpc: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/features/master/access", () => ({ masterAccount: m.account }));
-vi.mock("next/navigation", () => ({
-  notFound: () => {
-    throw new Error("NOT_FOUND");
-  },
-}));
 import { getInquiry } from "./repository";
 const id = "20000000-0000-4000-8000-000000000100";
 beforeEach(() => {
@@ -16,10 +11,10 @@ beforeEach(() => {
 });
 it("checks the account and masks nonexistent and other-authors IDs equally", async () => {
   m.rpc.mockResolvedValue({ data: null });
-  await expect(getInquiry(id)).rejects.toThrow("NOT_FOUND");
+  await expect(getInquiry(id)).resolves.toBeNull();
   expect(m.rpc).toHaveBeenCalledWith("get_support_inquiry", { p_id: id });
   m.rpc.mockClear();
-  await expect(getInquiry("invalid")).rejects.toThrow("NOT_FOUND");
+  await expect(getInquiry("invalid")).resolves.toBeNull();
   expect(m.rpc).not.toHaveBeenCalled();
   m.account.mockRejectedValue(new Error("LOGIN"));
   await expect(getInquiry(id)).rejects.toThrow("LOGIN");
