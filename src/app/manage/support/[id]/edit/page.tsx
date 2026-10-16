@@ -19,7 +19,7 @@ export default async function EditInquiryPage({
       </Link>
       <h1 className="text-3xl font-bold">문의글 편집</h1>
       <InquiryForm
-        key={inquiry.updated_at}
+        key={inquiry.id}
         id={inquiry.id}
         title={inquiry.title}
         body={inquiry.body}

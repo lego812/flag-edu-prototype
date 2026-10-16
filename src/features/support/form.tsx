@@ -25,6 +25,8 @@ export function InquiryForm({
   version?: string;
 }) {
   const router = useRouter();
+  // Revalidation must not discard a pending result or adopt another edit's version.
+  const [original] = useState({ title: initialTitle, body: initialBody, version });
   const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState(initialBody);
   const busy = useRef(false);
@@ -44,7 +46,7 @@ export function InquiryForm({
     {},
   );
   const dirty =
-    !state.savedId && (title !== initialTitle || body !== initialBody);
+    !state.savedId && (title !== original.title || body !== original.body);
   const { register } = useNavigationGuard();
   useLayoutEffect(
     () => register(() => ({ dirty, busy: pending, label: "문의글" })),
@@ -72,7 +74,7 @@ export function InquiryForm({
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <input type="hidden" name="version" value={version} />
+      <input type="hidden" name="version" value={original.version} />
       <fieldset disabled={pending || !!state.savedId} className="space-y-5">
         <legend className="sr-only">문의글 작성</legend>
         <label className="block text-sm font-medium">
@@ -109,7 +111,7 @@ export function InquiryForm({
           정보는 입력하지 마세요.
         </p>
         <SubmitButton pending={pending} pendingLabel="저장 중…" className="btn">
-          {version ? "수정 저장" : "문의 등록"}
+          {original.version ? "수정 저장" : "문의 등록"}
         </SubmitButton>
       </fieldset>
       {state.error && (
