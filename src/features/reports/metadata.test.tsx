@@ -3,18 +3,36 @@ import { describe, expect, it } from "vitest";
 import { ReportMetadata } from "./metadata";
 
 describe("ReportMetadata", () => {
-  it("shows only the author and creation time in Korean time", () => {
+  it("prioritizes the class schedule and keeps creation time as details", () => {
     const { container } = render(
-      <ReportMetadata name="박다빈" createdAt="2026-09-22T01:30:00Z" />,
+      <ReportMetadata
+        name="김남중"
+        createdAt="2026-10-23T08:13:00Z"
+        classStartAt="2026-10-22T05:00:00Z"
+        location="강남센터"
+      />,
     );
-    expect(screen.getByText(/박다빈/)).toBeInTheDocument();
-    expect(container.querySelector("time")).toHaveAttribute(
+    expect(screen.getByText(/김남중/)).toBeInTheDocument();
+    expect(screen.getByText(/수업일시/)).toBeInTheDocument();
+    expect(screen.getByText(/2026년 10월 22일/)).toBeInTheDocument();
+    expect(screen.getByText(/강남센터/)).toBeInTheDocument();
+    expect(screen.getByText(/상세정보:/)).toHaveTextContent(/2026년 10월 23일.*작성/);
+    expect(container.querySelectorAll("time")[1]).toHaveAttribute(
       "dateTime",
-      "2026-09-22T01:30:00Z",
+      "2026-10-23T08:13:00Z",
     );
-    expect(container.querySelector("time")?.textContent).toContain("10:30");
-    expect(container.textContent).not.toMatch(
-      /작성자|작성일시|미제출|양식|시간 미정/,
+  });
+
+  it("labels a class without a fixed time", () => {
+    render(
+      <ReportMetadata
+        name="김남중"
+        createdAt="2026-10-23T08:13:00Z"
+        classStartAt="2026-10-22T15:00:00Z"
+        classHasTime={false}
+        location="강남센터"
+      />,
     );
+    expect(screen.getByText(/시간 미정/)).toBeInTheDocument();
   });
 });

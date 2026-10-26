@@ -63,6 +63,9 @@ export default async function ReportPage({
           <ReportMetadata
             name={report.profiles.name}
             createdAt={report.created_at}
+            classStartAt={report.class_sessions.start_at}
+            classHasTime={report.class_sessions.has_time}
+            location={report.class_sessions.location}
           />
           {!mine && profile.role !== "admin" && (
             <p className="text-sm text-neutral-500">다른 사람이 작성한 보고서는 조회만 가능합니다.</p>

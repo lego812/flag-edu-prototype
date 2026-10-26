@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { requireCurrentProfile } from "@/features/auth/current-user";
 import { formatClassDate, seoulToday } from "@/features/classes/dates";
 import { ReportMetadata } from "@/features/reports/metadata";
+import type { ReportSummary } from "@/features/reports/model";
 
 export const metadata = { title: "홈" };
 
@@ -28,10 +29,11 @@ export default async function DashboardPage() {
       .eq("status", "draft"),
     supabase
       .from("reports")
-      .select("id,created_at,class_sessions(title)")
+      .select("id,created_at,class_sessions!inner(title,location,start_at,has_time)")
       .eq("author_id", profile.id)
       .order("updated_at", { ascending: false })
-      .limit(5),
+      .limit(5)
+      .returns<Pick<ReportSummary, "id" | "created_at" | "class_sessions">[]>(),
   ]);
 
   const nextClass = sessions.data?.[0];
@@ -152,10 +154,13 @@ export default async function DashboardPage() {
               {recent.data?.map((r) => (
                 <li key={r.id}>
                   <Link className="block py-5" href={"/reports/" + r.id}>
-                    <span className="font-semibold">보고서</span>
+                    <span className="font-semibold">{r.class_sessions.title}</span>
                     <ReportMetadata
                       name={profile.name}
                       createdAt={r.created_at}
+                      classStartAt={r.class_sessions.start_at}
+                      classHasTime={r.class_sessions.has_time}
+                      location={r.class_sessions.location}
                     />
                   </Link>
                 </li>

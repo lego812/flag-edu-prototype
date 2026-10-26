@@ -24,7 +24,7 @@ const filters: ReportFilters = {
 };
 
 it("loads small report cards while preserving tenant/coach restrictions and Seoul date pagination", async () => {
-  const card = { id: "report", created_at: "now", profiles: { name: "Coach" }, class_sessions: { title: "Class" } };
+  const card = { id: "report", created_at: "now", profiles: { name: "Coach" }, class_sessions: { title: "Class", location: "Center", start_at: "2026-02-01T01:00:00Z", has_time: true } };
   const { client, requests } = fixture([card]);
   const result = await listReportSummaries(client, "org-a", filters, "coach-a");
   expect(result.error).toBeNull();
@@ -33,7 +33,7 @@ it("loads small report cards while preserving tenant/coach restrictions and Seou
   expect(requests[0].body).toEqual({ p_organization_id: "org-a" });
   const q = requests[1].url.searchParams;
   expect(q.get("select")).not.toMatch(/\*|report_answers|report_attachments|storage_path/);
-  expect(q.get("select")).toContain("class_sessions!inner(title)");
+  expect(q.get("select")).toContain("class_sessions!inner(title,location,start_at,has_time)");
   expect(q.get("organization_id")).toBe("eq.org-a");
   expect(q.get("author_id")).toBe("eq.coach-a");
   expect(q.get("class_session_id")).toBe("eq.session-a");

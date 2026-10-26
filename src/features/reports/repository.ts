@@ -8,7 +8,7 @@ export const REPORT_SELECT =
   "*, class_sessions!inner(title,location,start_at,end_at,status,has_time), profiles!reports_author_id_fkey(name), report_answers(field_id,value), report_attachments(id,field_id,storage_path,original_filename,file_size,created_at)";
 
 export const REPORT_SUMMARY_SELECT =
-  "id,author_id,created_at,class_sessions!inner(title),profiles!reports_author_id_fkey(name)";
+  "id,author_id,created_at,class_sessions!inner(title,location,start_at,has_time),profiles!reports_author_id_fkey(name)";
 
 export async function listReportAuthors(client: SupabaseClient, ids?: string[]) {
   const { data, error } = await client.rpc("list_report_authors", {
