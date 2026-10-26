@@ -66,7 +66,7 @@ export type Report = {
 };
 // List cards must not require report answers or storage metadata.
 export type ReportSummary = Pick<Report, "id" | "author_id" | "created_at" | "profiles"> & {
-  class_sessions: { title: string };
+  class_sessions: Pick<Report["class_sessions"], "title" | "location" | "start_at" | "has_time">;
 };
 export type ActionState = {
   error?: string;

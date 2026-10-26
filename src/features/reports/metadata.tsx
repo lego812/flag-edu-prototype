@@ -1,25 +1,37 @@
+import { formatClassDate } from "@/features/classes/dates";
+
 export function ReportMetadata({
   name,
   createdAt,
+  classStartAt,
+  classHasTime = true,
+  location,
 }: {
   name: string;
   createdAt: string;
+  classStartAt: string;
+  classHasTime?: boolean;
+  location: string;
 }) {
   return (
-    <p className="text-sm text-neutral-600">
-      {name} ·{" "}
-      <time dateTime={createdAt}>
-        {new Intl.DateTimeFormat("sv-SE", {
-          timeZone: "Asia/Seoul",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-          .format(new Date(createdAt))
-          .replaceAll("-", ".")}
-      </time>
-    </p>
+    <div className="space-y-1 text-sm">
+      <p>
+        <span className="inline-block min-w-20 font-semibold">수업일시</span>
+        <time dateTime={classStartAt}>
+          {formatClassDate(classStartAt, classHasTime)}
+        </time>
+      </p>
+      <p>
+        <span className="inline-block min-w-20 font-semibold">장소</span>
+        {location}
+      </p>
+      <p>
+        <span className="inline-block min-w-20 font-semibold">작성자</span>
+        {name}
+      </p>
+      <p className="pt-1 text-xs text-neutral-500">
+        상세정보: <time dateTime={createdAt}>{formatClassDate(createdAt)}</time> 작성
+      </p>
+    </div>
   );
 }

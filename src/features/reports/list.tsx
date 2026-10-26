@@ -129,7 +129,13 @@ export async function ReportList({
               <div className="flex flex-wrap justify-between gap-2">
                 <strong>{r.class_sessions.title}</strong>
               </div>
-              <ReportMetadata name={r.profiles.name} createdAt={r.created_at} />
+              <ReportMetadata
+                name={r.profiles.name}
+                createdAt={r.created_at}
+                classStartAt={r.class_sessions.start_at}
+                classHasTime={r.class_sessions.has_time}
+                location={r.class_sessions.location}
+              />
             </Link>
           </li>
         ))}
